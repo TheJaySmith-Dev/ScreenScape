@@ -1,6 +1,6 @@
 
 import React from 'react';
-import type { MediaDetails } from '../types';
+import type { MediaDetails } from '../types.ts';
 
 interface RecommendationCardProps {
   media: MediaDetails;
@@ -18,6 +18,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({ media, o
           src={media.posterUrl}
           alt={media.title}
           className="w-full h-full object-cover"
+          loading="lazy"
         />
       </div>
       <div className="p-3">

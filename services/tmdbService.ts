@@ -1,4 +1,5 @@
-import type { MediaDetails, TmdbSearchResult, CastMember, WatchProviders, Collection, CollectionDetails } from '../types';
+
+import type { MediaDetails, TmdbSearchResult, CastMember, WatchProviders, Collection, CollectionDetails } from '../types.ts';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_API_KEY = '09b97a49759876f2fde9eadb163edc44';
@@ -134,12 +135,15 @@ const formatMediaDetailsFromApiResponse = (details: any, type: 'movie' | 'tv'): 
         releaseYear: (details.release_date || details.first_air_date || 'N/A').substring(0, 4),
         rating: details.vote_average ? parseFloat(details.vote_average.toFixed(1)) : 0,
         trailerUrl: trailer ? `https://www.youtube.com/embed/${trailer.key}` : null,
-        type: type
+        type: type,
+        popularity: details.popularity || 0,
+        releaseDate: details.release_date || details.first_air_date,
+        mediaSubType: type === 'movie' && details.runtime <= 40 ? 'short' : undefined,
     };
 };
 
 
-const formatMediaListItem = (item: any, typeOverride?: 'movie' | 'tv'): MediaDetails | null => {
+const formatMediaListItem = (item: any, typeOverride?: 'movie' | 'tv', subType?: 'short'): MediaDetails | null => {
     const type = typeOverride || item.media_type;
     if (!type || (type !== 'movie' && type !== 'tv')) {
         return null;
@@ -155,14 +159,17 @@ const formatMediaListItem = (item: any, typeOverride?: 'movie' | 'tv'): MediaDet
         rating: item.vote_average ? parseFloat(item.vote_average.toFixed(1)) : 0,
         trailerUrl: null, // No trailer info in list views, will be fetched on demand
         type: type,
+        popularity: item.popularity || 0,
+        releaseDate: item.release_date || item.first_air_date,
+        mediaSubType: subType,
     };
 };
 
-const fetchTmdbList = async (endpoint: string, typeOverride?: 'movie' | 'tv'): Promise<MediaDetails[]> => {
+const fetchTmdbList = async (endpoint: string, typeOverride?: 'movie' | 'tv', subType?: 'short'): Promise<MediaDetails[]> => {
     try {
         const data = await fetchFromTmdb<{ results: any[] }>(endpoint);
         return data.results
-            .map(item => formatMediaListItem(item, typeOverride))
+            .map(item => formatMediaListItem(item, typeOverride, subType))
             .filter((item): item is MediaDetails => 
                 item !== null && 
                 !!item.posterUrl && 
@@ -329,3 +336,40 @@ export const getTrending = () => fetchTmdbList('/trending/all/week');
 export const getPopularMovies = () => fetchTmdbList('/movie/popular', 'movie');
 export const getPopularTv = () => fetchTmdbList('/tv/popular', 'tv');
 export const getNowPlayingMovies = () => fetchTmdbList('/movie/now_playing', 'movie');
+
+export const getMediaByStudio = async (studioId: number): Promise<MediaDetails[]> => {
+    try {
+        const totalPagesToFetch = 3;
+        const moviePromises: Promise<MediaDetails[]>[] = [];
+        const shortPromises: Promise<MediaDetails[]>[] = [];
+        const tvPromises: Promise<MediaDetails[]>[] = [];
+
+        for (let i = 1; i <= totalPagesToFetch; i++) {
+            // Regular movies (runtime > 40 mins)
+            moviePromises.push(fetchTmdbList(`/discover/movie?with_companies=${studioId}&sort_by=popularity.desc&page=${i}&with_runtime.gte=41`, 'movie'));
+            // Shorts (runtime <= 40 mins)
+            shortPromises.push(fetchTmdbList(`/discover/movie?with_companies=${studioId}&sort_by=popularity.desc&page=${i}&with_runtime.lte=40`, 'movie', 'short'));
+            // TV Shows
+            tvPromises.push(fetchTmdbList(`/discover/tv?with_companies=${studioId}&sort_by=popularity.desc&page=${i}`, 'tv'));
+        }
+
+        const [moviePages, shortPages, tvPages] = await Promise.all([
+            Promise.all(moviePromises),
+            Promise.all(shortPromises),
+            Promise.all(tvPromises)
+        ]);
+        
+        const allMedia = [...moviePages.flat(), ...shortPages.flat(), ...tvPages.flat()];
+        
+        // Remove duplicates by ID
+        const uniqueMedia = Array.from(new Map(allMedia.map(item => [item.id, item])).values());
+        
+        // Sort all combined media by popularity
+        uniqueMedia.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+        
+        return uniqueMedia;
+    } catch (error) {
+        console.error(`Failed to fetch media for studio ID ${studioId}:`, error);
+        return [];
+    }
+};

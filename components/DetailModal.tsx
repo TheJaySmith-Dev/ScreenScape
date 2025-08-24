@@ -1,12 +1,11 @@
-
 import React, { useEffect, useState } from 'react';
-import type { MediaDetails, CollectionDetails, CastMember, UserLocation } from '../types';
-import { CloseIcon, StarIcon, PlayIcon, TicketIcon } from './icons';
-import { Providers } from './Providers';
-import { RecommendationCard } from './RecommendationCard';
-import { LoadingSpinner } from './LoadingSpinner';
-import { getBookingInfo } from '../services/geminiService';
-import { VisionResult } from './VisionResult';
+import type { MediaDetails, CollectionDetails, CastMember, UserLocation } from '../types.ts';
+import { CloseIcon, StarIcon, PlayIcon, TicketIcon } from './icons.tsx';
+import { Providers } from './Providers.tsx';
+import { RecommendationCard } from './RecommendationCard.tsx';
+import { LoadingSpinner } from './LoadingSpinner.tsx';
+import { getBookingInfo } from '../services/geminiService.ts';
+import { VisionResult } from './VisionResult.tsx';
 
 interface DetailModalProps {
   item: MediaDetails | CollectionDetails;
@@ -25,7 +24,7 @@ const ModalSection: React.FC<{ title: string; children: React.ReactNode }> = ({ 
   
 const CastCard: React.FC<{ member: CastMember }> = ({ member }) => (
     <div className="flex-shrink-0 w-28 text-center">
-      <img src={member.profileUrl} alt={member.name} className="w-24 h-24 object-cover rounded-full mx-auto mb-2 border-2 border-white/20" />
+      <img src={member.profileUrl} alt={member.name} className="w-24 h-24 object-cover rounded-full mx-auto mb-2 border-2 border-white/20" loading="lazy" />
       <p className="font-semibold text-sm text-white truncate">{member.name}</p>
       <p className="text-xs text-gray-400 truncate">{member.character}</p>
     </div>
@@ -236,18 +235,40 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         onClick={onClose}
       >
         <div 
-          className="relative w-full max-w-4xl max-h-[90vh] bg-gray-900/50 border border-white/20 rounded-2xl overflow-hidden flex flex-col md:flex-row backdrop-blur-lg"
+          className="relative w-full max-w-4xl max-h-[90vh] bg-gray-900/50 border border-white/20 rounded-2xl overflow-hidden flex flex-col lg:flex-row backdrop-blur-lg"
           onClick={(e) => e.stopPropagation()}
         >
            <button onClick={onClose} className="absolute top-3 right-3 z-20 text-white/70 hover:text-white transition-colors">
               <CloseIcon className="w-8 h-8"/>
            </button>
 
-          <div className="w-full md:w-1/3 flex-shrink-0 hidden md:block">
-            <img src={item.posterUrl} alt={isMediaDetails(item) ? item.title : item.name} className="w-full h-full object-cover"/>
+          <div className="w-full lg:w-1/3 flex-shrink-0">
+            {/* Mobile Header with Backdrop and Poster */}
+            <div className="block lg:hidden relative">
+              <img src={item.backdropUrl} alt="" className="w-full h-auto object-cover opacity-50" />
+              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/70 to-transparent"></div>
+              <div className="absolute bottom-4 left-4 w-24 sm:w-28">
+                <img 
+                  src={item.posterUrl} 
+                  alt={isMediaDetails(item) ? item.title : item.name} 
+                  className="rounded-lg shadow-lg w-full h-full object-cover" 
+                  loading="lazy"
+                />
+              </div>
+            </div>
+            {/* Desktop Poster */}
+            <div className="hidden lg:block w-full h-full">
+              <img 
+                src={item.posterUrl} 
+                alt={isMediaDetails(item) ? item.title : item.name} 
+                className="w-full h-full object-cover" 
+                loading="lazy"
+              />
+            </div>
           </div>
 
-          <div className="w-full md:w-2/3 p-6 flex flex-col overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+
+          <div className="w-full lg:w-2/3 p-6 pt-0 lg:pt-6 flex flex-col overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
             {isMediaDetails(item) ? renderMediaContent(item) : renderCollectionContent(item)}
           </div>
         </div>

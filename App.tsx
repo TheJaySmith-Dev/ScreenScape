@@ -1,14 +1,12 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { SearchBar } from './components/SearchBar';
-import { RecommendationGrid } from './components/RecommendationGrid';
-import { CollectionGrid } from './components/CollectionGrid';
-import { DetailModal } from './components/DetailModal';
-import { LoadingSpinner } from './components/LoadingSpinner';
-import { MediaRow } from './components/MediaRow';
-import { Navigation } from './components/Navigation';
-import { GlobeIcon, VisionIcon } from './components/icons';
-import { getRecommendations } from './services/geminiService';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { SearchBar } from './components/SearchBar.tsx';
+import { RecommendationGrid } from './components/RecommendationGrid.tsx';
+import { LoadingSpinner } from './components/LoadingSpinner.tsx';
+import { MediaRow } from './components/MediaRow.tsx';
+import { Navigation } from './components/Navigation.tsx';
+import { GlobeIcon, VisionIcon } from './components/icons.tsx';
+import { getRecommendations } from './services/geminiService.ts';
 import { 
   fetchDetailsForModal,
   fetchCollectionDetails,
@@ -17,12 +15,22 @@ import {
   getPopularTv,
   getNowPlayingMovies,
   getMovieCollections,
-  fetchDetailsByTitle
-} from './services/tmdbService';
-import type { MediaDetails, Collection, CollectionDetails, UserLocation } from './types';
-import { VisionModal } from './components/VisionModal';
+  fetchDetailsByTitle,
+  getMediaByStudio
+} from './services/tmdbService.ts';
+import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio } from './types.ts';
+import { popularStudios } from './services/studioService.ts';
+import { DetailModal } from './components/DetailModal.tsx';
+import { VisionModal } from './components/VisionModal.tsx';
+import { StudioGrid } from './components/StudioGrid.tsx';
+import { CollectionGrid } from './components/CollectionGrid.tsx';
+import { StudioFilters } from './components/StudioFilters.tsx';
 
-type ActiveTab = 'home' | 'movies' | 'tv' | 'collections';
+
+type ActiveTab = 'home' | 'movies' | 'tv' | 'collections' | 'studios';
+type MediaTypeFilter = 'all' | 'movie' | 'show' | 'short';
+type SortBy = 'trending' | 'newest';
+
 
 const App: React.FC = () => {
   const [recommendations, setRecommendations] = useState<MediaDetails[]>([]);
@@ -38,6 +46,12 @@ const App: React.FC = () => {
   const [isVpnBlocked, setIsVpnBlocked] = useState<boolean | null>(null); // null: checking, false: ok, true: blocked
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isVisionModalOpen, setIsVisionModalOpen] = useState<boolean>(false);
+
+  const [studios] = useState<Studio[]>(popularStudios);
+  const [selectedStudio, setSelectedStudio] = useState<Studio | null>(null);
+  const [studioMedia, setStudioMedia] = useState<MediaDetails[]>([]);
+  const [studioMediaTypeFilter, setStudioMediaTypeFilter] = useState<MediaTypeFilter>('all');
+  const [studioSortBy, setStudioSortBy] = useState<SortBy>('trending');
 
 
   const checkVpn = useCallback(async () => {
@@ -78,11 +92,17 @@ const App: React.FC = () => {
   }, [checkVpn]);
 
 
+  // Effect for loading primary content based on tab.
+  // For home, it loads all sections together now for simplicity and robustness.
   useEffect(() => {
-    if (isVpnBlocked === false) { // Only load data if VPN check has passed
-      const loadHomePageData = async () => {
-        setIsHomeLoading(true);
-        try {
+    if (isVpnBlocked !== false) return;
+
+    const loadAllData = async () => {
+      setIsHomeLoading(true);
+      setError(null);
+
+      try {
+        if (activeTab === 'home') {
           const [trending, popularMovies, popularTv, nowPlayingMovies] = await Promise.all([
             getTrending(),
             getPopularMovies(),
@@ -95,37 +115,26 @@ const App: React.FC = () => {
           if (popularMovies.length > 0) sections.push({ title: 'Popular Movies', items: popularMovies, type: 'movie' as const });
           if (popularTv.length > 0) sections.push({ title: 'Popular TV Shows', items: popularTv, type: 'tv' as const });
           if (nowPlayingMovies.length > 0) sections.push({ title: 'Now Playing in Theaters', items: nowPlayingMovies, type: 'movie' as const });
-
           setHomeSections(sections);
 
-        } catch (err) {
-          console.error("Failed to load home page data:", err);
-          setError("Could not load home page content. Please try searching.");
-        } finally {
-          setIsHomeLoading(false);
+        } else if (activeTab === 'collections') {
+          const movieCollections = await getMovieCollections();
+          setCollections(movieCollections);
         }
-      };
+      } catch (err) {
+        console.error("Failed to load data:", err);
+        setError("Could not load content. Please try again later.");
+      } finally {
+        setIsHomeLoading(false);
+      }
+    };
 
-      const loadCollectionsData = async () => {
-          setIsHomeLoading(true);
-          try {
-              const movieCollections = await getMovieCollections();
-              setCollections(movieCollections);
-          } catch(err) {
-              console.error("Failed to load collections data:", err);
-              setError("Could not load collections. Please try again later.");
-          } finally {
-              setIsHomeLoading(false);
-          }
-      }
-      
-      if (activeTab === 'collections') {
-          if(collections.length === 0) loadCollectionsData();
-      } else {
-          if(homeSections.length === 0) loadHomePageData();
-      }
+    if ((activeTab === 'home' && homeSections.length === 0) || (activeTab === 'collections' && collections.length === 0)) {
+        loadAllData();
+    } else {
+        setIsHomeLoading(false);
     }
-  }, [activeTab, collections.length, homeSections.length, isVpnBlocked]);
+  }, [activeTab, isVpnBlocked]);
 
 
   const handleSearch = useCallback(async (query: string) => {
@@ -206,6 +215,63 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const handleSelectStudio = useCallback(async (studio: Studio) => {
+    setIsLoading(true);
+    setSelectedStudio(studio);
+    setStudioMedia([]);
+    setError(null);
+    setStudioMediaTypeFilter('all');
+    setStudioSortBy('trending');
+    try {
+        const media = await getMediaByStudio(studio.id);
+        setStudioMedia(media);
+    } catch (err) {
+        console.error(`Failed to load media for ${studio.name}:`, err);
+        setError(`Could not load media for ${studio.name}. Please try again later.`);
+    } finally {
+        setIsLoading(false);
+    }
+  }, []);
+
+  const displayedStudioMedia = useMemo(() => {
+    let filtered = [...studioMedia];
+
+    // Apply media type filter
+    if (studioMediaTypeFilter !== 'all') {
+        filtered = filtered.filter(media => {
+            if (studioMediaTypeFilter === 'movie') {
+                return media.type === 'movie' && media.mediaSubType !== 'short';
+            }
+            if (studioMediaTypeFilter === 'show') {
+                return media.type === 'tv';
+            }
+            if (studioMediaTypeFilter === 'short') {
+                return media.mediaSubType === 'short';
+            }
+            return true;
+        });
+    }
+    
+    // Apply sort
+    if (studioSortBy === 'newest') {
+        filtered.sort((a, b) => {
+            const dateA = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
+            const dateB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
+            return dateB - dateA;
+        });
+    } else { // 'trending' is the default sort from the API, but we re-sort to be safe
+         filtered.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+    }
+
+    return filtered;
+  }, [studioMedia, studioMediaTypeFilter, studioSortBy]);
+
+  const handleBackToStudios = () => {
+    setSelectedStudio(null);
+    setStudioMedia([]);
+    setError(null);
+  };
+
   const handleCloseModal = () => {
     setSelectedItem(null);
   };
@@ -217,21 +283,47 @@ const App: React.FC = () => {
 
   const handleTabChange = (tab: ActiveTab) => {
     clearSearch();
+    setHomeSections([]);
+    setCollections([]);
+    setSelectedStudio(null);
+    setStudioMedia([]);
     setActiveTab(tab);
   };
 
   const renderContent = () => {
     if (isLoading) return <LoadingSpinner />;
-    if (error && recommendations.length === 0) return <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>;
+    if (error && recommendations.length === 0 && !selectedStudio) return <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>;
     
     if (recommendations.length > 0) {
       return <RecommendationGrid recommendations={recommendations} onSelect={handleSelectMedia} />;
     }
 
-    if (isHomeLoading) return <LoadingSpinner />;
+    if (activeTab === 'studios') {
+        if (selectedStudio) {
+            return (
+                <div className="w-full max-w-7xl fade-in">
+                    <div className="flex items-center gap-4 mb-6">
+                        <button onClick={handleBackToStudios} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Studios</button>
+                        <h2 className="text-3xl font-bold">{selectedStudio.name}</h2>
+                    </div>
+                    <StudioFilters 
+                      mediaTypeFilter={studioMediaTypeFilter}
+                      setMediaTypeFilter={setStudioMediaTypeFilter}
+                      sortBy={studioSortBy}
+                      setSortBy={setStudioSortBy}
+                    />
+                    {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-lg mb-4">{error}</div>}
+                    <RecommendationGrid recommendations={displayedStudioMedia} onSelect={handleSelectMedia} />
+                </div>
+            )
+        }
+        return <StudioGrid studios={studios} onSelect={handleSelectStudio} />;
+    }
+    
+    if (isHomeLoading && homeSections.length === 0 && collections.length === 0) return <LoadingSpinner />;
 
     if (activeTab === 'collections') {
-      return <CollectionGrid collections={collections} onSelect={handleSelectCollection} />
+      return <CollectionGrid collections={collections} onSelect={handleSelectCollection} />;
     }
     
     const filteredSections = homeSections.filter(section => {
@@ -260,7 +352,7 @@ const App: React.FC = () => {
     return (
       <div className="text-center text-gray-400">
         <p>What are you in the mood for?</p>
-        <p className="text-sm">e.g., "sci-fi movies with a strong female lead" or "lighthearted comedies from the 90s"</p>
+        <p className="text-sm">e.g., "sci-fi movies with a strong female lead" or "lighthearted comedies from the 9s"</p>
       </div>
     );
   };
@@ -319,13 +411,13 @@ const App: React.FC = () => {
 
       <main className="container mx-auto px-4 py-8 min-h-screen flex flex-col items-center">
         <header className="w-full max-w-4xl text-center mb-8">
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight bg-gradient-to-r from-white to-gray-400 text-transparent bg-clip-text cursor-pointer" onClick={() => { handleTabChange('home')}}>
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight bg-gradient-to-r from-white to-gray-400 text-transparent bg-clip-text cursor-pointer" onClick={() => { handleTabChange('home')}}>
             WatchNow
           </h1>
-          <div className="flex items-center justify-center gap-4 mt-2">
-            <p className="text-gray-300 text-lg">AI-powered movie & TV show recommendations.</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mt-2">
+            <p className="text-gray-300 text-lg text-center sm:text-left">AI-powered movie & TV show recommendations.</p>
             {userLocation?.name && (
-              <div className="hidden sm:flex items-center gap-1.5 text-sm text-gray-400 bg-white/5 px-3 py-1 rounded-full border border-white/10">
+              <div className="flex items-center gap-1.5 text-sm text-gray-400 bg-white/5 px-3 py-1 rounded-full border border-white/10">
                 <GlobeIcon className="w-4 h-4" />
                 <span>{userLocation.name}</span>
               </div>
@@ -341,10 +433,10 @@ const App: React.FC = () => {
             </div>
             <button 
               onClick={() => setIsVisionModalOpen(true)}
-              className="flex-shrink-0 w-14 h-14 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full flex items-center justify-center transition-colors duration-300"
+              className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full flex items-center justify-center transition-colors duration-300"
               aria-label="Open WatchNow Vision AI Assistant"
             >
-              <VisionIcon className="w-7 h-7 text-white" />
+              <VisionIcon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
             </button>
         </div>
 
@@ -360,12 +452,14 @@ const App: React.FC = () => {
           />
         )}
 
-        <VisionModal 
-          isOpen={isVisionModalOpen}
-          onClose={() => setIsVisionModalOpen(false)}
-          userLocation={userLocation}
-          onSelectMedia={handleSelectMediaFromVision}
-        />
+        {isVisionModalOpen && (
+          <VisionModal 
+            isOpen={isVisionModalOpen}
+            onClose={() => setIsVisionModalOpen(false)}
+            userLocation={userLocation}
+            onSelectMedia={handleSelectMediaFromVision}
+          />
+        )}
       </main>
     </>
   );

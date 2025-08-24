@@ -1,6 +1,7 @@
+
 import React from 'react';
-import { RecommendationCard } from './RecommendationCard';
-import type { MediaDetails } from '../types';
+import { RecommendationCard } from './RecommendationCard.tsx';
+import type { MediaDetails } from '../types.ts';
 
 interface MediaRowProps {
   title: string;

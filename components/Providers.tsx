@@ -1,5 +1,6 @@
+
 import React from 'react';
-import type { WatchProviders, WatchProvider } from '../types';
+import type { WatchProviders, WatchProvider } from '../types.ts';
 
 interface ProvidersProps {
   providers: WatchProviders;

@@ -1,4 +1,5 @@
-import type { CinemaChain } from '../types';
+
+import type { CinemaChain } from '../types.ts';
 
 export const cinemaData: Record<string, CinemaChain[]> = {
   US: [

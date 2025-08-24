@@ -1,6 +1,6 @@
 
 import React from 'react';
-import type { Collection } from '../types';
+import type { Collection } from '../types.ts';
 
 interface CollectionCardProps {
   collection: Collection;
@@ -18,6 +18,7 @@ export const CollectionCard: React.FC<CollectionCardProps> = ({ collection, onSe
           src={collection.posterUrl}
           alt={collection.name}
           className="w-full h-full object-cover"
+          loading="lazy"
         />
       </div>
       <div className="p-3">

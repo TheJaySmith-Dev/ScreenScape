@@ -1,4 +1,3 @@
-
 export interface GeminiRecommendation {
   title: string;
   year: number;
@@ -45,6 +44,9 @@ export interface MediaDetails {
   rating: number;
   trailerUrl: string | null;
   type: 'movie' | 'tv';
+  popularity?: number;
+  releaseDate?: string; // e.g. "2023-10-26"
+  mediaSubType?: 'short';
   // Optional detailed properties fetched on demand
   cast?: CastMember[];
   watchProviders?: WatchProviders;
@@ -84,4 +86,14 @@ export interface VisionMessage {
 export interface VisionResponse {
   responseText: string;
   recommendations?: GeminiRecommendation[];
+}
+
+export interface Studio {
+  id: number;
+  name: string;
+  logoUrl: string;
+  bgColor?: string;
+  hoverGifUrl?: string;
+  forceWhiteLogo?: boolean;
+  sizeClass?: string;
 }

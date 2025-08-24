@@ -1,9 +1,10 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import type { VisionMessage, MediaDetails, UserLocation } from '../types';
-import { CloseIcon, VisionIcon } from './icons';
-import { chatWithVision } from '../services/geminiService';
-import { fetchDetailsByTitle } from '../services/tmdbService';
-import { MediaRow } from './MediaRow';
+import type { VisionMessage, MediaDetails, UserLocation } from '../types.ts';
+import { CloseIcon, VisionIcon } from './icons.tsx';
+import { chatWithVision } from '../services/geminiService.ts';
+import { fetchDetailsByTitle } from '../services/tmdbService.ts';
+import { MediaRow } from './MediaRow.tsx';
 
 interface VisionModalProps {
   isOpen: boolean;

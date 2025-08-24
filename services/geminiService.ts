@@ -1,7 +1,8 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
-import type { GeminiRecommendation, UserLocation, VisionResponse } from '../types';
-import { cinemaData } from './cinemaService';
-import { searchForFirstMediaResult, getWatchLink, fetchDetailsById } from "./tmdbService";
+import type { GeminiRecommendation, UserLocation, VisionResponse } from '../types.ts';
+import { cinemaData } from './cinemaService.ts';
+import { searchForFirstMediaResult, getWatchLink, fetchDetailsById } from "./tmdbService.ts";
 
 const recommendationSchema = {
   type: Type.ARRAY,
