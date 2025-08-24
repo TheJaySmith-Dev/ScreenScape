@@ -1,4 +1,4 @@
-import type { MediaDetails, TmdbSearchResult, CastMember, WatchProviders } from '../types';
+import type { MediaDetails, TmdbSearchResult, CastMember, WatchProviders, Collection, CollectionDetails } from '../types';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_API_KEY = '09b97a49759876f2fde9eadb163edc44';
@@ -18,19 +18,10 @@ const fetchFromTmdb = async <T,>(endpoint: string): Promise<T> => {
     return response.json();
 };
 
-const searchMedia = async (query: string, year: number | null, type: 'movie' | 'tv'): Promise<TmdbSearchResult | null> => {
-    let endpoint = `/search/${type}?query=${encodeURIComponent(query)}`;
-    if (year) {
-        const yearParam = type === 'movie' ? 'primary_release_year' : 'first_air_date_year';
-        endpoint += `&${yearParam}=${year}`;
-    }
+const searchMedia = async (query: string, type: 'movie' | 'tv'): Promise<TmdbSearchResult | null> => {
+    const endpoint = `/search/${type}?query=${encodeURIComponent(query)}`;
     const data = await fetchFromTmdb<{ results: TmdbSearchResult[] }>(endpoint);
     return data.results.length > 0 ? data.results[0] : null;
-};
-
-const getMediaDetails = async (id: number, type: 'movie' | 'tv') => {
-    const endpoint = `/${type}/${id}?append_to_response=videos`;
-    return fetchFromTmdb<any>(endpoint);
 };
 
 // A simple hash function to generate a numeric ID from a string for placeholder data
@@ -44,33 +35,34 @@ const simpleHash = (str: string): number => {
     return Math.abs(hash);
 };
 
-
-export const fetchFullMediaDetails = async (title: string, year: number, type: 'movie' | 'tv'): Promise<MediaDetails | null> => {
+export const fetchDetailsById = async (id: number, type: 'movie' | 'tv'): Promise<MediaDetails | null> => {
     try {
-        const searchResult = await searchMedia(title, year, type);
-        if (!searchResult) {
-            // Fallback: search without year if initial search fails
-            const fallbackSearch = await searchMedia(title, null, type);
-            if(!fallbackSearch) return null;
-            
-            const details = await getMediaDetails(fallbackSearch.id, type);
-            return formatMediaDetailsFromApiResponse(details, type);
-        }
-
-        const details = await getMediaDetails(searchResult.id, type);
+        const details = await fetchFromTmdb<any>(`/${type}/${id}?append_to_response=videos`);
         return formatMediaDetailsFromApiResponse(details, type);
+    } catch(error) {
+        console.error(`Failed to fetch details for ${type} ID ${id} from TMDb:`, error);
+        return null;
+    }
+};
+
+export const fetchDetailsByTitle = async (title: string, type: 'movie' | 'tv'): Promise<MediaDetails | null> => {
+    try {
+        const searchResult = await searchMedia(title, type);
+        if (!searchResult) {
+            return null
+        }
+        return fetchDetailsById(searchResult.id, type);
     } catch (error) {
-        console.error(`Failed to fetch details for ${title} (${year}) from TMDb:`, error);
+        console.error(`Failed to fetch details for ${title} from TMDb:`, error);
         
-        // Gracefully degrade when TMDb API key is not available or API call fails
         console.warn(`Returning placeholder data for "${title}".`);
         return {
-            id: simpleHash(`${title}:${year}:${type}`),
+            id: simpleHash(`${title}:${type}`),
             title: title,
-            overview: "Full details for this title are currently unavailable. This feature requires a TMDb API key.",
+            overview: "Full details for this title are currently unavailable.",
             posterUrl: `https://picsum.photos/seed/${encodeURIComponent(title)}/500/750`,
             backdropUrl: `https://picsum.photos/seed/${encodeURIComponent(title)}/1280/720`,
-            releaseYear: year.toString(),
+            releaseYear: 'N/A',
             rating: 0,
             trailerUrl: null,
             type: type
@@ -78,10 +70,60 @@ export const fetchFullMediaDetails = async (title: string, year: number, type: '
     }
 };
 
+export const searchForFirstMediaResult = async (query: string): Promise<{id: number, type: 'movie' | 'tv', title: string} | null> => {
+    const endpoint = `/search/multi?query=${encodeURIComponent(query)}`;
+    const data = await fetchFromTmdb<{ results: any[] }>(endpoint);
+    const firstResult = data.results.find(r => r.media_type === 'movie' || r.media_type === 'tv');
+    if (!firstResult) return null;
+    return {
+        id: firstResult.id,
+        type: firstResult.media_type,
+        title: firstResult.title || firstResult.name
+    };
+}
+
+export const getWatchLink = async (mediaId: number, mediaType: 'movie' | 'tv', countryCode: string): Promise<string | null> => {
+    try {
+        const providers = await fetchFromTmdb<any>(`/${mediaType}/${mediaId}/watch/providers`);
+        const countryProviders = providers?.results?.[countryCode.toUpperCase()];
+        return countryProviders?.link || null;
+    } catch (error) {
+        console.error(`Failed to get watch link for ${mediaType} ID ${mediaId}:`, error);
+        return null;
+    }
+};
+
+
+const findBestTrailer = (videos: any[]): any | null => {
+    if (!videos || videos.length === 0) return null;
+
+    const candidates = videos.filter(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
+    if (candidates.length === 0) return null;
+
+    // Sort to find the "best" trailer: official > unofficial, trailer > teaser, newer > older
+    candidates.sort((a, b) => {
+        let scoreA = 0;
+        let scoreB = 0;
+
+        if (a.official) scoreA += 4;
+        if (b.official) scoreB += 4;
+        
+        if (a.type === 'Trailer') scoreA += 2;
+        if (b.type === 'Trailer') scoreB += 2;
+        
+        const dateA = new Date(a.published_at).getTime();
+        const dateB = new Date(b.published_at).getTime();
+        if (dateA > dateB) scoreA += 1;
+        else scoreB += 1;
+
+        return scoreB - scoreA; // Sort descending by score
+    });
+
+    return candidates[0];
+};
+
 const formatMediaDetailsFromApiResponse = (details: any, type: 'movie' | 'tv'): MediaDetails => {
-    const trailer = details.videos?.results.find(
-      (v: any) => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
-    );
+    const trailer = findBestTrailer(details.videos?.results);
     
     return {
         id: details.id,
@@ -171,9 +213,7 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv'): Pr
           const endpoint = `/${type}/${id}?append_to_response=videos,credits,watch/providers,recommendations`;
           const details = await fetchFromTmdb<any>(endpoint);
           
-          const trailer = details.videos?.results.find(
-              (v: any) => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')
-          );
+          const trailer = findBestTrailer(details.videos?.results);
   
           return {
               trailerUrl: trailer ? `https://www.youtube.com/embed/${trailer.key}` : null,
@@ -192,6 +232,98 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv'): Pr
           };
       }
 };
+
+const formatCollection = (collection: any): Collection => ({
+    id: collection.id,
+    name: collection.name,
+    posterUrl: collection.poster_path ? `https://image.tmdb.org/t/p/w500${collection.poster_path}` : `https://picsum.photos/500/750?grayscale`,
+    backdropUrl: collection.backdrop_path ? `https://image.tmdb.org/t/p/w1280${collection.backdrop_path}` : 'https://picsum.photos/1280/720?grayscale',
+});
+
+
+const POPULAR_COLLECTION_QUERIES = [
+    "The Lord of the Rings Collection",
+    "Star Wars Collection",
+    "Harry Potter Collection",
+    "The Fast and the Furious Collection",
+    "Marvel Cinematic Universe",
+    "James Bond Collection",
+    "Jurassic Park Collection",
+    "Back to the Future Collection",
+    "Mission: Impossible Collection",
+    "Toy Story Collection",
+    "The Dark Knight Trilogy",
+    "Indiana Jones Collection",
+    "Pirates of the Caribbean Collection",
+    "Ghostbusters Collection",
+    "The Hunger Games Collection",
+    "John Wick Collection",
+    "Mad Max Collection",
+    "The Matrix Collection",
+    "Alien Collection",
+    "Die Hard Collection"
+];
+
+const searchForCollection = async (query: string): Promise<any | null> => {
+    try {
+        const endpoint = `/search/collection?query=${encodeURIComponent(query)}`;
+        const data = await fetchFromTmdb<{ results: any[] }>(endpoint);
+        // Find the most relevant result (often the first, but check for exact name match)
+        const exactMatch = data.results.find(c => c.name.toLowerCase() === query.toLowerCase());
+        return exactMatch || (data.results.length > 0 ? data.results[0] : null);
+    } catch (error) {
+        console.error(`Failed to search for collection "${query}":`, error);
+        return null;
+    }
+};
+
+export const getMovieCollections = async (): Promise<Collection[]> => {
+    try {
+        const searchPromises = POPULAR_COLLECTION_QUERIES.map(query => searchForCollection(query));
+        const searchResults = await Promise.all(searchPromises);
+
+        const validResults = searchResults.filter(result => result !== null);
+        
+        // Remove duplicates that might arise from different search queries pointing to the same collection
+        const uniqueCollections = Array.from(new Map(validResults.map(item => [item.id, item])).values());
+        
+        return uniqueCollections
+          .map(formatCollection)
+          .filter(c => c.posterUrl.includes('image.tmdb.org')); // Filter out collections without posters
+
+    } catch (error) {
+        console.error("Failed to fetch movie collections:", error);
+        return [];
+    }
+};
+
+export const fetchCollectionDetails = async (id: number): Promise<CollectionDetails> => {
+    try {
+        const details = await fetchFromTmdb<any>(`/collection/${id}`);
+        return {
+            id: details.id,
+            name: details.name,
+            overview: details.overview,
+            posterUrl: details.poster_path ? `https://image.tmdb.org/t/p/w500${details.poster_path}` : `https://picsum.photos/500/750?grayscale`,
+            backdropUrl: details.backdrop_path ? `https://image.tmdb.org/t/p/w1280${details.backdrop_path}` : 'https://picsum.photos/1280/720?grayscale',
+            parts: details.parts
+                .slice() // Create a shallow copy to avoid side-effects
+                .sort((a: any, b: any) => {
+                    const dateA = a.release_date ? new Date(a.release_date).getTime() : 0;
+                    const dateB = b.release_date ? new Date(b.release_date).getTime() : 0;
+                     // Handle movies without a release date by pushing them to the end
+                    if (dateA === 0 && dateB !== 0) return 1;
+                    if (dateA !== 0 && dateB === 0) return -1;
+                    return dateA - dateB;
+                })
+                .map((part: any) => formatMediaListItem(part, 'movie'))
+                .filter((item): item is MediaDetails => item !== null),
+        };
+    } catch(error) {
+        console.error(`Failed to fetch details for collection ID ${id}:`, error);
+        throw error;
+    }
+}
 
 export const getTrending = () => fetchTmdbList('/trending/all/week');
 export const getPopularMovies = () => fetchTmdbList('/movie/popular', 'movie');

@@ -1,3 +1,4 @@
+
 export interface GeminiRecommendation {
   title: string;
   year: number;
@@ -34,7 +35,6 @@ export interface WatchProviders {
   buy?: WatchProvider[];
 }
 
-
 export interface MediaDetails {
   id: number;
   title: string;
@@ -49,4 +49,39 @@ export interface MediaDetails {
   cast?: CastMember[];
   watchProviders?: WatchProviders;
   related?: MediaDetails[];
+}
+
+export interface Collection {
+  id: number;
+  name: string;
+  posterUrl: string;
+  backdropUrl: string;
+}
+
+export interface CollectionDetails extends Collection {
+    overview: string;
+    parts: MediaDetails[];
+}
+
+export interface UserLocation {
+  name: string;
+  code: string;
+}
+
+export interface CinemaChain {
+  name: string;
+  domain: string;
+}
+
+export interface VisionMessage {
+  id: string;
+  sender: 'user' | 'ai';
+  text?: string;
+  recommendations?: MediaDetails[];
+  isLoading?: boolean;
+}
+
+export interface VisionResponse {
+  responseText: string;
+  recommendations?: GeminiRecommendation[];
 }
