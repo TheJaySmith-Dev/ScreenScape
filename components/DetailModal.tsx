@@ -6,6 +6,7 @@ import { RecommendationCard } from './RecommendationCard.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { getBookingInfo } from '../services/geminiService.ts';
 import { VisionResult } from './VisionResult.tsx';
+import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
 
 interface DetailModalProps {
   item: MediaDetails | CollectionDetails;
@@ -36,18 +37,16 @@ const isMediaDetails = (item: MediaDetails | CollectionDetails): item is MediaDe
 };
 
 export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, userLocation }) => {
-    const [showTrailer, setShowTrailer] = useState(false);
+    const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
     const [isVisionLoading, setIsVisionLoading] = useState(false);
     const [visionResult, setVisionResult] = useState<string | null>(null);
     const [visionError, setVisionError] = useState<string | null>(null);
     
-    const trailerUrl = isMediaDetails(item) ? item.trailerUrl : null;
-
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
-                if (showTrailer) {
-                    setShowTrailer(false);
+                if (trailerVideoId) {
+                    setTrailerVideoId(null);
                 } else {
                     onClose();
                 }
@@ -65,7 +64,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             window.removeEventListener('keydown', handleEsc);
             document.body.style.overflow = 'auto';
         };
-    }, [onClose, showTrailer, item]);
+    }, [onClose, trailerVideoId, item]);
 
     const handleFindShowtimes = async () => {
         if (!userLocation || !isMediaDetails(item)) return;
@@ -84,37 +83,14 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         }
     }
 
-  const renderTrailerOverlay = () => {
-    if (!showTrailer || !trailerUrl) return null;
-
-    return (
-      <div
-        className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4 fade-in"
-        onClick={() => setShowTrailer(false)}
-      >
-        <div
-          className="relative w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            onClick={() => setShowTrailer(false)}
-            className="absolute top-2 right-2 z-10 text-white/70 hover:text-white transition-colors"
-            aria-label="Close trailer"
-          >
-            <CloseIcon className="w-8 h-8" />
-          </button>
-          <iframe
-            src={`${trailerUrl}?autoplay=1`}
-            title={`${isMediaDetails(item) ? item.title : ''} Trailer`}
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="w-full h-full"
-          ></iframe>
-        </div>
-      </div>
-    );
-  };
+    const handleWatchTrailer = () => {
+        if (isMediaDetails(item) && item.trailerUrl) {
+            const videoId = item.trailerUrl.split('embed/')[1]?.split('?')[0];
+            if (videoId) {
+                setTrailerVideoId(videoId);
+            }
+        }
+    };
 
   const renderWatchNowVision = () => {
       if (!isMediaDetails(item) || item.type !== 'movie' || !userLocation) return null;
@@ -163,7 +139,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         {!isLoading && media.trailerUrl && (
           <div className="mb-6">
             <button
-                onClick={() => setShowTrailer(true)}
+                onClick={handleWatchTrailer}
                 className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-semibold transition-colors duration-300"
             >
                 <PlayIcon className="w-6 h-6" />
@@ -273,7 +249,13 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
           </div>
         </div>
       </div>
-      {renderTrailerOverlay()}
+      
+      {trailerVideoId && (
+        <CustomVideoPlayer 
+          videoId={trailerVideoId}
+          onClose={() => setTrailerVideoId(null)}
+        />
+      )}
     </>
   );
 };

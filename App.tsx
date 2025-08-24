@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -27,7 +28,7 @@ import { CollectionGrid } from './components/CollectionGrid.tsx';
 import { StudioFilters } from './components/StudioFilters.tsx';
 
 
-type ActiveTab = 'home' | 'movies' | 'tv' | 'collections' | 'studios';
+type ActiveTab = 'home' | 'movies' | 'tv' | 'series' | 'studios';
 type MediaTypeFilter = 'all' | 'movie' | 'show' | 'short';
 type SortBy = 'trending' | 'newest';
 
@@ -117,7 +118,7 @@ const App: React.FC = () => {
           if (nowPlayingMovies.length > 0) sections.push({ title: 'Now Playing in Theaters', items: nowPlayingMovies, type: 'movie' as const });
           setHomeSections(sections);
 
-        } else if (activeTab === 'collections') {
+        } else if (activeTab === 'series') {
           const movieCollections = await getMovieCollections();
           setCollections(movieCollections);
         }
@@ -129,7 +130,7 @@ const App: React.FC = () => {
       }
     };
 
-    if ((activeTab === 'home' && homeSections.length === 0) || (activeTab === 'collections' && collections.length === 0)) {
+    if ((activeTab === 'home' && homeSections.length === 0) || (activeTab === 'series' && collections.length === 0)) {
         loadAllData();
     } else {
         setIsHomeLoading(false);
@@ -322,7 +323,7 @@ const App: React.FC = () => {
     
     if (isHomeLoading && homeSections.length === 0 && collections.length === 0) return <LoadingSpinner />;
 
-    if (activeTab === 'collections') {
+    if (activeTab === 'series') {
       return <CollectionGrid collections={collections} onSelect={handleSelectCollection} />;
     }
     

@@ -66,55 +66,20 @@ export const getRecommendations = async (prompt: string): Promise<GeminiRecommen
 };
 
 export const getBookingInfo = async (movieTitle: string, country: string, countryCode: string): Promise<string> => {
-  if (!process.env.API_KEY) {
-    throw new Error("Gemini API key is missing.");
-  }
-
   const chains = cinemaData[countryCode.toUpperCase() as keyof typeof cinemaData] || [];
   if (chains.length === 0) {
     return `Sorry, we don't have specific cinema information for ${country}. You can try searching for tickets for "${movieTitle}" online.`;
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
   const encodedTitle = encodeURIComponent(movieTitle);
   const formattedChains = chains.map(c => {
     const googleSearchUrl = `https://www.google.com/search?q=${encodedTitle}+site%3A${c.domain}`;
-    return `- ${c.name}: ${googleSearchUrl}`;
+    return `*   **${c.name}:** [Find on ${c.domain}](${googleSearchUrl})`;
   }).join('\n');
 
-  const prompt = `
-You are 'WatchNow Vision', an AI assistant helping users find movie tickets.
-The user is in ${country} and wants to see the movie "${movieTitle}".
-To ensure the most reliable results, I have generated Google search links that will search for the movie directly on each major cinema's website. This is the best way to get them to the correct page.
-
-Your task is to present these links to the user in a helpful, friendly, and clearly formatted response.
-- Use markdown for the links.
-- The link text should be descriptive, like "Find on [Cinema Name]" or "Check showtimes on [domain]".
-
-Here are the cinema chains and their specific search links for "${movieTitle}":
-${formattedChains}
-
-Example of a great response:
-"The most reliable way to find showtimes for "${movieTitle}" in ${country} is to search directly on the cinema's website. Here are some quick links to help you:
-
-*   **AMC Theatres:** [Find on amctheatres.com](https://www.google.com/search?q=Superman+site%3Aamctheatres.com)
-*   **Regal Cinemas:** [Check showtimes on regmovies.com](https://www.google.com/search?q=Superman+site%3Aregmovies.com)
-"
-
-Please generate a response now for the user's request.
-  `;
-
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-    });
-    return response.text;
-  } catch (error) {
-    console.error("Error fetching booking info from Gemini:", error);
-    throw new Error("The AI assistant could not fetch booking information at this time.");
-  }
+  const responseText = `To find showtimes for "${movieTitle}" in ${country}, here are some direct search links for major cinema websites:\n\n${formattedChains}`;
+  
+  return responseText;
 };
 
 const visionResponseSchema = {
