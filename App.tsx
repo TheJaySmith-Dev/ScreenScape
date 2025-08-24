@@ -180,7 +180,7 @@ const App: React.FC = () => {
     setIsModalLoading(true);
   
     try {
-      const details = await fetchDetailsForModal(media.id, media.type);
+      const details = await fetchDetailsForModal(media.id, media.type, userLocation?.code || 'US');
       setSelectedItem(currentMedia => 
         currentMedia && 'id' in currentMedia && currentMedia.id === media.id
           ? { ...currentMedia, ...details } 
@@ -191,7 +191,7 @@ const App: React.FC = () => {
     } finally {
       setIsModalLoading(false);
     }
-  }, []);
+  }, [userLocation]);
 
   const handleSelectMediaFromVision = useCallback((media: MediaDetails) => {
       setIsVisionModalOpen(false);

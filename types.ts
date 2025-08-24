@@ -43,6 +43,7 @@ export interface MediaDetails {
   releaseYear: string;
   rating: number;
   trailerUrl: string | null;
+  logoUrl?: string | null;
   type: 'movie' | 'tv';
   popularity?: number;
   releaseDate?: string; // e.g. "2023-10-26"

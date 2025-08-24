@@ -41,6 +41,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
     const [isVisionLoading, setIsVisionLoading] = useState(false);
     const [visionResult, setVisionResult] = useState<string | null>(null);
     const [visionError, setVisionError] = useState<string | null>(null);
+    const [scrollTop, setScrollTop] = useState(0);
     
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
@@ -65,6 +66,10 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             document.body.style.overflow = 'auto';
         };
     }, [onClose, trailerVideoId, item]);
+
+    const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
+      setScrollTop(event.currentTarget.scrollTop);
+    };
 
     const handleFindShowtimes = async () => {
         if (!userLocation || !isMediaDetails(item)) return;
@@ -121,21 +126,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
 
   const renderMediaContent = (media: MediaDetails) => (
     <>
-        <h2 className="text-3xl font-bold mb-2">{media.title} <span className="text-gray-400 font-normal">({media.releaseYear})</span></h2>
-        
-        <div className="flex items-center gap-4 mb-4 text-gray-300">
-          <div className="flex items-center gap-1">
-            <StarIcon className="w-5 h-5 text-yellow-400" />
-            <span className="font-bold text-lg">{media.rating}</span>
-            <span className="text-sm">/ 10</span>
-          </div>
-          <div className="uppercase text-sm px-2 py-0.5 border border-gray-500 rounded">
-              {media.type}
-          </div>
-        </div>
-        
-        <p className="text-gray-300 mb-6">{media.overview}</p>
-        
         {!isLoading && media.trailerUrl && (
           <div className="mb-6">
             <button
@@ -186,9 +176,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
 
   const renderCollectionContent = (collection: CollectionDetails) => (
     <>
-        <h2 className="text-3xl font-bold mb-2">{collection.name}</h2>
-        <p className="text-gray-300 mb-6">{collection.overview}</p>
-
         {isLoading && !collection.parts && <div className="mt-6 flex justify-center"><LoadingSpinner /></div>}
 
         {!isLoading && collection.parts && collection.parts.length > 0 && (
@@ -211,41 +198,77 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         onClick={onClose}
       >
         <div 
-          className="relative w-full max-w-4xl max-h-[90vh] bg-gray-900/50 border border-white/20 rounded-2xl overflow-hidden flex flex-col lg:flex-row backdrop-blur-lg"
+          className="relative w-full max-w-4xl max-h-[90vh] bg-gray-900 rounded-2xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
-           <button onClick={onClose} className="absolute top-3 right-3 z-20 text-white/70 hover:text-white transition-colors">
-              <CloseIcon className="w-8 h-8"/>
-           </button>
-
-          <div className="w-full lg:w-1/3 flex-shrink-0">
-            {/* Mobile Header with Backdrop and Poster */}
-            <div className="block lg:hidden relative">
-              <img src={item.backdropUrl} alt="" className="w-full h-auto object-cover opacity-50" />
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/70 to-transparent"></div>
-              <div className="absolute bottom-4 left-4 w-24 sm:w-28">
-                <img 
-                  src={item.posterUrl} 
-                  alt={isMediaDetails(item) ? item.title : item.name} 
-                  className="rounded-lg shadow-lg w-full h-full object-cover" 
-                  loading="lazy"
-                />
-              </div>
+          <button onClick={onClose} className="absolute top-4 right-4 z-40 text-white/70 hover:text-white transition-colors bg-black/30 rounded-full p-1">
+              <CloseIcon className="w-6 h-6"/>
+          </button>
+          
+          {/* Header with backdrop and logo/title */}
+          <header className="absolute top-0 left-0 right-0 h-56 sm:h-64 lg:h-80 z-10 overflow-hidden">
+            <img 
+              src={item.backdropUrl} 
+              alt="" 
+              className="absolute inset-0 w-full h-full object-cover" 
+              style={{ transform: `translateY(${scrollTop * 0.5}px)` }}
+            />
+            <div 
+              className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent"
+            ></div>
+            <div 
+              className="absolute inset-0 flex items-end justify-start p-6"
+              style={{ 
+                opacity: Math.max(0, 1 - scrollTop / 150),
+                transform: `translateY(${scrollTop * 0.6}px)`
+              }}
+            >
+              {isMediaDetails(item) && (
+                isLoading ? (
+                  <div className="w-full flex justify-center items-center h-full"><LoadingSpinner /></div>
+                ) : item.logoUrl ? (
+                  <img src={item.logoUrl} alt={`${item.title} logo`} className="max-w-[60%] sm:max-w-[50%] max-h-32 object-contain drop-shadow-2xl" />
+                ) : (
+                  <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-left drop-shadow-2xl">{item.title}</h2>
+                )
+              )}
+               {!isMediaDetails(item) && (
+                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-left drop-shadow-2xl">{item.name}</h2>
+               )}
             </div>
-            {/* Desktop Poster */}
-            <div className="hidden lg:block w-full h-full">
-              <img 
-                src={item.posterUrl} 
-                alt={isMediaDetails(item) ? item.title : item.name} 
-                className="w-full h-full object-cover" 
-                loading="lazy"
-              />
+          </header>
+
+          <div 
+            className="w-full h-full overflow-y-auto"
+            style={{ scrollbarWidth: 'thin' }}
+            onScroll={handleScroll}
+          >
+            {/* Spacer to push content below header */}
+            <div className="h-56 sm:h-64 lg:h-80 flex-shrink-0" />
+            
+            {/* Main Content Area */}
+            <div className="relative z-20 bg-gray-900 p-6">
+                {isMediaDetails(item) && (
+                  <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mb-2 text-gray-300">
+                    <div className="flex items-center gap-1">
+                      <StarIcon className="w-5 h-5 text-yellow-400" />
+                      <span className="font-bold text-lg">{item.rating}</span>
+                      <span className="text-sm">/ 10</span>
+                    </div>
+                    <div className="uppercase text-sm px-2 py-0.5 border border-gray-500 rounded">
+                        {item.type}
+                    </div>
+                     <div className="text-lg font-semibold">
+                        {item.releaseYear}
+                    </div>
+                  </div>
+                )}
+                <p className="text-gray-300 text-sm sm:text-base">{item.overview}</p>
+
+                <div className="mt-6">
+                    {isMediaDetails(item) ? renderMediaContent(item) : renderCollectionContent(item)}
+                </div>
             </div>
-          </div>
-
-
-          <div className="w-full lg:w-2/3 p-6 pt-0 lg:pt-6 flex flex-col overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
-            {isMediaDetails(item) ? renderMediaContent(item) : renderCollectionContent(item)}
           </div>
         </div>
       </div>
