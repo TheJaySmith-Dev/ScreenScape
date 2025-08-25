@@ -1,10 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth.ts';
-import type { MediaDetails } from '../types.ts';
-
-// Simple type for stored preferences, only storing what's needed.
-type LikedItem = { id: number; type: 'movie' | 'tv'; title: string };
-type DislikedItem = { id: number; type: 'movie' | 'tv' };
+import type { MediaDetails, LikedItem, DislikedItem } from '../types.ts';
 
 interface Preferences {
   likes: LikedItem[];

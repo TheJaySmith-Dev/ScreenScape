@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { usePreferences } from '../hooks/usePreferences.ts';
-import { getRecommendations } from '../services/geminiService.ts';
-import { fetchDetailsByTitle } from '../services/tmdbService.ts';
+import { getRecommendationsFromLiked } from '../services/tmdbService.ts';
 import type { MediaDetails } from '../types.ts';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
@@ -25,30 +24,17 @@ export const ForYouPage: React.FC<ForYouPageProps> = ({ onSelectMedia }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const likedTitles = likes.map(item => item.title).join(', ');
-      const prompt = `Based on my interest in the following movies and TV shows, please recommend some others I might enjoy. My liked items are: ${likedTitles}.`;
-
-      const geminiResults = await getRecommendations(prompt);
-      if (!geminiResults || geminiResults.length === 0) {
-        throw new Error('Could not find any recommendations based on your liked items.');
-      }
-
-      const tmdbPromises = geminiResults.map(rec =>
-        fetchDetailsByTitle(rec.title, rec.type)
-      );
-
-      const tmdbResults = await Promise.all(tmdbPromises);
-      const validResults = tmdbResults.filter((result): result is MediaDetails => result !== null);
-
-      if (validResults.length === 0) {
-        setError("Found recommendations, but couldn't fetch their details. Please try again.");
+      const results = await getRecommendationsFromLiked(likes);
+      
+      if (results.length === 0) {
+        setError("Could not generate recommendations. Try liking a few more items!");
       } else {
-        setRecommendations(validResults);
+        setRecommendations(results);
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
       console.error(errorMessage);
-      setError(errorMessage);
+      setError("An error occurred while fetching recommendations.");
     } finally {
       setIsLoading(false);
     }

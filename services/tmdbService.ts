@@ -1,6 +1,6 @@
 
 
-import type { MediaDetails, TmdbSearchResult, CastMember, WatchProviders, Collection, CollectionDetails } from '../types.ts';
+import type { MediaDetails, TmdbSearchResult, CastMember, WatchProviders, Collection, CollectionDetails, LikedItem } from '../types.ts';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_API_KEY = '09b97a49759876f2fde9eadb163edc44';
@@ -408,6 +408,56 @@ export const getMediaByStudio = async (studioId: number): Promise<MediaDetails[]
         return uniqueMedia;
     } catch (error) {
         console.error(`Failed to fetch media for studio ID ${studioId}:`, error);
+        return [];
+    }
+};
+
+export const searchTmdb = async (query: string): Promise<MediaDetails[]> => {
+    const endpoint = `/search/multi?query=${encodeURIComponent(query)}`;
+    try {
+        const data = await fetchFromTmdb<{ results: any[] }>(endpoint);
+        return data.results
+            .map(item => formatMediaListItem(item))
+            .filter((item): item is MediaDetails => 
+                item !== null && 
+                !!item.posterUrl && 
+                item.posterUrl.includes('image.tmdb.org') &&
+                !!item.backdropUrl &&
+                item.backdropUrl.includes('image.tmdb.org')
+            );
+    } catch (error) {
+        console.error(`Failed to search TMDb for "${query}":`, error);
+        return [];
+    }
+};
+
+export const getRecommendationsFromLiked = async (likedItems: LikedItem[]): Promise<MediaDetails[]> => {
+    if (likedItems.length === 0) {
+        return [];
+    }
+    
+    try {
+        const recommendationPromises = likedItems.map(item =>
+            fetchTmdbList(`/${item.type}/${item.id}/recommendations`)
+        );
+
+        const results = await Promise.all(recommendationPromises);
+        const allRecommendations = results.flat();
+        
+        // Remove duplicates and items that are already liked
+        const likedIds = new Set(likedItems.map(item => item.id));
+        const uniqueRecommendations = Array.from(new Map(allRecommendations.map(item => [item.id, item])).values())
+            .filter(item => !likedIds.has(item.id));
+            
+        // Shuffle the array to provide variety on each load
+        for (let i = uniqueRecommendations.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [uniqueRecommendations[i], uniqueRecommendations[j]] = [uniqueRecommendations[j], uniqueRecommendations[i]];
+        }
+        
+        return uniqueRecommendations.slice(0, 20); // Limit to 20 recommendations
+    } catch (error) {
+        console.error("Failed to fetch recommendations from TMDb:", error);
         return [];
     }
 };

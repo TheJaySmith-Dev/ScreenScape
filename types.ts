@@ -122,3 +122,15 @@ export interface AuthContextType {
   login: (email: string) => void;
   logout: () => void;
 }
+
+// User preferences
+export interface LikedItem {
+  id: number;
+  type: 'movie' | 'tv';
+  title: string;
+}
+
+export interface DislikedItem {
+  id: number;
+  type: 'movie' | 'tv';
+}

@@ -23,7 +23,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading }) => 
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Tell me what you're looking for..."
+        placeholder="Search for movies, TV shows..."
         className="w-full pl-4 pr-12 py-3 sm:pl-5 sm:py-4 text-base sm:text-lg text-white bg-white/10 border border-white/20 rounded-full focus:ring-2 focus:ring-blue-400 focus:outline-none backdrop-blur-sm transition-all duration-300 placeholder-gray-400"
         disabled={isLoading}
       />

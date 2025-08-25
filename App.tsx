@@ -6,7 +6,6 @@ import { LoadingSpinner } from './components/LoadingSpinner.tsx';
 import { MediaRow } from './components/MediaRow.tsx';
 import { Navigation } from './components/Navigation.tsx';
 import { VisionIcon } from './components/icons.tsx';
-import { getRecommendations } from './services/geminiService.ts';
 import { 
   fetchDetailsForModal,
   fetchCollectionDetails,
@@ -15,8 +14,8 @@ import {
   getPopularTv,
   getNowPlayingMovies,
   getMovieCollections,
-  fetchDetailsByTitle,
-  getMediaByStudio
+  getMediaByStudio,
+  searchTmdb,
 } from './services/tmdbService.ts';
 import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand } from './types.ts';
 import { popularStudios } from './services/studioService.ts';
@@ -161,28 +160,16 @@ const App: React.FC = () => {
     setActiveTab('home');
 
     try {
-      const geminiResults = await getRecommendations(query);
-      if (!geminiResults || geminiResults.length === 0) {
-        throw new Error('Could not find any recommendations. Try a different prompt.');
-      }
-
-      const tmdbPromises = geminiResults.map(rec => 
-        fetchDetailsByTitle(rec.title, rec.type)
-      );
-
-      const tmdbResults = await Promise.all(tmdbPromises);
-      const validResults = tmdbResults.filter((result): result is MediaDetails => result !== null);
-
-      if(validResults.length === 0) {
-        setError("Found recommendations, but couldn't fetch their details. Please try again.");
+      const searchResults = await searchTmdb(query);
+      if (!searchResults || searchResults.length === 0) {
+        setError(`No results found for "${query}".`);
       } else {
-        setRecommendations(validResults);
+        setRecommendations(searchResults);
       }
-
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
       console.error(errorMessage);
-      setError(errorMessage);
+      setError("An error occurred while searching. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -446,7 +433,7 @@ const App: React.FC = () => {
     return (
       <div className="text-center text-gray-400">
         <p>What are you in the mood for?</p>
-        <p className="text-sm">e.g., "sci-fi movies with a strong female lead" or "lighthearted comedies from the 9s"</p>
+        <p className="text-sm">e.g., "The Matrix", "Stranger Things", etc.</p>
       </div>
     );
   };
@@ -509,7 +496,7 @@ const App: React.FC = () => {
                 <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight bg-gradient-to-r from-white to-gray-400 text-transparent bg-clip-text cursor-pointer" onClick={() => { handleTabChange('home')}}>
                     WatchNow
                 </h1>
-                <p className="text-gray-300 text-lg">AI-powered movie & TV show recommendations.</p>
+                <p className="text-gray-300 text-lg">Find your next favorite watch.</p>
             </div>
             <AccountButton
                 onSignInClick={() => setIsAuthModalOpen(true)}
