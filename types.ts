@@ -17,6 +17,12 @@ export interface CastMember {
   profileUrl: string;
 }
 
+export interface ExternalRatings {
+  imdb?: string;
+  rottenTomatoes?: string;
+  metacritic?: string;
+}
+
 export interface MediaDetails {
   id: number;
   title: string;
@@ -31,11 +37,15 @@ export interface MediaDetails {
   popularity?: number;
   releaseDate?: string; // e.g. "2023-10-26"
   mediaSubType?: 'short';
+  imdbId?: string | null;
   // Optional detailed properties fetched on demand
   cast?: CastMember[];
   related?: MediaDetails[];
   watchProviders?: WatchProviders | null;
   isInTheaters?: boolean;
+  otherRatings?: ExternalRatings;
+  rated?: string; // MPAA rating
+  awards?: string;
 }
 
 export interface Collection {
@@ -61,6 +71,16 @@ export interface CinemaChain {
 }
 
 export interface Studio {
+  id: number;
+  name: string;
+  logoUrl: string;
+  bgColor?: string;
+  hoverGifUrl?: string;
+  forceWhiteLogo?: boolean;
+  sizeClass?: string;
+}
+
+export interface Network {
   id: number;
   name: string;
   logoUrl: string;
@@ -127,4 +147,5 @@ export interface StreamingProviderInfo {
   name: string;
   logoUrl: string;
   bgColor?: string;
+  hoverGifUrl?: string;
 }

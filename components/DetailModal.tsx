@@ -7,6 +7,7 @@ import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
 import { usePreferences } from '../hooks/usePreferences.ts';
 import { Providers } from './Providers.tsx';
 import { CinemaAvailability } from './CinemaAvailability.tsx';
+import { ExternalRatings } from './ExternalRatings.tsx';
 
 interface DetailModalProps {
   item: MediaDetails | CollectionDetails;
@@ -278,19 +279,39 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             {/* Main Content Area */}
             <div className="relative z-20 bg-gray-900 p-6">
                 {isMediaDetails(item) && (
-                  <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mb-2 text-gray-300">
-                    <div className="flex items-center gap-1">
-                      <StarIcon className="w-5 h-5 text-yellow-400" />
-                      <span className="font-bold text-lg">{item.rating}</span>
-                      <span className="text-sm">/ 10</span>
+                  <>
+                    <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mb-4 text-gray-300">
+                        <div className="text-lg font-semibold">
+                            {item.releaseYear}
+                        </div>
+                        {item.rated && (
+                            <div className="uppercase text-sm px-2 py-0.5 border border-gray-500 rounded">
+                                {item.rated}
+                            </div>
+                        )}
+                        <div className="uppercase text-sm px-2 py-0.5 border border-gray-500 rounded">
+                            {item.type}
+                        </div>
                     </div>
-                    <div className="uppercase text-sm px-2 py-0.5 border border-gray-500 rounded">
-                        {item.type}
+
+                    <div className="flex flex-wrap items-start gap-3 mb-4">
+                        <div className="flex items-center gap-2 bg-black/20 p-2 rounded-lg">
+                            <StarIcon className="w-8 h-8 text-yellow-400" />
+                            <div>
+                                <span className="font-bold text-lg">{item.rating}</span>
+                                <span className="text-sm">/10</span>
+                                <p className="text-xs text-gray-400 -mt-1">TMDb</p>
+                            </div>
+                        </div>
+                        {!isLoading && <ExternalRatings ratings={item.otherRatings} />}
                     </div>
-                     <div className="text-lg font-semibold">
-                        {item.releaseYear}
-                    </div>
-                  </div>
+                    
+                    {!isLoading && item.awards && item.awards !== 'N/A' && (
+                      <div className="mb-4 p-3 bg-yellow-900/30 border-l-4 border-yellow-500 rounded-r-lg">
+                          <p className="text-sm text-yellow-300 font-semibold">🏆 {item.awards}</p>
+                      </div>
+                    )}
+                </>
                 )}
                 <p className="text-gray-300 text-sm sm:text-base">{item.overview}</p>
 

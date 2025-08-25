@@ -1,0 +1,47 @@
+import type { Network } from '../types.ts';
+
+export const popularNetworks: Network[] = [
+  {
+    id: 49,
+    name: 'HBO',
+    logoUrl: 'https://cdn.brandfetch.io/ide9_vzBKU/theme/light/logo.svg?c=1dxbfHSJFAPEGdCLU4o5B',
+    bgColor: '#404040',
+    hoverGifUrl: 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExbGRtemtxc3ZjdGVmM2RvMjljODJ2cWhxY3hmeHdkb2xja3YwNGkxOCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/LhZlRI68grHYtHcwjo/giphy.gif',
+    forceWhiteLogo: true,
+  },
+  {
+    id: 174,
+    name: 'AMC',
+    logoUrl: 'https://cdn.brandfetch.io/id3Yt2Btzp/idgfgibX6Q.svg?c=1dxbfHSJFAPEGdCLU4o5B',
+    bgColor: '#00EEE6',
+    hoverGifUrl: 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExODR5MGtycmNpbDAxZTc5b3ZsaGtqeDhvNm0xMjMxNW91Y3N6MGEzeiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/hEbiZKI7C2kde6D6HF/giphy.gif',
+  },
+  {
+    id: 2,
+    name: 'ABC',
+    logoUrl: 'https://cdn.brandfetch.io/idrPuLMiut/w/1250/h/1250/theme/light/logo.png?c=1dxbfHSJFAPEGdCLU4o5B',
+    bgColor: '#FFFFFF',
+    hoverGifUrl: 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZW9kbHUzNGdieDRpbjlvajA1c2gwNXNlaTA5M2FjMXltcmIyZjViZiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/n9N6RuWhS5fbOrXHla/giphy.gif',
+  },
+  {
+    id: 88,
+    name: 'FX',
+    logoUrl: 'https://cdn.brandfetch.io/idOAEGeWKM/theme/light/logo.svg?c=1dxbfHSJFAPEGdCLU4o5B',
+    bgColor: '#DDAB4A',
+    hoverGifUrl: 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZHM0cjJvdGIxanRxNHVqdXY4ODgxNHI2NWlkdm1kZnVzajYxZXg1OCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/urFt8OQtZoaSDjr5ov/giphy.gif',
+  },
+  {
+    id: 67,
+    name: 'Showtime',
+    logoUrl: 'https://image.tmdb.org/t/p/w500/uYf3U7Y2s3sIeklnI563sbi5P3E.png',
+    bgColor: '#a60000',
+    hoverGifUrl: 'https://media.giphy.com/media/26n6R5HOd4wAmk0gw/giphy.gif',
+  },
+  {
+    id: 44,
+    name: 'Disney XD',
+    logoUrl: 'https://image.tmdb.org/t/p/w500/563V18bB17YhDx1u2Yc4A94tJj.png',
+    bgColor: '#006E3C',
+    hoverGifUrl: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNTVlMDcxYjdmN2E2ZTU0ZDVmZGY1ZDY2ZDE4MTU4YjRhM2IyYWM3NSZlcD12MV9pbnRlcm5hbF9naWZzX2dpZklkJmN0PWc/y5z4p5hS2Y2dO/giphy.gif'
+  },
+];

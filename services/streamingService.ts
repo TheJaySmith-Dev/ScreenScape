@@ -6,8 +6,9 @@ export const supportedProviders: StreamingProviderInfo[] = [
     id: 8,
     key: 'netflix',
     name: 'Netflix',
-    logoUrl: 'https://image.tmdb.org/t/p/w500/p64T1dD1s6I1s3s2eR2x61zT0bA.jpg',
-    bgColor: '#141414'
+    logoUrl: 'https://cdn.brandfetch.io/ideQwN5lBE/theme/light/logo.svg?c=1dxbfHSJFAPEGdCLU4o5B',
+    bgColor: '#000000',
+    hoverGifUrl: 'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDYyeXgzMmszYmM5b200ZTFmNjE3eG5zNThhcGQ2NDd6YnUxOWdkdSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/c69RGBBRK8SKwMO78n/giphy.gif'
   },
   {
     id: 337,

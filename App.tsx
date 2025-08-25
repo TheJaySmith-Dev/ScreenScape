@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -18,8 +16,9 @@ import {
   searchTmdb,
   getMediaByStreamingProvider,
   getAvailableWatchProvidersForRegion,
+  getMediaByNetwork,
 } from './services/tmdbService.ts';
-import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo } from './types.ts';
+import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network } from './types.ts';
 import { popularStudios } from './services/studioService.ts';
 import { brands as allBrands } from './services/brandService.ts';
 import { DetailModal } from './components/DetailModal.tsx';
@@ -33,9 +32,11 @@ import { AuthModal } from './components/AuthModal.tsx';
 import { ForYouPage } from './components/ForYouPage.tsx';
 import { supportedProviders } from './services/streamingService.ts';
 import { StreamingGrid } from './components/StreamingGrid.tsx';
+import { popularNetworks } from './services/networkService.ts';
+import { NetworkGrid } from './components/NetworkGrid.tsx';
 
 
-type ActiveTab = 'home' | 'foryou' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming';
+type ActiveTab = 'home' | 'foryou' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming' | 'networks';
 type MediaTypeFilter = 'all' | 'movie' | 'show' | 'short';
 type SortBy = 'trending' | 'newest';
 
@@ -73,6 +74,11 @@ const App: React.FC = () => {
   const [brandMedia, setBrandMedia] = useState<MediaDetails[]>([]);
   const [brandMediaTypeFilter, setBrandMediaTypeFilter] = useState<MediaTypeFilter>('all');
   const [brandSortBy, setBrandSortBy] = useState<SortBy>('trending');
+
+  // State for Networks hub
+  const [networks] = useState<Network[]>(popularNetworks);
+  const [selectedNetwork, setSelectedNetwork] = useState<Network | null>(null);
+  const [networkMedia, setNetworkMedia] = useState<MediaDetails[]>([]);
 
 
   useEffect(() => {
@@ -372,6 +378,28 @@ const App: React.FC = () => {
     setError(null);
   };
 
+  const handleSelectNetwork = useCallback(async (network: Network) => {
+    setIsLoading(true);
+    setSelectedNetwork(network);
+    setNetworkMedia([]);
+    setError(null);
+    try {
+        const media = await getMediaByNetwork(network.id);
+        setNetworkMedia(media);
+    } catch (err) {
+        console.error(`Failed to load media for ${network.name}:`, err);
+        setError(`Could not load media for ${network.name}. Please try again later.`);
+    } finally {
+        setIsLoading(false);
+    }
+  }, []);
+
+  const handleBackToNetworks = () => {
+    setSelectedNetwork(null);
+    setNetworkMedia([]);
+    setError(null);
+  };
+
   const handleCloseModal = () => {
     setSelectedItem(null);
   };
@@ -392,12 +420,14 @@ const App: React.FC = () => {
     setBrandMedia([]);
     setSelectedProvider(null);
     setProviderMedia([]);
+    setSelectedNetwork(null);
+    setNetworkMedia([]);
     setActiveTab(tab);
   };
 
   const renderContent = () => {
     if (isLoading) return <LoadingSpinner />;
-    if (error && recommendations.length === 0 && !selectedStudio && !selectedBrand && !selectedProvider) {
+    if (error && recommendations.length === 0 && !selectedStudio && !selectedBrand && !selectedProvider && !selectedNetwork) {
         return <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>;
     }
     
@@ -420,6 +450,22 @@ const App: React.FC = () => {
             )
         }
         return <StreamingGrid providers={availableProviders} onSelect={handleSelectProvider} />;
+    }
+
+    if (activeTab === 'networks') {
+        if (selectedNetwork) {
+            return (
+                <div className="w-full max-w-7xl fade-in">
+                    <div className="flex items-center gap-4 mb-6">
+                        <button onClick={handleBackToNetworks} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Networks</button>
+                        <h2 className="text-3xl font-bold">{selectedNetwork.name}</h2>
+                    </div>
+                    {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-lg mb-4">{error}</div>}
+                    <RecommendationGrid recommendations={networkMedia} onSelect={handleSelectMedia} />
+                </div>
+            )
+        }
+        return <NetworkGrid networks={networks} onSelect={handleSelectNetwork} />;
     }
     
     if (activeTab === 'foryou') {
