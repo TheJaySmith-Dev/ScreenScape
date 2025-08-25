@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, UserLocation } from '../types.ts';
-import { CloseIcon, StarIcon, PlayIcon, TicketIcon, ThumbsUpIcon, ThumbsDownIcon } from './icons.tsx';
+import { CloseIcon, StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon } from './icons.tsx';
 import { Providers } from './Providers.tsx';
 import { RecommendationCard } from './RecommendationCard.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
-import { getBookingInfo } from '../services/geminiService.ts';
-import { VisionResult } from './VisionResult.tsx';
 import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
 import { usePreferences } from '../hooks/usePreferences.ts';
 
@@ -39,9 +37,6 @@ const isMediaDetails = (item: MediaDetails | CollectionDetails): item is MediaDe
 
 export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, userLocation }) => {
     const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
-    const [isVisionLoading, setIsVisionLoading] = useState(false);
-    const [visionResult, setVisionResult] = useState<string | null>(null);
-    const [visionError, setVisionError] = useState<string | null>(null);
     const [scrollTop, setScrollTop] = useState(0);
     const { likeItem, dislikeItem, unlistItem, isLiked, isDisliked } = usePreferences();
     
@@ -58,11 +53,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         window.addEventListener('keydown', handleEsc);
         document.body.style.overflow = 'hidden';
 
-        // Reset vision state when item changes
-        setIsVisionLoading(false);
-        setVisionResult(null);
-        setVisionError(null);
-
         return () => {
             window.removeEventListener('keydown', handleEsc);
             document.body.style.overflow = 'auto';
@@ -72,23 +62,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
     const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
       setScrollTop(event.currentTarget.scrollTop);
     };
-
-    const handleFindShowtimes = async () => {
-        if (!userLocation || !isMediaDetails(item)) return;
-
-        setIsVisionLoading(true);
-        setVisionResult(null);
-        setVisionError(null);
-        try {
-            const result = await getBookingInfo(item.title, userLocation.name, userLocation.code);
-            setVisionResult(result);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'An unknown error occurred.';
-            setVisionError(message);
-        } finally {
-            setIsVisionLoading(false);
-        }
-    }
 
     const handleWatchTrailer = () => {
         if (isMediaDetails(item) && item.trailerUrl) {
@@ -119,33 +92,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             dislikeItem(item);
         }
     };
-
-  const renderWatchNowVision = () => {
-      if (!isMediaDetails(item) || item.type !== 'movie' || !userLocation) return null;
-      // Only show for movies released in the current year or last year.
-      const currentYear = new Date().getFullYear();
-      if (parseInt(item.releaseYear, 10) < currentYear - 1) return null;
-
-      return (
-          <ModalSection title="WatchNow Vision">
-              <div className="bg-black/30 p-4 rounded-lg">
-                  <p className="text-sm text-gray-300 mb-4">See this movie in theaters? Let our AI assistant help you find tickets in {userLocation.name}.</p>
-                  <button
-                      onClick={handleFindShowtimes}
-                      disabled={isVisionLoading}
-                      className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-semibold transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                      <TicketIcon className="w-6 h-6" />
-                      <span>{isVisionLoading ? 'Searching...' : 'Find Showtimes Nearby'}</span>
-                  </button>
-
-                  {isVisionLoading && <div className="mt-4"><LoadingSpinner/></div>}
-                  {visionError && <p className="text-red-400 mt-4 text-sm">{visionError}</p>}
-                  {visionResult && <VisionResult text={visionResult} />}
-              </div>
-          </ModalSection>
-      )
-  }
 
   const renderMediaContent = (media: MediaDetails) => (
     <>
@@ -186,8 +132,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         </div>
         
         {isLoading && !media.cast && <div className="mt-6 flex justify-center"><LoadingSpinner /></div>}
-
-        {renderWatchNowVision()}
 
         {!isLoading && media.watchProviders && (Object.values(media.watchProviders).some(v => v && v.length > 0)) && (
           <ModalSection title="Where to Watch">

@@ -1,9 +1,3 @@
-export interface GeminiRecommendation {
-  title: string;
-  year: number;
-  type: 'movie' | 'tv';
-}
-
 export interface TmdbSearchResult {
   id: number;
   poster_path: string | null;
@@ -76,19 +70,6 @@ export interface CinemaChain {
   domain: string;
 }
 
-export interface VisionMessage {
-  id: string;
-  sender: 'user' | 'ai';
-  text?: string;
-  recommendations?: MediaDetails[];
-  isLoading?: boolean;
-}
-
-export interface VisionResponse {
-  responseText: string;
-  recommendations?: GeminiRecommendation[];
-}
-
 export interface Studio {
   id: number;
   name: string;
@@ -133,4 +114,24 @@ export interface LikedItem {
 export interface DislikedItem {
   id: number;
   type: 'movie' | 'tv';
+}
+
+// Gemini Vision Service Types
+export interface GeminiRecommendation {
+  title: string;
+  year: number;
+  type: 'movie' | 'tv';
+}
+
+export interface VisionResponse {
+  responseText: string;
+  recommendations?: GeminiRecommendation[];
+}
+
+export interface VisionMessage {
+  id: string;
+  sender: 'user' | 'ai';
+  text?: string;
+  isLoading?: boolean;
+  recommendations?: MediaDetails[];
 }

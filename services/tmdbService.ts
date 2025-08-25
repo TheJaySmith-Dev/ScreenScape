@@ -1,6 +1,6 @@
 
 
-import type { MediaDetails, TmdbSearchResult, CastMember, WatchProviders, Collection, CollectionDetails, LikedItem } from '../types.ts';
+import type { MediaDetails, TmdbSearchResult, CastMember, WatchProviders, Collection, CollectionDetails, LikedItem, DislikedItem } from '../types.ts';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_API_KEY = '09b97a49759876f2fde9eadb163edc44';
@@ -431,7 +431,7 @@ export const searchTmdb = async (query: string): Promise<MediaDetails[]> => {
     }
 };
 
-export const getRecommendationsFromLiked = async (likedItems: LikedItem[]): Promise<MediaDetails[]> => {
+export const getRecommendationsFromTastes = async (likedItems: LikedItem[], dislikedItems: DislikedItem[]): Promise<MediaDetails[]> => {
     if (likedItems.length === 0) {
         return [];
     }
@@ -444,10 +444,12 @@ export const getRecommendationsFromLiked = async (likedItems: LikedItem[]): Prom
         const results = await Promise.all(recommendationPromises);
         const allRecommendations = results.flat();
         
-        // Remove duplicates and items that are already liked
+        // Create sets of liked and disliked IDs for efficient filtering
         const likedIds = new Set(likedItems.map(item => item.id));
+        const dislikedIds = new Set(dislikedItems.map(item => item.id));
+
         const uniqueRecommendations = Array.from(new Map(allRecommendations.map(item => [item.id, item])).values())
-            .filter(item => !likedIds.has(item.id));
+            .filter(item => !likedIds.has(item.id) && !dislikedIds.has(item.id));
             
         // Shuffle the array to provide variety on each load
         for (let i = uniqueRecommendations.length - 1; i > 0; i--) {

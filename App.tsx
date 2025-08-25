@@ -5,7 +5,6 @@ import { RecommendationGrid } from './components/RecommendationGrid.tsx';
 import { LoadingSpinner } from './components/LoadingSpinner.tsx';
 import { MediaRow } from './components/MediaRow.tsx';
 import { Navigation } from './components/Navigation.tsx';
-import { VisionIcon } from './components/icons.tsx';
 import { 
   fetchDetailsForModal,
   fetchCollectionDetails,
@@ -21,7 +20,6 @@ import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio,
 import { popularStudios } from './services/studioService.ts';
 import { brands as allBrands } from './services/brandService.ts';
 import { DetailModal } from './components/DetailModal.tsx';
-import { VisionModal } from './components/VisionModal.tsx';
 import { StudioGrid } from './components/StudioGrid.tsx';
 import { CollectionGrid } from './components/CollectionGrid.tsx';
 import { StudioFilters } from './components/StudioFilters.tsx';
@@ -50,7 +48,6 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [isVpnBlocked, setIsVpnBlocked] = useState<boolean | null>(null); // null: checking, false: ok, true: blocked
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [isVisionModalOpen, setIsVisionModalOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
 
@@ -192,14 +189,6 @@ const App: React.FC = () => {
       setIsModalLoading(false);
     }
   }, [userLocation]);
-
-  const handleSelectMediaFromVision = useCallback((media: MediaDetails) => {
-      setIsVisionModalOpen(false);
-      // Use a timeout to allow the modal to close before opening the next one
-      setTimeout(() => {
-          handleSelectMedia(media);
-      }, 300);
-  }, [handleSelectMedia]);
 
   const handleSelectCollection = useCallback(async (collection: Collection) => {
     setSelectedItem({ ...collection, overview: '', parts: [] });
@@ -510,13 +499,6 @@ const App: React.FC = () => {
             <div className="flex-grow">
               <SearchBar onSearch={handleSearch} isLoading={isLoading} />
             </div>
-            <button 
-              onClick={() => setIsVisionModalOpen(true)}
-              className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full flex items-center justify-center transition-colors duration-300"
-              aria-label="Open WatchNow Vision AI Assistant"
-            >
-              <VisionIcon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-            </button>
         </div>
 
         {renderContent()}
@@ -528,15 +510,6 @@ const App: React.FC = () => {
             isLoading={isModalLoading}
             onSelectMedia={handleSelectMedia}
             userLocation={userLocation}
-          />
-        )}
-
-        {isVisionModalOpen && (
-          <VisionModal 
-            isOpen={isVisionModalOpen}
-            onClose={() => setIsVisionModalOpen(false)}
-            userLocation={userLocation}
-            onSelectMedia={handleSelectMediaFromVision}
           />
         )}
         

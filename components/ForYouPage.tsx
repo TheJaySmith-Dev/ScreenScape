@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { usePreferences } from '../hooks/usePreferences.ts';
-import { getRecommendationsFromLiked } from '../services/tmdbService.ts';
+import { getRecommendationsFromTastes } from '../services/tmdbService.ts';
 import type { MediaDetails } from '../types.ts';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
@@ -10,7 +10,7 @@ interface ForYouPageProps {
 }
 
 export const ForYouPage: React.FC<ForYouPageProps> = ({ onSelectMedia }) => {
-  const { likes } = usePreferences();
+  const { likes, dislikes } = usePreferences();
   const [recommendations, setRecommendations] = useState<MediaDetails[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +24,7 @@ export const ForYouPage: React.FC<ForYouPageProps> = ({ onSelectMedia }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const results = await getRecommendationsFromLiked(likes);
+      const results = await getRecommendationsFromTastes(likes, dislikes);
       
       if (results.length === 0) {
         setError("Could not generate recommendations. Try liking a few more items!");
@@ -38,7 +38,7 @@ export const ForYouPage: React.FC<ForYouPageProps> = ({ onSelectMedia }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [likes]);
+  }, [likes, dislikes]);
 
   useEffect(() => {
     fetchForYouRecommendations();
