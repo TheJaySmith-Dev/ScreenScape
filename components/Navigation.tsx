@@ -15,7 +15,7 @@ const NavButton: React.FC<{
     return (
         <button
             onClick={onClick}
-            className={`flex-shrink-0 px-3 py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${
+            className={`px-3 py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${
                 isActive 
                 ? 'bg-white text-gray-900' 
                 : 'text-gray-300 hover:bg-white/10 hover:text-white'
@@ -28,8 +28,8 @@ const NavButton: React.FC<{
 
 export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
   return (
-    <nav className="w-full max-w-lg p-1.5 bg-black/30 backdrop-blur-sm border border-white/10 rounded-full">
-      <div className="nav-row flex items-center justify-start space-x-1 overflow-x-auto">
+    <nav className="w-full max-w-lg p-2 bg-black/30 backdrop-blur-sm border border-white/10 rounded-2xl">
+      <div className="flex items-center justify-center flex-wrap gap-2">
         <NavButton label="Home" isActive={activeTab === 'home'} onClick={() => onTabChange('home')} />
         <NavButton label="For You" isActive={activeTab === 'foryou'} onClick={() => onTabChange('foryou')} />
         <NavButton label="Movies" isActive={activeTab === 'movies'} onClick={() => onTabChange('movies')} />

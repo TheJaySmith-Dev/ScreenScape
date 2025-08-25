@@ -36,14 +36,14 @@ export const StudioFilters: React.FC<StudioFiltersProps> = ({
 }) => {
   return (
     <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
-      <div className="flex items-center justify-center p-1 space-x-2 bg-black/30 backdrop-blur-sm border border-white/10 rounded-full">
+      <div className="flex items-center justify-center flex-wrap gap-2 p-2 bg-black/30 backdrop-blur-sm border border-white/10 rounded-2xl">
         <FilterButton label="All" isActive={mediaTypeFilter === 'all'} onClick={() => setMediaTypeFilter('all')} />
         <FilterButton label="Movies" isActive={mediaTypeFilter === 'movie'} onClick={() => setMediaTypeFilter('movie')} />
         <FilterButton label="Shows" isActive={mediaTypeFilter === 'show'} onClick={() => setMediaTypeFilter('show')} />
         <FilterButton label="Shorts" isActive={mediaTypeFilter === 'short'} onClick={() => setMediaTypeFilter('short')} />
       </div>
 
-      <div className="flex items-center justify-center p-1 space-x-2 bg-black/30 backdrop-blur-sm border border-white/10 rounded-full">
+      <div className="flex items-center justify-center flex-wrap gap-2 p-2 bg-black/30 backdrop-blur-sm border border-white/10 rounded-2xl">
         <FilterButton label="Trending" isActive={sortBy === 'trending'} onClick={() => setSortBy('trending')} />
         <FilterButton label="Newest" isActive={sortBy === 'newest'} onClick={() => setSortBy('newest')} />
       </div>

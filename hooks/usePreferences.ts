@@ -50,32 +50,38 @@ export const usePreferences = () => {
     setPreferences(loadPreferences(getPreferencesKey(currentUser?.email)));
   }, [currentUser]);
 
-  const updatePreferences = useCallback((newPrefs: Partial<Preferences>) => {
-    const updated = { ...preferences, ...newPrefs };
-    setPreferences(updated);
-    savePreferences(preferencesKey, updated);
-  }, [preferences, preferencesKey]);
+  const likeItem = useCallback((item: MediaDetails) => {
+    setPreferences(currentPreferences => {
+      const newLikes = [...currentPreferences.likes.filter(like => like.id !== item.id), { id: item.id, type: item.type, title: item.title }];
+      const newDislikes = currentPreferences.dislikes.filter(dislike => dislike.id !== item.id);
+      const updatedPrefs = { ...currentPreferences, likes: newLikes, dislikes: newDislikes };
+      savePreferences(preferencesKey, updatedPrefs);
+      return updatedPrefs;
+    });
+  }, [preferencesKey]);
 
-  const likeItem = (item: MediaDetails) => {
-    const newLikes = [...preferences.likes.filter(like => like.id !== item.id), { id: item.id, type: item.type, title: item.title }];
-    const newDislikes = preferences.dislikes.filter(dislike => dislike.id !== item.id);
-    updatePreferences({ likes: newLikes, dislikes: newDislikes });
-  };
-
-  const dislikeItem = (item: MediaDetails) => {
-    const newLikes = preferences.likes.filter(like => like.id !== item.id);
-    const newDislikes = [...preferences.dislikes.filter(dislike => dislike.id !== item.id), { id: item.id, type: item.type }];
-    updatePreferences({ likes: newLikes, dislikes: newDislikes });
-  };
+  const dislikeItem = useCallback((item: MediaDetails) => {
+    setPreferences(currentPreferences => {
+      const newLikes = currentPreferences.likes.filter(like => like.id !== item.id);
+      const newDislikes = [...currentPreferences.dislikes.filter(dislike => dislike.id !== item.id), { id: item.id, type: item.type }];
+      const updatedPrefs = { ...currentPreferences, likes: newLikes, dislikes: newDislikes };
+      savePreferences(preferencesKey, updatedPrefs);
+      return updatedPrefs;
+    });
+  }, [preferencesKey]);
     
-  const unlistItem = (item: MediaDetails) => {
-    const newLikes = preferences.likes.filter(like => like.id !== item.id);
-    const newDislikes = preferences.dislikes.filter(dislike => dislike.id !== item.id);
-    updatePreferences({ likes: newLikes, dislikes: newDislikes });
-  }
+  const unlistItem = useCallback((item: MediaDetails) => {
+    setPreferences(currentPreferences => {
+      const newLikes = currentPreferences.likes.filter(like => like.id !== item.id);
+      const newDislikes = currentPreferences.dislikes.filter(dislike => dislike.id !== item.id);
+      const updatedPrefs = { ...currentPreferences, likes: newLikes, dislikes: newDislikes };
+      savePreferences(preferencesKey, updatedPrefs);
+      return updatedPrefs;
+    });
+  }, [preferencesKey]);
 
-  const isLiked = (id: number) => preferences.likes.some(like => like.id === id);
-  const isDisliked = (id: number) => preferences.dislikes.some(dislike => dislike.id === id);
+  const isLiked = useCallback((id: number) => preferences.likes.some(like => like.id === id), [preferences.likes]);
+  const isDisliked = useCallback((id: number) => preferences.dislikes.some(dislike => dislike.id === id), [preferences.dislikes]);
 
   return {
     likes: preferences.likes,
