@@ -1,5 +1,5 @@
 {
   "name": "WatchNow",
-  "description": "A sleek movie and TV show recommendation platform, featuring metadata and trailers from TMDb. Discover your next favorite watch with a stunning liquid glass interface.",
+  "description": "A sleek movie and TV show recommendation platform, featuring metadata from TMDb. Discover your next favorite watch with a stunning liquid glass interface.",
   "requestFramePermissions": []
 }

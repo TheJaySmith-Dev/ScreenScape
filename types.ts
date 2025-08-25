@@ -35,6 +35,7 @@ export interface MediaDetails {
   cast?: CastMember[];
   related?: MediaDetails[];
   watchProviders?: WatchProviders | null;
+  isInTheaters?: boolean;
 }
 
 export interface Collection {

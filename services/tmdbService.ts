@@ -238,11 +238,35 @@ const formatRelated = (recommendations: any, currentType: 'movie' | 'tv'): Media
         .map((item: any) => formatMediaListItem(item, item.media_type || currentType))
         .filter((item): item is MediaDetails => item !== null && !!item.id);
 };
-  
+
+const checkIfInTheaters = (releaseDatesData: any, countryCode: string): boolean => {
+    if (!releaseDatesData?.results) {
+        return false;
+    }
+
+    const countryReleases = releaseDatesData.results.find((r: any) => r.iso_3166_1 === countryCode.toUpperCase());
+    if (!countryReleases || !countryReleases.release_dates) {
+        return false;
+    }
+
+    const today = new Date();
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(today.getMonth() - 3);
+
+    const theatricalRelease = countryReleases.release_dates.find((release: any) => release.type === 3 || release.type === 2);
+    
+    if (theatricalRelease) {
+        const releaseDate = new Date(theatricalRelease.release_date);
+        return releaseDate >= threeMonthsAgo && releaseDate <= today;
+    }
+
+    return false;
+};
   
 export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', countryCode: string): Promise<Partial<MediaDetails>> => {
       try {
-          const endpoint = `/${type}/${id}?append_to_response=videos,credits,recommendations,images,watch/providers&include_image_language=en,null`;
+          const appendToResponse = 'videos,credits,recommendations,images,watch/providers' + (type === 'movie' ? ',release_dates' : '');
+          const endpoint = `/${type}/${id}?append_to_response=${appendToResponse}&include_image_language=en,null`;
           const details = await fetchFromTmdb<any>(endpoint);
           
           const trailer = findBestTrailer(details.videos?.results);
@@ -255,6 +279,8 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
               rent: providersData.rent,
               buy: providersData.buy,
           } : null;
+
+          const isInTheaters = type === 'movie' ? checkIfInTheaters(details.release_dates, countryCode) : false;
   
           return {
               trailerUrl: trailer ? `https://www.youtube.com/embed/${trailer.key}` : null,
@@ -262,6 +288,7 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
               cast: formatCast(details.credits),
               related: formatRelated(details.recommendations, type),
               watchProviders,
+              isInTheaters,
           };
   
       } catch (error) {
@@ -272,6 +299,7 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
               cast: [],
               related: [],
               watchProviders: null,
+              isInTheaters: false,
           };
       }
 };

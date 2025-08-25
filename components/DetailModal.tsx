@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import type { MediaDetails, CollectionDetails, CastMember, UserLocation } from '../types.ts';
-import { CloseIcon, StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon } from './icons.tsx';
+import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders } from '../types.ts';
+import { CloseIcon, StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon } from './icons.tsx';
 import { RecommendationCard } from './RecommendationCard.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
 import { usePreferences } from '../hooks/usePreferences.ts';
 import { Providers } from './Providers.tsx';
+import { CinemaAvailability } from './CinemaAvailability.tsx';
 
 interface DetailModalProps {
   item: MediaDetails | CollectionDetails;
@@ -34,6 +35,12 @@ const CastCard: React.FC<{ member: CastMember }> = ({ member }) => (
 const isMediaDetails = (item: MediaDetails | CollectionDetails): item is MediaDetails => {
   return 'title' in item && 'type' in item;
 };
+
+const providersExist = (providers: WatchProviders) => {
+    return (providers.flatrate && providers.flatrate.length > 0) ||
+           (providers.rent && providers.rent.length > 0) ||
+           (providers.buy && providers.buy.length > 0);
+}
 
 export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, userLocation }) => {
     const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
@@ -135,23 +142,38 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
 
         {!isLoading && (
             <ModalSection title="Where to Watch">
-                {media.watchProviders ? (
-                    <>
-                        <Providers providers={media.watchProviders} />
+                <div className="flex flex-col gap-4">
+                    {media.isInTheaters && (
+                        <CinemaAvailability userLocation={userLocation} movieTitle={media.title} />
+                    )}
+
+                    {media.watchProviders && providersExist(media.watchProviders) && (
+                        <div>
+                            <h4 className="text-md font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                                <TvIcon className="w-5 h-5" />
+                                <span>Streaming & On Demand</span>
+                            </h4>
+                            <Providers providers={media.watchProviders} />
+                        </div>
+                    )}
+                    
+                    {media.watchProviders?.link && (
                         <a 
                             href={`https://reelgood.com/search?q=${encodeURIComponent(media.title)}`} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="inline-block mt-4 px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-center w-full sm:w-auto"
+                            className="inline-block mt-2 px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-center w-full sm:w-auto"
                         >
                             Search all options on ReelGood
                         </a>
-                    </>
-                ) : (
-                    <p className="text-gray-400 text-sm">
-                        Streaming availability information could not be found for your region ({userLocation?.name}).
-                    </p>
-                )}
+                    )}
+
+                    {!media.isInTheaters && (!media.watchProviders || (!providersExist(media.watchProviders) && !media.watchProviders.link)) && (
+                        <p className="text-gray-400 text-sm">
+                            Viewing options could not be found for your region ({userLocation?.name}).
+                        </p>
+                    )}
+                </div>
             </ModalSection>
         )}
 

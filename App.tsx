@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -28,9 +29,10 @@ import { BrandDetail } from './components/BrandDetail.tsx';
 import { AccountButton } from './components/AccountButton.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
 import { ForYouPage } from './components/ForYouPage.tsx';
+import { getStreamingServiceMedia } from './services/mdblistService.ts';
 
 
-type ActiveTab = 'home' | 'foryou' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands';
+type ActiveTab = 'home' | 'foryou' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'disney' | 'netflix' | 'prime';
 type MediaTypeFilter = 'all' | 'movie' | 'show' | 'short';
 type SortBy = 'trending' | 'newest';
 
@@ -49,6 +51,10 @@ const App: React.FC = () => {
   const [isVpnBlocked, setIsVpnBlocked] = useState<boolean | null>(null); // null: checking, false: ok, true: blocked
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+
+  // State for service hubs
+  const [serviceMedia, setServiceMedia] = useState<MediaDetails[]>([]);
+  const [isServiceMediaLoading, setIsServiceMediaLoading] = useState<boolean>(false);
 
 
   const [studios] = useState<Studio[]>(popularStudios);
@@ -103,48 +109,76 @@ const App: React.FC = () => {
 
 
   // Effect for loading primary content based on tab.
-  // For home, it loads all sections together now for simplicity and robustness.
   useEffect(() => {
     if (isVpnBlocked !== false) return;
 
-    const loadAllData = async () => {
+    const loadHomeAndSharedData = async () => {
       setIsHomeLoading(true);
       setError(null);
-
       try {
-        if (activeTab === 'home') {
-          const [trending, popularMovies, popularTv, nowPlayingMovies] = await Promise.all([
-            getTrending(),
-            getPopularMovies(),
-            getPopularTv(),
-            getNowPlayingMovies()
-          ]);
-          
-          const sections = [];
-          if (trending.length > 0) sections.push({ title: 'Trending This Week', items: trending, type: 'mixed' as const });
-          if (popularMovies.length > 0) sections.push({ title: 'Popular Movies', items: popularMovies, type: 'movie' as const });
-          if (popularTv.length > 0) sections.push({ title: 'Popular TV Shows', items: popularTv, type: 'tv' as const });
-          if (nowPlayingMovies.length > 0) sections.push({ title: 'Now Playing in Theaters', items: nowPlayingMovies, type: 'movie' as const });
-          setHomeSections(sections);
-
-        } else if (activeTab === 'collections') {
-          const movieCollections = await getMovieCollections();
-          setCollections(movieCollections);
-        }
+        const [
+          trending, 
+          popularMovies, 
+          popularTv, 
+          nowPlayingMovies,
+        ] = await Promise.all([
+          getTrending(),
+          getPopularMovies(),
+          getPopularTv(),
+          getNowPlayingMovies(),
+        ]);
+        
+        const sections = [];
+        if (trending.length > 0) sections.push({ title: 'Trending This Week', items: trending, type: 'mixed' as const });
+        if (popularMovies.length > 0) sections.push({ title: 'Popular Movies', items: popularMovies, type: 'movie' as const });
+        if (popularTv.length > 0) sections.push({ title: 'Popular TV Shows', items: popularTv, type: 'tv' as const });
+        if (nowPlayingMovies.length > 0) sections.push({ title: 'Now Playing in Theaters', items: nowPlayingMovies, type: 'movie' as const });
+        setHomeSections(sections);
       } catch (err) {
-        console.error("Failed to load data:", err);
+        console.error("Failed to load home data:", err);
         setError("Could not load content. Please try again later.");
       } finally {
         setIsHomeLoading(false);
       }
     };
-
-    if ((activeTab === 'home' && homeSections.length === 0) || (activeTab === 'collections' && collections.length === 0)) {
-        loadAllData();
-    } else {
-        setIsHomeLoading(false);
+    
+    const loadCollectionsData = async () => {
+        setIsHomeLoading(true);
+        setError(null);
+        try {
+            const movieCollections = await getMovieCollections();
+            setCollections(movieCollections);
+        } catch (err) {
+            console.error("Failed to load collections:", err);
+            setError("Could not load collections. Please try again later.");
+        } finally {
+            setIsHomeLoading(false);
+        }
+    };
+    
+    const loadServiceData = async (service: 'disney' | 'netflix' | 'prime') => {
+        setIsServiceMediaLoading(true);
+        setError(null);
+        try {
+            const media = await getStreamingServiceMedia(service);
+            setServiceMedia(media);
+        } catch (err) {
+            console.error(`Failed to load data for ${service}:`, err);
+            setError(`Could not load content for ${service}. Please try again later.`);
+        } finally {
+            setIsServiceMediaLoading(false);
+        }
+    };
+    
+    // Router-like logic to fetch data for the active tab
+    if (['home', 'movies', 'tv'].includes(activeTab)) {
+        loadHomeAndSharedData();
+    } else if (activeTab === 'collections') {
+        loadCollectionsData();
+    } else if (['disney', 'netflix', 'prime'].includes(activeTab)) {
+        loadServiceData(activeTab as 'disney' | 'netflix' | 'prime');
     }
-  }, [activeTab, isVpnBlocked, collections.length, homeSections.length]);
+  }, [activeTab, isVpnBlocked]);
 
 
   const handleSearch = useCallback(async (query: string) => {
@@ -328,21 +362,43 @@ const App: React.FC = () => {
 
   const handleTabChange = (tab: ActiveTab) => {
     clearSearch();
+    // Reset states for other tabs to ensure fresh content on navigation
     setHomeSections([]);
     setCollections([]);
     setSelectedStudio(null);
     setStudioMedia([]);
     setSelectedBrand(null);
     setBrandMedia([]);
+    setServiceMedia([]);
     setActiveTab(tab);
   };
 
   const renderContent = () => {
     if (isLoading) return <LoadingSpinner />;
-    if (error && recommendations.length === 0 && !selectedStudio && !selectedBrand) return <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>;
+    if (error && recommendations.length === 0 && !selectedStudio && !selectedBrand && !['disney', 'netflix', 'prime'].includes(activeTab)) {
+        return <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>;
+    }
     
     if (recommendations.length > 0) {
       return <RecommendationGrid recommendations={recommendations} onSelect={handleSelectMedia} />;
+    }
+    
+    if (['disney', 'netflix', 'prime'].includes(activeTab)) {
+        if (isServiceMediaLoading) return <LoadingSpinner />;
+        if (error) return <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>;
+
+        const serviceTitleMap = {
+            disney: 'Highlights from Disney+',
+            netflix: 'Highlights from Netflix',
+            prime: 'Highlights from Prime Video',
+        };
+
+        return (
+            <div className="w-full max-w-7xl fade-in">
+                <h2 className="text-3xl font-bold mb-6">{serviceTitleMap[activeTab as keyof typeof serviceTitleMap]}</h2>
+                <RecommendationGrid recommendations={serviceMedia} onSelect={handleSelectMedia} />
+            </div>
+        )
     }
 
     if (activeTab === 'foryou') {
@@ -485,7 +541,7 @@ const App: React.FC = () => {
                 <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight bg-gradient-to-r from-white to-gray-400 text-transparent bg-clip-text cursor-pointer" onClick={() => { handleTabChange('home')}}>
                     WatchNow
                 </h1>
-                <p className="text-gray-300 text-lg">Find your next favorite watch.</p>
+                <p className="text-gray-300 text-lg">Discover movies & TV shows.</p>
             </div>
             <AccountButton
                 onSignInClick={() => setIsAuthModalOpen(true)}
@@ -495,10 +551,8 @@ const App: React.FC = () => {
         
         <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
 
-        <div className="w-full max-w-2xl my-8 flex items-center gap-3">
-            <div className="flex-grow">
-              <SearchBar onSearch={handleSearch} isLoading={isLoading} />
-            </div>
+        <div className="w-full max-w-2xl my-8">
+          <SearchBar onSearch={handleSearch} isLoading={isLoading} />
         </div>
 
         {renderContent()}
@@ -517,6 +571,7 @@ const App: React.FC = () => {
             isOpen={isAuthModalOpen}
             onClose={() => setIsAuthModalOpen(false)}
         />
+        
       </main>
     </>
   );

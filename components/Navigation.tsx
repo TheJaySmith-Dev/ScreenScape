@@ -1,6 +1,6 @@
 import React from 'react';
 
-type ActiveTab = 'home' | 'foryou' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands';
+type ActiveTab = 'home' | 'foryou' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'disney' | 'netflix' | 'prime';
 
 interface NavigationProps {
   activeTab: ActiveTab;
@@ -28,7 +28,7 @@ const NavButton: React.FC<{
 
 export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
   return (
-    <nav className="w-full max-w-lg p-2 bg-black/30 backdrop-blur-sm border border-white/10 rounded-2xl">
+    <nav className="w-full max-w-2xl p-2 bg-black/30 backdrop-blur-sm border border-white/10 rounded-2xl">
       <div className="flex items-center justify-center flex-wrap gap-2">
         <NavButton label="Home" isActive={activeTab === 'home'} onClick={() => onTabChange('home')} />
         <NavButton label="For You" isActive={activeTab === 'foryou'} onClick={() => onTabChange('foryou')} />
@@ -37,6 +37,9 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
         <NavButton label="Collections" isActive={activeTab === 'collections'} onClick={() => onTabChange('collections')} />
         <NavButton label="Studios" isActive={activeTab === 'studios'} onClick={() => onTabChange('studios')} />
         <NavButton label="Brands" isActive={activeTab === 'brands'} onClick={() => onTabChange('brands')} />
+        <NavButton label="Disney+" isActive={activeTab === 'disney'} onClick={() => onTabChange('disney')} />
+        <NavButton label="Netflix" isActive={activeTab === 'netflix'} onClick={() => onTabChange('netflix')} />
+        <NavButton label="Prime Video" isActive={activeTab === 'prime'} onClick={() => onTabChange('prime')} />
       </div>
     </nav>
   );
