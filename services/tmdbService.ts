@@ -1,6 +1,6 @@
 
 
-import type { MediaDetails, TmdbSearchResult, CastMember, WatchProviders, Collection, CollectionDetails, LikedItem, DislikedItem } from '../types.ts';
+import type { MediaDetails, TmdbSearchResult, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders } from '../types.ts';
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
 const TMDB_API_KEY = '09b97a49759876f2fde9eadb163edc44';
@@ -231,16 +231,6 @@ const formatCast = (credits: any): CastMember[] => {
       }));
 };
   
-const formatWatchProviders = (providers: any, countryCode: string): WatchProviders => {
-    const results = providers?.results?.[countryCode.toUpperCase()];
-    if (!results) return {};
-    return {
-        flatrate: results.flatrate,
-        rent: results.rent,
-        buy: results.buy,
-    };
-};
-
 const formatRelated = (recommendations: any, currentType: 'movie' | 'tv'): MediaDetails[] => {
     if (!recommendations?.results) return [];
     return recommendations.results
@@ -252,18 +242,26 @@ const formatRelated = (recommendations: any, currentType: 'movie' | 'tv'): Media
   
 export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', countryCode: string): Promise<Partial<MediaDetails>> => {
       try {
-          const endpoint = `/${type}/${id}?append_to_response=videos,credits,watch/providers,recommendations,images&include_image_language=en,null`;
+          const endpoint = `/${type}/${id}?append_to_response=videos,credits,recommendations,images,watch/providers&include_image_language=en,null`;
           const details = await fetchFromTmdb<any>(endpoint);
           
           const trailer = findBestTrailer(details.videos?.results);
           const logo = findBestLogo(details.images);
+
+          const providersData = details['watch/providers']?.results?.[countryCode.toUpperCase()];
+          const watchProviders: WatchProviders | null = providersData ? {
+              link: providersData.link,
+              flatrate: providersData.flatrate,
+              rent: providersData.rent,
+              buy: providersData.buy,
+          } : null;
   
           return {
               trailerUrl: trailer ? `https://www.youtube.com/embed/${trailer.key}` : null,
               logoUrl: logo,
               cast: formatCast(details.credits),
-              watchProviders: formatWatchProviders(details['watch/providers'], countryCode),
               related: formatRelated(details.recommendations, type),
+              watchProviders,
           };
   
       } catch (error) {
@@ -272,8 +270,8 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
               trailerUrl: null,
               logoUrl: null,
               cast: [],
-              watchProviders: {},
               related: [],
+              watchProviders: null,
           };
       }
 };

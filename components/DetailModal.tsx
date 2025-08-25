@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, UserLocation } from '../types.ts';
 import { CloseIcon, StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon } from './icons.tsx';
-import { Providers } from './Providers.tsx';
 import { RecommendationCard } from './RecommendationCard.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
 import { usePreferences } from '../hooks/usePreferences.ts';
+import { Providers } from './Providers.tsx';
 
 interface DetailModalProps {
   item: MediaDetails | CollectionDetails;
@@ -133,10 +133,26 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         
         {isLoading && !media.cast && <div className="mt-6 flex justify-center"><LoadingSpinner /></div>}
 
-        {!isLoading && media.watchProviders && (Object.values(media.watchProviders).some(v => v && v.length > 0)) && (
-          <ModalSection title="Where to Watch">
-            <Providers providers={media.watchProviders} />
-          </ModalSection>
+        {!isLoading && (
+            <ModalSection title="Where to Watch">
+                {media.watchProviders ? (
+                    <>
+                        <Providers providers={media.watchProviders} />
+                        <a 
+                            href={`https://reelgood.com/search?q=${encodeURIComponent(media.title)}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-block mt-4 px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-center w-full sm:w-auto"
+                        >
+                            Search all options on ReelGood
+                        </a>
+                    </>
+                ) : (
+                    <p className="text-gray-400 text-sm">
+                        Streaming availability information could not be found for your region ({userLocation?.name}).
+                    </p>
+                )}
+            </ModalSection>
         )}
 
         {!isLoading && media.cast && media.cast.length > 0 && (

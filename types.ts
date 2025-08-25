@@ -17,17 +17,6 @@ export interface CastMember {
   profileUrl: string;
 }
 
-export interface WatchProvider {
-  provider_name: string;
-  logo_path: string;
-}
-
-export interface WatchProviders {
-  flatrate?: WatchProvider[]; // For streaming services
-  rent?: WatchProvider[];
-  buy?: WatchProvider[];
-}
-
 export interface MediaDetails {
   id: number;
   title: string;
@@ -44,8 +33,8 @@ export interface MediaDetails {
   mediaSubType?: 'short';
   // Optional detailed properties fetched on demand
   cast?: CastMember[];
-  watchProviders?: WatchProviders;
   related?: MediaDetails[];
+  watchProviders?: WatchProviders | null;
 }
 
 export interface Collection {
@@ -116,22 +105,17 @@ export interface DislikedItem {
   type: 'movie' | 'tv';
 }
 
-// Gemini Vision Service Types
-export interface GeminiRecommendation {
-  title: string;
-  year: number;
-  type: 'movie' | 'tv';
+// TMDB Watch Provider Types
+export interface WatchProvider {
+    provider_id: number;
+    provider_name: string;
+    logo_path: string;
+    display_priority: number;
 }
 
-export interface VisionResponse {
-  responseText: string;
-  recommendations?: GeminiRecommendation[];
-}
-
-export interface VisionMessage {
-  id: string;
-  sender: 'user' | 'ai';
-  text?: string;
-  isLoading?: boolean;
-  recommendations?: MediaDetails[];
+export interface WatchProviders {
+    link?: string;
+    flatrate?: WatchProvider[];
+    rent?: WatchProvider[];
+    buy?: WatchProvider[];
 }

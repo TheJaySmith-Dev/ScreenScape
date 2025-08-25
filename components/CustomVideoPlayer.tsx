@@ -107,8 +107,10 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId, o
     if (window.YT && event.data === window.YT.PlayerState.PLAYING) {
       setIsPlaying(true);
       const interval = setInterval(() => {
-        setCurrentTime(event.target.getCurrentTime());
-        setProgress((event.target.getCurrentTime() / event.target.getDuration()) * 100);
+        if (event.target.getCurrentTime) {
+            setCurrentTime(event.target.getCurrentTime());
+            setProgress((event.target.getCurrentTime() / event.target.getDuration()) * 100);
+        }
       }, 250);
       (window as any).progressInterval = interval;
     } else {
@@ -116,6 +118,10 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId, o
       if ((window as any).progressInterval) {
         clearInterval((window as any).progressInterval);
       }
+    }
+    
+    if (window.YT && event.data === window.YT.PlayerState.ENDED) {
+      onClose();
     }
   };
 
