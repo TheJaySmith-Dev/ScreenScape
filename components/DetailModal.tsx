@@ -269,7 +269,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
           </header>
 
           <div 
-            className="w-full h-full overflow-y-auto"
+            className="w-full h-full overflow-y-auto overscroll-contain"
             style={{ scrollbarWidth: 'thin' }}
             onScroll={handleScroll}
           >

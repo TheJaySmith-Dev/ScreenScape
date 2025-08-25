@@ -1,6 +1,6 @@
 import React from 'react';
 import type { ExternalRatings as ExternalRatingsType } from '../types.ts';
-import { ImdbIcon, RottenTomatoesIcon } from './icons.tsx';
+import { ImdbIcon, FreshTomatometerIcon, RottenTomatometerIcon } from './icons.tsx';
 
 interface ExternalRatingsProps {
   ratings?: ExternalRatingsType;
@@ -32,6 +32,7 @@ export const ExternalRatings: React.FC<ExternalRatingsProps> = ({ ratings }) => 
     }
 
     const metacriticScore = ratings.metacritic ? parseInt(ratings.metacritic, 10) : null;
+    const rottenTomatoesValue = ratings.rottenTomatoes ? parseInt(ratings.rottenTomatoes.replace('%', ''), 10) : null;
     
     return (
         <div className="flex flex-wrap items-stretch gap-3">
@@ -42,10 +43,13 @@ export const ExternalRatings: React.FC<ExternalRatingsProps> = ({ ratings }) => 
                     label="IMDb"
                 />
             )}
-            {ratings.rottenTomatoes && (
+            {rottenTomatoesValue !== null && !isNaN(rottenTomatoesValue) && (
                 <RatingItem 
-                    icon={<RottenTomatoesIcon className="w-8 h-8" />}
-                    value={ratings.rottenTomatoes}
+                    icon={rottenTomatoesValue >= 60 
+                        ? <FreshTomatometerIcon className="w-8 h-8" /> 
+                        : <RottenTomatometerIcon className="w-8 h-8" />
+                    }
+                    value={`${rottenTomatoesValue}%`}
                     label="Tomatometer"
                 />
             )}

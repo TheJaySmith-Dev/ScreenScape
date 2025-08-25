@@ -15,13 +15,32 @@ export const supportedProviders: StreamingProviderInfo[] = [
     key: 'disney',
     name: 'Disney+',
     logoUrl: 'https://image.tmdb.org/t/p/w500/dgPSo2h2cozZf7b6x4B5s3g4H2A.jpg',
-    bgColor: '#0A193C'
+    bgColor: '#0A193C',
+    hoverGifUrl: 'https://media.giphy.com/media/C669q14vk6dsG7M449/giphy.gif',
   },
   {
     id: 9,
     key: 'prime',
     name: 'Prime Video',
     logoUrl: 'https://image.tmdb.org/t/p/w500/dQeAar5H991dsB4hM5jSAnjhI6.jpg',
-    bgColor: '#00A8E1'
+    bgColor: '#00A8E1',
+    hoverGifUrl: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExN3ZzOHp4eGg2NThnYXgyOW96d2RnbW13MnFuN2kzcTFwZWdxbmxsbiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/9J1rsK6c84wsQ2r5sA/giphy.gif'
+  },
+  {
+    id: 1899,
+    key: 'max',
+    name: 'HBO Max',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/17/HBO_Max_Logo.svg',
+    bgColor: '#3E008D',
+    hoverGifUrl: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ3N0a2l4bHljYjU2dWNuaGhyNjJ0b2NtcXVpODN1OTZzcjVjZ2xidCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o72F5tx9CEdwAwg12/giphy.gif'
   },
 ];
+
+export const showmaxProvider: StreamingProviderInfo = {
+    id: 175,
+    key: 'showmax',
+    name: 'Showmax',
+    logoUrl: 'https://image.tmdb.org/t/p/w500/aHgS1gTjWn3GzS3f22f26Jd2dCs.jpg',
+    bgColor: '#000000',
+    hoverGifUrl: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdXRjZXVlZzVld3oyZ3U1eWJzZ2h4b3k3N3k2ZWxnbjJrcDk2Z2x2biZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l41lNx6T12t2t8812/giphy.gif'
+};

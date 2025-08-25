@@ -1,6 +1,6 @@
-import type { MediaDetails, TmdbSearchResult, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders } from '../types.ts';
+import type { MediaDetails, TmdbSearchResult, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo } from '../types.ts';
 import { fetchOmdbDetails } from './omdbService.ts';
-import { supportedProviders } from './streamingService.ts';
+import { showmaxProvider, supportedProviders } from './streamingService.ts';
 
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
@@ -107,11 +107,14 @@ const formatMediaListItem = (item: any, typeOverride?: 'movie' | 'tv', subType?:
     if (!type || (type !== 'movie' && type !== 'tv')) {
         return null;
     }
+    
+    const overview = item.overview || 'No overview available.';
+    if (!overview) return null; // Exclude items with no overview text at all
 
     return {
         id: item.id,
         title: item.title || item.name,
-        overview: item.overview || 'No overview available.',
+        overview,
         posterUrl: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : `https://picsum.photos/seed/${encodeURIComponent(item.title || item.name)}/500/750`,
         backdropUrl: item.backdrop_path ? `https://image.tmdb.org/t/p/w1280${item.backdrop_path}` : `https://picsum.photos/seed/${encodeURIComponent(item.title || item.name)}/1280/720`,
         releaseYear: (item.release_date || item.first_air_date || 'N/A').substring(0, 4),
@@ -190,7 +193,7 @@ const checkIfInTheaters = (releaseDatesData: any, countryCode: string): boolean 
   
 export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', countryCode: string): Promise<Partial<MediaDetails>> => {
       try {
-          const appendToResponse = 'videos,credits,recommendations,images,watch/providers' + (type === 'movie' ? ',release_dates' : '');
+          const appendToResponse = 'videos,credits,recommendations,images,watch/providers,external_ids' + (type === 'movie' ? ',release_dates' : ',content_ratings');
           const endpoint = `/${type}/${id}?append_to_response=${appendToResponse}&include_image_language=en,null`;
           const details = await fetchFromTmdb<any>(endpoint);
           
@@ -208,8 +211,8 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
           const isInTheaters = type === 'movie' ? checkIfInTheaters(details.release_dates, countryCode) : false;
           
           let omdbDetails: Partial<MediaDetails> = {};
-          const imdbId = details.imdb_id;
-          if (imdbId && type === 'movie') {
+          const imdbId = details.external_ids?.imdb_id || details.imdb_id;
+          if (imdbId) {
               omdbDetails = await fetchOmdbDetails(imdbId);
           }
   
@@ -220,7 +223,7 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
               related: formatRelated(details.recommendations, type),
               watchProviders,
               isInTheaters,
-              imdbId: details.imdb_id || null,
+              imdbId: imdbId || null,
               ...omdbDetails,
           };
   
@@ -313,6 +316,37 @@ export const getMediaByNetwork = async (networkId: number): Promise<MediaDetails
     return fetchTmdbList(endpoint, 'tv');
 };
 
+export const getShowmaxOriginals = async (providerId: number, region: string): Promise<MediaDetails[]> => {
+    const SHOWMAX_NETWORK_ID = 1042;
+    const endpoint = `/discover/tv?with_networks=${SHOWMAX_NETWORK_ID}&with_watch_providers=${providerId}&watch_region=${region}&sort_by=popularity.desc`;
+    return fetchTmdbList(endpoint, 'tv');
+};
+
+export const getStudioContentOnProvider = async (studioId: number, providerId: number, region: string): Promise<MediaDetails[]> => {
+    const movieEndpoint = `/discover/movie?with_companies=${studioId}&with_watch_providers=${providerId}&watch_region=${region}&sort_by=popularity.desc`;
+    const tvEndpoint = `/discover/tv?with_companies=${studioId}&with_watch_providers=${providerId}&watch_region=${region}&sort_by=popularity.desc`;
+
+    const [movies, tvShows] = await Promise.all([
+        fetchTmdbList(movieEndpoint, 'movie'),
+        fetchTmdbList(tvEndpoint, 'tv')
+    ]);
+
+    const combined = [];
+    const maxLength = Math.max(movies.length, tvShows.length);
+    for (let i = 0; i < maxLength; i++) {
+        if (movies[i]) combined.push(movies[i]);
+        if (tvShows[i]) combined.push(tvShows[i]);
+    }
+    
+    return combined;
+};
+
+export const getNetworkContentOnProvider = async (networkId: number, providerId: number, region: string): Promise<MediaDetails[]> => {
+    // This discovers TV shows from a specific network available on a given provider.
+    const endpoint = `/discover/tv?with_networks=${networkId}&with_watch_providers=${providerId}&watch_region=${region}&sort_by=popularity.desc`;
+    return fetchTmdbList(endpoint, 'tv');
+};
+
 export const getRecommendationsFromTastes = async (likes: LikedItem[], dislikes: DislikedItem[]): Promise<MediaDetails[]> => {
     if (likes.length === 0) return [];
 
@@ -354,12 +388,16 @@ export const getRecommendationsFromTastes = async (likes: LikedItem[], dislikes:
     return Array.from(uniqueRecommendations.values()).sort(() => Math.random() - 0.5);
 };
 
-export const getMediaByStreamingProvider = async (providerKey: 'disney' | 'netflix' | 'prime', countryCode: string): Promise<MediaDetails[]> => {
-    const providerId = supportedProviders.find(p => p.key === providerKey)?.id;
+export const getMediaByStreamingProvider = async (providerKey: StreamingProviderInfo['key'], countryCode: string): Promise<MediaDetails[]> => {
+    const allProviders = [...supportedProviders, showmaxProvider];
+    const providerId = allProviders.find(p => p.key === providerKey)?.id;
     if (!providerId) return [];
+
+    // For Showmax, use the user's region. For global providers, use 'US' for content consistency.
+    const region = providerKey === 'showmax' ? countryCode : 'US';
     
-    const movieEndpoint = `/discover/movie?with_watch_providers=${providerId}&watch_region=${countryCode}&sort_by=popularity.desc`;
-    const tvEndpoint = `/discover/tv?with_watch_providers=${providerId}&watch_region=${countryCode}&sort_by=popularity.desc`;
+    const movieEndpoint = `/discover/movie?with_watch_providers=${providerId}&watch_region=${region}&sort_by=popularity.desc`;
+    const tvEndpoint = `/discover/tv?with_watch_providers=${providerId}&watch_region=${region}&sort_by=popularity.desc`;
     
     const [movies, tvShows] = await Promise.all([
         fetchTmdbList(movieEndpoint, 'movie'),
@@ -374,14 +412,4 @@ export const getMediaByStreamingProvider = async (providerKey: 'disney' | 'netfl
     }
     
     return combined;
-};
-
-export const getAvailableWatchProvidersForRegion = async (region: string): Promise<number[]> => {
-  try {
-    const data = await fetchFromTmdb<{ results: { provider_id: number }[] }>(`/watch/providers/tv?watch_region=${region}`);
-    return data.results.map(p => p.provider_id);
-  } catch (error) {
-    console.error(`Failed to get providers for region ${region}:`, error);
-    return [];
-  }
 };

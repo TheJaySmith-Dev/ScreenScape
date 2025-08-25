@@ -143,7 +143,7 @@ export interface WatchProviders {
 
 export interface StreamingProviderInfo {
   id: number;
-  key: 'disney' | 'netflix' | 'prime';
+  key: 'disney' | 'netflix' | 'prime' | 'max' | 'showmax';
   name: string;
   logoUrl: string;
   bgColor?: string;

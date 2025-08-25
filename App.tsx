@@ -15,7 +15,6 @@ import {
   getMediaByStudio,
   searchTmdb,
   getMediaByStreamingProvider,
-  getAvailableWatchProvidersForRegion,
   getMediaByNetwork,
 } from './services/tmdbService.ts';
 import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network } from './types.ts';
@@ -30,10 +29,11 @@ import { BrandDetail } from './components/BrandDetail.tsx';
 import { AccountButton } from './components/AccountButton.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
 import { ForYouPage } from './components/ForYouPage.tsx';
-import { supportedProviders } from './services/streamingService.ts';
+import { supportedProviders, showmaxProvider } from './services/streamingService.ts';
 import { StreamingGrid } from './components/StreamingGrid.tsx';
 import { popularNetworks } from './services/networkService.ts';
 import { NetworkGrid } from './components/NetworkGrid.tsx';
+import { ShowmaxHub } from './components/ShowmaxHub.tsx';
 
 
 type ActiveTab = 'home' | 'foryou' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming' | 'networks';
@@ -105,20 +105,24 @@ const App: React.FC = () => {
           setIsVpnBlocked(true);
         } else {
           setIsVpnBlocked(false);
-          // Fetch providers now that we have a location
-          const providerIds = await getAvailableWatchProvidersForRegion(loc.code);
-          const available = supportedProviders.filter(p => providerIds.includes(p.id));
-          setAvailableProviders(available);
+          const providers = [...supportedProviders];
+          // Add Showmax only for South African users
+          if (loc.code === 'ZA') {
+              providers.push(showmaxProvider);
+          }
+          setAvailableProviders(providers);
         }
       } catch (error) {
         console.error('Error checking for VPN/location:', error);
         setIsVpnBlocked(false);
         const defaultLoc = { name: 'United States', code: 'US' };
         setUserLocation(defaultLoc);
-        // Fetch providers for default location
-        const providerIds = await getAvailableWatchProvidersForRegion(defaultLoc.code);
-        const available = supportedProviders.filter(p => providerIds.includes(p.id));
-        setAvailableProviders(available);
+        // Fallback to showing curated providers on error
+        const providers = [...supportedProviders];
+        if (defaultLoc.code === 'ZA') { // Should not happen, but for safety
+          providers.push(showmaxProvider);
+        }
+        setAvailableProviders(providers);
       }
     };
 
@@ -354,10 +358,15 @@ const App: React.FC = () => {
   };
   
   const handleSelectProvider = useCallback(async (provider: StreamingProviderInfo) => {
-    setIsProviderMediaLoading(true);
     setSelectedProvider(provider);
     setProviderMedia([]);
     setError(null);
+    
+    if (provider.key === 'showmax') {
+        return; // The ShowmaxHub component has its own loading logic
+    }
+
+    setIsProviderMediaLoading(true);
     try {
         const media = await getMediaByStreamingProvider(provider.key, userLocation?.code || 'US');
         setProviderMedia(media);
@@ -437,6 +446,16 @@ const App: React.FC = () => {
 
     if (activeTab === 'streaming') {
         if (selectedProvider) {
+            if (selectedProvider.key === 'showmax') {
+                return (
+                    <ShowmaxHub
+                        provider={selectedProvider}
+                        onBack={handleBackToStreaming}
+                        onSelectMedia={handleSelectMedia}
+                        userLocation={userLocation}
+                    />
+                );
+            }
             return (
                  <div className="w-full max-w-7xl fade-in">
                     <div className="flex items-center gap-4 mb-6">
