@@ -14,8 +14,9 @@ const fetchFromTmdb = async <T,>(endpoint: string): Promise<T> => {
     const response = await fetch(url);
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({})); // Try to get error details from TMDb
-        console.error("TMDb API Error:", errorData);
-        throw new Error(`TMDb API request failed: ${response.statusText}`);
+        console.error("TMDb API Error:", JSON.stringify(errorData, null, 2));
+        const errorMessage = errorData.status_message || response.statusText || 'Unknown error';
+        throw new Error(`TMDb API request failed: ${response.status} ${errorMessage}`);
     }
     return response.json();
 };
@@ -290,7 +291,7 @@ const POPULAR_COLLECTION_QUERIES = [
     "Star Wars Collection",
     "Harry Potter Collection",
     "The Fast and the Furious Collection",
-    "Marvel Cinematic Universe",
+    "The Infinity Saga",
     "James Bond Collection",
     "Jurassic Park Collection",
     "Back to the Future Collection",

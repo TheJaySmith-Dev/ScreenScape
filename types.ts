@@ -1,3 +1,5 @@
+import type { User } from 'firebase/auth';
+
 export interface GeminiRecommendation {
   title: string;
   year: number;
@@ -97,4 +99,19 @@ export interface Studio {
   hoverGifUrl?: string;
   forceWhiteLogo?: boolean;
   sizeClass?: string;
+}
+
+export interface CharacterCollection extends Collection {}
+
+export interface Brand {
+  id: string;
+  name: string;
+  posterUrl: string;
+  companyId: number;
+  characterCollections: CharacterCollection[];
+}
+
+export interface AuthContextType {
+  currentUser: User | null;
+  loading: boolean;
 }

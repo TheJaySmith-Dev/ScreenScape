@@ -1,12 +1,11 @@
 
-
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
 import { LoadingSpinner } from './components/LoadingSpinner.tsx';
 import { MediaRow } from './components/MediaRow.tsx';
 import { Navigation } from './components/Navigation.tsx';
-import { GlobeIcon, VisionIcon } from './components/icons.tsx';
+import { VisionIcon } from './components/icons.tsx';
 import { getRecommendations } from './services/geminiService.ts';
 import { 
   fetchDetailsForModal,
@@ -19,16 +18,21 @@ import {
   fetchDetailsByTitle,
   getMediaByStudio
 } from './services/tmdbService.ts';
-import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio } from './types.ts';
+import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand } from './types.ts';
 import { popularStudios } from './services/studioService.ts';
+import { brands as allBrands } from './services/brandService.ts';
 import { DetailModal } from './components/DetailModal.tsx';
 import { VisionModal } from './components/VisionModal.tsx';
 import { StudioGrid } from './components/StudioGrid.tsx';
 import { CollectionGrid } from './components/CollectionGrid.tsx';
 import { StudioFilters } from './components/StudioFilters.tsx';
+import { BrandGrid } from './components/BrandGrid.tsx';
+import { BrandDetail } from './components/BrandDetail.tsx';
+import { AccountButton } from './components/AccountButton.tsx';
+import { AuthModal } from './components/AuthModal.tsx';
 
 
-type ActiveTab = 'home' | 'movies' | 'tv' | 'series' | 'studios';
+type ActiveTab = 'home' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands';
 type MediaTypeFilter = 'all' | 'movie' | 'show' | 'short';
 type SortBy = 'trending' | 'newest';
 
@@ -47,12 +51,20 @@ const App: React.FC = () => {
   const [isVpnBlocked, setIsVpnBlocked] = useState<boolean | null>(null); // null: checking, false: ok, true: blocked
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isVisionModalOpen, setIsVisionModalOpen] = useState<boolean>(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+
 
   const [studios] = useState<Studio[]>(popularStudios);
   const [selectedStudio, setSelectedStudio] = useState<Studio | null>(null);
   const [studioMedia, setStudioMedia] = useState<MediaDetails[]>([]);
   const [studioMediaTypeFilter, setStudioMediaTypeFilter] = useState<MediaTypeFilter>('all');
   const [studioSortBy, setStudioSortBy] = useState<SortBy>('trending');
+
+  const [brands] = useState<Brand[]>(allBrands);
+  const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
+  const [brandMedia, setBrandMedia] = useState<MediaDetails[]>([]);
+  const [brandMediaTypeFilter, setBrandMediaTypeFilter] = useState<MediaTypeFilter>('all');
+  const [brandSortBy, setBrandSortBy] = useState<SortBy>('trending');
 
 
   const checkVpn = useCallback(async () => {
@@ -118,7 +130,7 @@ const App: React.FC = () => {
           if (nowPlayingMovies.length > 0) sections.push({ title: 'Now Playing in Theaters', items: nowPlayingMovies, type: 'movie' as const });
           setHomeSections(sections);
 
-        } else if (activeTab === 'series') {
+        } else if (activeTab === 'collections') {
           const movieCollections = await getMovieCollections();
           setCollections(movieCollections);
         }
@@ -130,12 +142,12 @@ const App: React.FC = () => {
       }
     };
 
-    if ((activeTab === 'home' && homeSections.length === 0) || (activeTab === 'series' && collections.length === 0)) {
+    if ((activeTab === 'home' && homeSections.length === 0) || (activeTab === 'collections' && collections.length === 0)) {
         loadAllData();
     } else {
         setIsHomeLoading(false);
     }
-  }, [activeTab, isVpnBlocked]);
+  }, [activeTab, isVpnBlocked, collections.length, homeSections.length]);
 
 
   const handleSearch = useCallback(async (query: string) => {
@@ -272,6 +284,61 @@ const App: React.FC = () => {
     setStudioMedia([]);
     setError(null);
   };
+  
+  const handleSelectBrand = useCallback(async (brand: Brand) => {
+    setIsLoading(true);
+    setSelectedBrand(brand);
+    setBrandMedia([]);
+    setError(null);
+    setBrandMediaTypeFilter('all');
+    setBrandSortBy('trending');
+    try {
+        const media = await getMediaByStudio(brand.companyId);
+        setBrandMedia(media);
+    } catch (err) {
+        console.error(`Failed to load media for ${brand.name}:`, err);
+        setError(`Could not load media for ${brand.name}. Please try again later.`);
+    } finally {
+        setIsLoading(false);
+    }
+  }, []);
+
+  const displayedBrandMedia = useMemo(() => {
+    let filtered = [...brandMedia];
+
+    if (brandMediaTypeFilter !== 'all') {
+        filtered = filtered.filter(media => {
+            if (brandMediaTypeFilter === 'movie') {
+                return media.type === 'movie' && media.mediaSubType !== 'short';
+            }
+            if (brandMediaTypeFilter === 'show') {
+                return media.type === 'tv';
+            }
+            if (brandMediaTypeFilter === 'short') {
+                return media.mediaSubType === 'short';
+            }
+            return true;
+        });
+    }
+    
+    if (brandSortBy === 'newest') {
+        filtered.sort((a, b) => {
+            const dateA = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
+            const dateB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
+            return dateB - dateA;
+        });
+    } else {
+         filtered.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+    }
+
+    return filtered;
+  }, [brandMedia, brandMediaTypeFilter, brandSortBy]);
+
+  const handleBackToBrands = () => {
+    setSelectedBrand(null);
+    setBrandMedia([]);
+    setError(null);
+  };
 
   const handleCloseModal = () => {
     setSelectedItem(null);
@@ -288,12 +355,14 @@ const App: React.FC = () => {
     setCollections([]);
     setSelectedStudio(null);
     setStudioMedia([]);
+    setSelectedBrand(null);
+    setBrandMedia([]);
     setActiveTab(tab);
   };
 
   const renderContent = () => {
     if (isLoading) return <LoadingSpinner />;
-    if (error && recommendations.length === 0 && !selectedStudio) return <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>;
+    if (error && recommendations.length === 0 && !selectedStudio && !selectedBrand) return <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>;
     
     if (recommendations.length > 0) {
       return <RecommendationGrid recommendations={recommendations} onSelect={handleSelectMedia} />;
@@ -320,10 +389,29 @@ const App: React.FC = () => {
         }
         return <StudioGrid studios={studios} onSelect={handleSelectStudio} />;
     }
+
+    if (activeTab === 'brands') {
+        if (selectedBrand) {
+            return (
+                <BrandDetail
+                    brand={selectedBrand}
+                    media={displayedBrandMedia}
+                    mediaTypeFilter={brandMediaTypeFilter}
+                    setMediaTypeFilter={setBrandMediaTypeFilter}
+                    sortBy={brandSortBy}
+                    setSortBy={setBrandSortBy}
+                    onBack={handleBackToBrands}
+                    onSelectMedia={handleSelectMedia}
+                    onSelectCollection={handleSelectCollection}
+                />
+            );
+        }
+        return <BrandGrid brands={brands} onSelect={handleSelectBrand} />;
+    }
     
     if (isHomeLoading && homeSections.length === 0 && collections.length === 0) return <LoadingSpinner />;
 
-    if (activeTab === 'series') {
+    if (activeTab === 'collections') {
       return <CollectionGrid collections={collections} onSelect={handleSelectCollection} />;
     }
     
@@ -411,19 +499,17 @@ const App: React.FC = () => {
       {renderBackground()}
 
       <main className="container mx-auto px-4 py-8 min-h-screen flex flex-col items-center">
-        <header className="w-full max-w-4xl text-center mb-8">
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight bg-gradient-to-r from-white to-gray-400 text-transparent bg-clip-text cursor-pointer" onClick={() => { handleTabChange('home')}}>
-            WatchNow
-          </h1>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mt-2">
-            <p className="text-gray-300 text-lg text-center sm:text-left">AI-powered movie & TV show recommendations.</p>
-            {userLocation?.name && (
-              <div className="flex items-center gap-1.5 text-sm text-gray-400 bg-white/5 px-3 py-1 rounded-full border border-white/10">
-                <GlobeIcon className="w-4 h-4" />
-                <span>{userLocation.name}</span>
-              </div>
-            )}
-          </div>
+        <header className="w-full max-w-4xl mb-8 flex justify-between items-center">
+            <div>
+                <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight bg-gradient-to-r from-white to-gray-400 text-transparent bg-clip-text cursor-pointer" onClick={() => { handleTabChange('home')}}>
+                    WatchNow
+                </h1>
+                <p className="text-gray-300 text-lg">AI-powered movie & TV show recommendations.</p>
+            </div>
+            <AccountButton
+                onSignInClick={() => setIsAuthModalOpen(true)}
+                userLocation={userLocation}
+            />
         </header>
         
         <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
@@ -461,6 +547,11 @@ const App: React.FC = () => {
             onSelectMedia={handleSelectMediaFromVision}
           />
         )}
+        
+        <AuthModal 
+            isOpen={isAuthModalOpen}
+            onClose={() => setIsAuthModalOpen(false)}
+        />
       </main>
     </>
   );
