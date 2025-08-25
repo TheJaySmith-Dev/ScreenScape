@@ -16,8 +16,10 @@ import {
   getMovieCollections,
   getMediaByStudio,
   searchTmdb,
+  getMediaByStreamingProvider,
+  getAvailableWatchProvidersForRegion,
 } from './services/tmdbService.ts';
-import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand } from './types.ts';
+import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo } from './types.ts';
 import { popularStudios } from './services/studioService.ts';
 import { brands as allBrands } from './services/brandService.ts';
 import { DetailModal } from './components/DetailModal.tsx';
@@ -29,10 +31,11 @@ import { BrandDetail } from './components/BrandDetail.tsx';
 import { AccountButton } from './components/AccountButton.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
 import { ForYouPage } from './components/ForYouPage.tsx';
-import { getStreamingServiceMedia } from './services/mdblistService.ts';
+import { supportedProviders } from './services/streamingService.ts';
+import { StreamingGrid } from './components/StreamingGrid.tsx';
 
 
-type ActiveTab = 'home' | 'foryou' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'disney' | 'netflix' | 'prime';
+type ActiveTab = 'home' | 'foryou' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming';
 type MediaTypeFilter = 'all' | 'movie' | 'show' | 'short';
 type SortBy = 'trending' | 'newest';
 
@@ -52,9 +55,11 @@ const App: React.FC = () => {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
-  // State for service hubs
-  const [serviceMedia, setServiceMedia] = useState<MediaDetails[]>([]);
-  const [isServiceMediaLoading, setIsServiceMediaLoading] = useState<boolean>(false);
+  // State for Streaming hubs
+  const [availableProviders, setAvailableProviders] = useState<StreamingProviderInfo[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<StreamingProviderInfo | null>(null);
+  const [providerMedia, setProviderMedia] = useState<MediaDetails[]>([]);
+  const [isProviderMediaLoading, setIsProviderMediaLoading] = useState<boolean>(false);
 
 
   const [studios] = useState<Studio[]>(popularStudios);
@@ -70,42 +75,49 @@ const App: React.FC = () => {
   const [brandSortBy, setBrandSortBy] = useState<SortBy>('trending');
 
 
-  const checkVpn = useCallback(async () => {
-    setIsVpnBlocked(null); // Set to checking state
-    setUserLocation(null);
-    try {
-      // Add a cache buster to ensure a fresh check
-      const response = await fetch(`https://ipinfo.io/json?token=3a0f3ae3fa17bb&_=${new Date().getTime()}`);
-      if (!response.ok) {
-        throw new Error('VPN check service returned an error.');
-      }
-      const data = await response.json();
-
-      if (data.country) {
-        try {
-          const countryName = new Intl.DisplayNames(['en'], { type: 'region' }).of(data.country);
-          setUserLocation({ name: countryName ?? data.country, code: data.country });
-        } catch (e) {
-          console.error("Could not get country name from code: ", data.country, e);
-          setUserLocation({ name: data.country, code: data.country }); // Fallback to country code
-        }
-      }
-
-      if (data.privacy?.vpn === true) {
-        setIsVpnBlocked(true);
-      } else {
-        setIsVpnBlocked(false);
-      }
-    } catch (error) {
-      console.error('Error checking for VPN:', error);
-      // Fail open: if the check fails for any reason, allow the user to proceed.
-      setIsVpnBlocked(false);
-    }
-  }, []);
-
   useEffect(() => {
-    checkVpn();
-  }, [checkVpn]);
+    const initApp = async () => {
+      setIsVpnBlocked(null);
+      setUserLocation(null);
+      try {
+        const response = await fetch(`https://ipinfo.io/json?token=3a0f3ae3fa17bb&_=${new Date().getTime()}`);
+        if (!response.ok) throw new Error('VPN check service returned an error.');
+        const data = await response.json();
+
+        let loc: UserLocation = { name: 'United States', code: 'US' };
+        if (data.country) {
+          try {
+            const countryName = new Intl.DisplayNames(['en'], { type: 'region' }).of(data.country);
+            loc = { name: countryName ?? data.country, code: data.country };
+          } catch (e) {
+            loc = { name: data.country, code: data.country };
+          }
+        }
+        setUserLocation(loc);
+
+        if (data.privacy?.vpn === true) {
+          setIsVpnBlocked(true);
+        } else {
+          setIsVpnBlocked(false);
+          // Fetch providers now that we have a location
+          const providerIds = await getAvailableWatchProvidersForRegion(loc.code);
+          const available = supportedProviders.filter(p => providerIds.includes(p.id));
+          setAvailableProviders(available);
+        }
+      } catch (error) {
+        console.error('Error checking for VPN/location:', error);
+        setIsVpnBlocked(false);
+        const defaultLoc = { name: 'United States', code: 'US' };
+        setUserLocation(defaultLoc);
+        // Fetch providers for default location
+        const providerIds = await getAvailableWatchProvidersForRegion(defaultLoc.code);
+        const available = supportedProviders.filter(p => providerIds.includes(p.id));
+        setAvailableProviders(available);
+      }
+    };
+
+    initApp();
+  }, []);
 
 
   // Effect for loading primary content based on tab.
@@ -156,27 +168,11 @@ const App: React.FC = () => {
         }
     };
     
-    const loadServiceData = async (service: 'disney' | 'netflix' | 'prime') => {
-        setIsServiceMediaLoading(true);
-        setError(null);
-        try {
-            const media = await getStreamingServiceMedia(service);
-            setServiceMedia(media);
-        } catch (err) {
-            console.error(`Failed to load data for ${service}:`, err);
-            setError(`Could not load content for ${service}. Please try again later.`);
-        } finally {
-            setIsServiceMediaLoading(false);
-        }
-    };
-    
     // Router-like logic to fetch data for the active tab
     if (['home', 'movies', 'tv'].includes(activeTab)) {
         loadHomeAndSharedData();
     } else if (activeTab === 'collections') {
         loadCollectionsData();
-    } else if (['disney', 'netflix', 'prime'].includes(activeTab)) {
-        loadServiceData(activeTab as 'disney' | 'netflix' | 'prime');
     }
   }, [activeTab, isVpnBlocked]);
 
@@ -350,6 +346,31 @@ const App: React.FC = () => {
     setBrandMedia([]);
     setError(null);
   };
+  
+  const handleSelectProvider = useCallback(async (provider: StreamingProviderInfo) => {
+    setIsProviderMediaLoading(true);
+    setSelectedProvider(provider);
+    setProviderMedia([]);
+    setError(null);
+    try {
+        const media = await getMediaByStreamingProvider(provider.key, userLocation?.code || 'US');
+        setProviderMedia(media);
+        if (media.length === 0) {
+            setError(`Could not find popular content for ${provider.name} in your region (${userLocation?.name || 'US'}).`);
+        }
+    } catch (err) {
+        console.error(`Failed to load data for ${provider.name}:`, err);
+        setError(`Could not load content for ${provider.name}. Please try again later.`);
+    } finally {
+        setIsProviderMediaLoading(false);
+    }
+  }, [userLocation]);
+
+  const handleBackToStreaming = () => {
+    setSelectedProvider(null);
+    setProviderMedia([]);
+    setError(null);
+  };
 
   const handleCloseModal = () => {
     setSelectedItem(null);
@@ -369,38 +390,38 @@ const App: React.FC = () => {
     setStudioMedia([]);
     setSelectedBrand(null);
     setBrandMedia([]);
-    setServiceMedia([]);
+    setSelectedProvider(null);
+    setProviderMedia([]);
     setActiveTab(tab);
   };
 
   const renderContent = () => {
     if (isLoading) return <LoadingSpinner />;
-    if (error && recommendations.length === 0 && !selectedStudio && !selectedBrand && !['disney', 'netflix', 'prime'].includes(activeTab)) {
+    if (error && recommendations.length === 0 && !selectedStudio && !selectedBrand && !selectedProvider) {
         return <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>;
     }
     
     if (recommendations.length > 0) {
       return <RecommendationGrid recommendations={recommendations} onSelect={handleSelectMedia} />;
     }
-    
-    if (['disney', 'netflix', 'prime'].includes(activeTab)) {
-        if (isServiceMediaLoading) return <LoadingSpinner />;
-        if (error) return <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>;
 
-        const serviceTitleMap = {
-            disney: 'Highlights from Disney+',
-            netflix: 'Highlights from Netflix',
-            prime: 'Highlights from Prime Video',
-        };
-
-        return (
-            <div className="w-full max-w-7xl fade-in">
-                <h2 className="text-3xl font-bold mb-6">{serviceTitleMap[activeTab as keyof typeof serviceTitleMap]}</h2>
-                <RecommendationGrid recommendations={serviceMedia} onSelect={handleSelectMedia} />
-            </div>
-        )
+    if (activeTab === 'streaming') {
+        if (selectedProvider) {
+            return (
+                 <div className="w-full max-w-7xl fade-in">
+                    <div className="flex items-center gap-4 mb-6">
+                        <button onClick={handleBackToStreaming} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Streaming Services</button>
+                        <h2 className="text-3xl font-bold">{selectedProvider.name}</h2>
+                    </div>
+                    {isProviderMediaLoading && <LoadingSpinner />}
+                    {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-lg mb-4">{error}</div>}
+                    <RecommendationGrid recommendations={providerMedia} onSelect={handleSelectMedia} />
+                </div>
+            )
+        }
+        return <StreamingGrid providers={availableProviders} onSelect={handleSelectProvider} />;
     }
-
+    
     if (activeTab === 'foryou') {
       return <ForYouPage onSelectMedia={handleSelectMedia} />;
     }
@@ -492,6 +513,10 @@ const App: React.FC = () => {
     </div>
   );
 
+  const retryConnection = () => {
+    window.location.reload();
+  };
+
   if (isVpnBlocked === null) {
     return (
       <>
@@ -519,7 +544,7 @@ const App: React.FC = () => {
                     Please disable your VPN or proxy service to continue using WatchNow. Our service requires a direct connection to provide accurate, region-specific content.
                 </p>
                 <button
-                    onClick={checkVpn}
+                    onClick={retryConnection}
                     className="px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-semibold transition-colors duration-300"
                 >
                     Retry Connection

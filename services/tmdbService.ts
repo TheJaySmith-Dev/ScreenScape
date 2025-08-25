@@ -489,3 +489,51 @@ export const getRecommendationsFromTastes = async (likedItems: LikedItem[], disl
         return [];
     }
 };
+
+const STREAMING_PROVIDER_IDS = {
+    disney: 337, // Disney+
+    netflix: 8,
+    prime: 9, // Amazon Prime Video
+};
+
+export const getMediaByStreamingProvider = async (serviceName: keyof typeof STREAMING_PROVIDER_IDS, countryCode: string): Promise<MediaDetails[]> => {
+    const providerId = STREAMING_PROVIDER_IDS[serviceName];
+    if (!providerId) return [];
+
+    try {
+        const moviePromise = fetchTmdbList(`/discover/movie?with_watch_providers=${providerId}&watch_region=${countryCode.toUpperCase()}&sort_by=popularity.desc`, 'movie');
+        const tvPromise = fetchTmdbList(`/discover/tv?with_watch_providers=${providerId}&watch_region=${countryCode.toUpperCase()}&sort_by=popularity.desc`, 'tv');
+
+        const [movies, tvShows] = await Promise.all([moviePromise, tvPromise]);
+        
+        const allMedia = [...movies, ...tvShows];
+        
+        const uniqueMedia = Array.from(new Map(allMedia.map(item => [item.id, item])).values());
+        
+        uniqueMedia.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+        
+        return uniqueMedia.slice(0, 40);
+    } catch (error) {
+        console.error(`Failed to fetch media for provider ID ${providerId}:`, error);
+        return [];
+    }
+};
+
+export const getAvailableWatchProvidersForRegion = async (countryCode: string): Promise<number[]> => {
+    try {
+        const movieProvidersPromise = fetchFromTmdb<any>(`/watch/providers/movie?watch_region=${countryCode.toUpperCase()}`);
+        const tvProvidersPromise = fetchFromTmdb<any>(`/watch/providers/tv?watch_region=${countryCode.toUpperCase()}`);
+        
+        const [movieProviders, tvProviders] = await Promise.all([movieProvidersPromise, tvProvidersPromise]);
+
+        const movieProviderIds = movieProviders.results?.map((p: any) => p.provider_id) || [];
+        const tvProviderIds = tvProviders.results?.map((p: any) => p.provider_id) || [];
+
+        const allIds = new Set([...movieProviderIds, ...tvProviderIds]);
+        
+        return Array.from(allIds);
+    } catch (error) {
+        console.error(`Failed to get available watch providers for region ${countryCode}:`, error);
+        return [];
+    }
+};

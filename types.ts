@@ -120,3 +120,11 @@ export interface WatchProviders {
     rent?: WatchProvider[];
     buy?: WatchProvider[];
 }
+
+export interface StreamingProviderInfo {
+  id: number;
+  key: 'disney' | 'netflix' | 'prime';
+  name: string;
+  logoUrl: string;
+  bgColor?: string;
+}
