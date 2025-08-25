@@ -1,5 +1,3 @@
-import type { User } from 'firebase/auth';
-
 export interface GeminiRecommendation {
   title: string;
   year: number;
@@ -111,7 +109,16 @@ export interface Brand {
   characterCollections: CharacterCollection[];
 }
 
+// New/Modified types for local auth
+export interface User {
+  email: string;
+  displayName: string;
+  photoURL?: string;
+}
+
 export interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
+  login: (email: string) => void;
+  logout: () => void;
 }

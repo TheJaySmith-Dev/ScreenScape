@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { signOut } from 'firebase/auth';
 import { useAuth } from '../hooks/useAuth.ts';
-import { auth } from '../services/firebase.ts';
 import { UserIcon, GlobeIcon } from './icons.tsx';
 import type { UserLocation } from '../types.ts';
 
@@ -11,17 +9,13 @@ interface AccountButtonProps {
 }
 
 export const AccountButton: React.FC<AccountButtonProps> = ({ onSignInClick, userLocation }) => {
-    const { currentUser } = useAuth();
+    const { currentUser, logout } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
-    const handleLogout = async () => {
-        try {
-            await signOut(auth);
-            setIsMenuOpen(false);
-        } catch (error) {
-            console.error("Error signing out: ", error);
-        }
+    const handleLogout = () => {
+        logout();
+        setIsMenuOpen(false);
     };
 
     // Close menu when clicking outside
@@ -49,14 +43,16 @@ export const AccountButton: React.FC<AccountButtonProps> = ({ onSignInClick, use
         );
     }
 
+    const photoURL = currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName)}&background=374151&color=fff`;
+
     return (
         <div className="relative" ref={menuRef}>
             <button
                 onClick={() => setIsMenuOpen(prev => !prev)}
                 className="flex items-center gap-2 p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white font-semibold transition-colors duration-300"
             >
-                {currentUser.photoURL ? (
-                    <img src={currentUser.photoURL} alt="User" className="w-8 h-8 rounded-full" />
+                {photoURL ? (
+                    <img src={photoURL} alt="User" className="w-8 h-8 rounded-full" />
                 ) : (
                     <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center">
                         <UserIcon className="w-5 h-5" />
