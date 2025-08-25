@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, UserLocation } from '../types.ts';
-import { CloseIcon, StarIcon, PlayIcon, TicketIcon } from './icons.tsx';
+import { CloseIcon, StarIcon, PlayIcon, TicketIcon, ThumbsUpIcon, ThumbsDownIcon } from './icons.tsx';
 import { Providers } from './Providers.tsx';
 import { RecommendationCard } from './RecommendationCard.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { getBookingInfo } from '../services/geminiService.ts';
 import { VisionResult } from './VisionResult.tsx';
 import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
+import { usePreferences } from '../hooks/usePreferences.ts';
 
 interface DetailModalProps {
   item: MediaDetails | CollectionDetails;
@@ -42,6 +43,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
     const [visionResult, setVisionResult] = useState<string | null>(null);
     const [visionError, setVisionError] = useState<string | null>(null);
     const [scrollTop, setScrollTop] = useState(0);
+    const { likeItem, dislikeItem, unlistItem, isLiked, isDisliked } = usePreferences();
     
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
@@ -96,6 +98,27 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             }
         }
     };
+    
+    const currentIsLiked = isMediaDetails(item) && isLiked(item.id);
+    const currentIsDisliked = isMediaDetails(item) && isDisliked(item.id);
+
+    const handleLike = () => {
+        if (!isMediaDetails(item)) return;
+        if (currentIsLiked) {
+            unlistItem(item);
+        } else {
+            likeItem(item);
+        }
+    };
+    
+    const handleDislike = () => {
+        if (!isMediaDetails(item)) return;
+        if (currentIsDisliked) {
+            unlistItem(item);
+        } else {
+            dislikeItem(item);
+        }
+    };
 
   const renderWatchNowVision = () => {
       if (!isMediaDetails(item) || item.type !== 'movie' || !userLocation) return null;
@@ -126,17 +149,41 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
 
   const renderMediaContent = (media: MediaDetails) => (
     <>
-        {!isLoading && media.trailerUrl && (
-          <div className="mb-6">
-            <button
-                onClick={handleWatchTrailer}
-                className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-semibold transition-colors duration-300"
-            >
-                <PlayIcon className="w-6 h-6" />
-                <span>Watch Trailer</span>
-            </button>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-4 mb-6">
+            {!isLoading && media.trailerUrl && (
+                <button
+                    onClick={handleWatchTrailer}
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-semibold transition-colors duration-300"
+                >
+                    <PlayIcon className="w-6 h-6" />
+                    <span>Watch Trailer</span>
+                </button>
+            )}
+            <div className="flex items-center gap-2">
+                <button
+                    onClick={handleLike}
+                    aria-label={currentIsLiked ? "Unlike" : "Like"}
+                    className={`p-3 rounded-full border transition-colors duration-300 ${
+                        currentIsLiked 
+                        ? 'bg-green-500/20 border-green-500 text-green-400'
+                        : 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/20 hover:text-white'
+                    }`}
+                >
+                    <ThumbsUpIcon className="w-6 h-6"/>
+                </button>
+                <button
+                    onClick={handleDislike}
+                    aria-label={currentIsDisliked ? "Remove dislike" : "Dislike"}
+                    className={`p-3 rounded-full border transition-colors duration-300 ${
+                        currentIsDisliked
+                        ? 'bg-red-500/20 border-red-500 text-red-400'
+                        : 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/20 hover:text-white'
+                    }`}
+                >
+                    <ThumbsDownIcon className="w-6 h-6"/>
+                </button>
+            </div>
+        </div>
         
         {isLoading && !media.cast && <div className="mt-6 flex justify-center"><LoadingSpinner /></div>}
 

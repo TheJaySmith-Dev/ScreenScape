@@ -30,9 +30,10 @@ import { BrandGrid } from './components/BrandGrid.tsx';
 import { BrandDetail } from './components/BrandDetail.tsx';
 import { AccountButton } from './components/AccountButton.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
+import { ForYouPage } from './components/ForYouPage.tsx';
 
 
-type ActiveTab = 'home' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands';
+type ActiveTab = 'home' | 'foryou' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands';
 type MediaTypeFilter = 'all' | 'movie' | 'show' | 'short';
 type SortBy = 'trending' | 'newest';
 
@@ -366,6 +367,10 @@ const App: React.FC = () => {
     
     if (recommendations.length > 0) {
       return <RecommendationGrid recommendations={recommendations} onSelect={handleSelectMedia} />;
+    }
+
+    if (activeTab === 'foryou') {
+      return <ForYouPage onSelectMedia={handleSelectMedia} />;
     }
 
     if (activeTab === 'studios') {
