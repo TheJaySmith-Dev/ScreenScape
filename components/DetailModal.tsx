@@ -74,7 +74,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
     const [scrollTop, setScrollTop] = useState(0);
     const { likeItem, dislikeItem, unlistItem, isLiked, isDisliked } = usePreferences();
     
-    // Effect for keyboard shortcuts and scroll locking
+    // Effect for keyboard shortcuts and robust scroll locking
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
@@ -86,14 +86,38 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             }
         };
         window.addEventListener('keydown', handleEsc);
-        
-        // Simpler, more reliable scroll lock
-        const originalStyle = window.getComputedStyle(document.body).overflow;
-        document.body.style.overflow = 'hidden';
+
+        // --- START OF NEW SCROLL LOCK LOGIC ---
+        const body = document.body;
+        // Save original styles
+        const originalBodyOverflow = body.style.overflow;
+        const originalBodyPosition = body.style.position;
+        const originalBodyTop = body.style.top;
+        const originalBodyWidth = body.style.width;
+
+        // Get current scroll position
+        const scrollY = window.scrollY;
+
+        // Apply scroll lock styles
+        body.style.overflow = 'hidden';
+        body.style.position = 'fixed';
+        body.style.top = `-${scrollY}px`;
+        body.style.width = '100%';
+        // --- END OF NEW SCROLL LOCK LOGIC ---
 
         return () => {
             window.removeEventListener('keydown', handleEsc);
-            document.body.style.overflow = originalStyle;
+            
+            // --- START OF RESTORE LOGIC ---
+            // Restore original styles
+            body.style.overflow = originalBodyOverflow;
+            body.style.position = originalBodyPosition;
+            body.style.top = originalBodyTop;
+            body.style.width = originalBodyWidth;
+
+            // Restore scroll position
+            window.scrollTo(0, scrollY);
+            // --- END OF RESTORE LOGIC ---
         };
     }, [onClose, trailerVideoId]);
 
