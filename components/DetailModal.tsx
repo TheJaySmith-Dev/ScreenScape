@@ -74,7 +74,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
     const [scrollTop, setScrollTop] = useState(0);
     const { likeItem, dislikeItem, unlistItem, isLiked, isDisliked } = usePreferences();
     
-    // Effect for keyboard shortcuts
+    // Effect for keyboard shortcuts and scroll locking
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
@@ -86,39 +86,16 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             }
         };
         window.addEventListener('keydown', handleEsc);
+        
+        // Simpler, more reliable scroll lock
+        const originalStyle = window.getComputedStyle(document.body).overflow;
+        document.body.style.overflow = 'hidden';
+
         return () => {
             window.removeEventListener('keydown', handleEsc);
+            document.body.style.overflow = originalStyle;
         };
     }, [onClose, trailerVideoId]);
-
-    // Robust scroll lock effect for mobile and desktop
-    useEffect(() => {
-        const scrollY = window.scrollY;
-        const body = document.body;
-        
-        // Save original styles
-        const originalPosition = body.style.position;
-        const originalTop = body.style.top;
-        const originalWidth = body.style.width;
-        const originalOverflow = body.style.overflow;
-
-        // Apply new styles to lock scroll
-        body.style.position = 'fixed';
-        body.style.top = `-${scrollY}px`;
-        body.style.width = '100%';
-        body.style.overflow = 'hidden';
-
-        return () => {
-            // Restore original styles
-            body.style.position = originalPosition;
-            body.style.top = originalTop;
-            body.style.width = originalWidth;
-            body.style.overflow = originalOverflow;
-            
-            // Restore scroll position
-            window.scrollTo(0, scrollY);
-        };
-    }, []); // Empty dependency array ensures this runs only on mount and unmount
 
 
     const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
@@ -324,7 +301,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
 
           <div 
             className="w-full h-full overflow-y-auto overscroll-contain"
-            style={{ scrollbarWidth: 'thin' }}
+            style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'thin' }}
             onScroll={handleScroll}
           >
             {/* Spacer to push content below header */}
