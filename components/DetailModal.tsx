@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useState } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders } from '../types.ts';
 import { CloseIcon, StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon } from './icons.tsx';
@@ -84,13 +85,20 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             }
         };
         window.addEventListener('keydown', handleEsc);
+
+        // Robust scroll lock to prevent background scrolling on mobile
+        const originalHtmlOverflow = document.documentElement.style.overflow;
+        const originalBodyOverflow = document.body.style.overflow;
+        
+        document.documentElement.style.overflow = 'hidden';
         document.body.style.overflow = 'hidden';
 
         return () => {
             window.removeEventListener('keydown', handleEsc);
-            document.body.style.overflow = 'auto';
+            document.documentElement.style.overflow = originalHtmlOverflow;
+            document.body.style.overflow = originalBodyOverflow;
         };
-    }, [onClose, trailerVideoId, item]);
+    }, [onClose, trailerVideoId]);
 
     const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
       setScrollTop(event.currentTarget.scrollTop);
