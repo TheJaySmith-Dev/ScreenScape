@@ -439,9 +439,9 @@ const App: React.FC = () => {
     setError(null);
   };
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setSelectedItem(null);
-  };
+  }, []);
 
   const clearSearch = () => {
     setRecommendations([]);

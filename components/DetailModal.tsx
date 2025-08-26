@@ -74,52 +74,49 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
     const [scrollTop, setScrollTop] = useState(0);
     const { likeItem, dislikeItem, unlistItem, isLiked, isDisliked } = usePreferences();
     
-    // Effect for keyboard shortcuts and robust scroll locking
+    // Effect for keyboard shortcuts
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
                 if (trailerVideoId) {
-                    setTrailerVideoId(null);
+                    setTrailerVideoId(null); // Close trailer first if open
                 } else {
                     onClose();
                 }
             }
         };
         window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [onClose, trailerVideoId]);
 
-        // --- START OF NEW SCROLL LOCK LOGIC ---
+    // Effect for robust scroll locking
+    useEffect(() => {
         const body = document.body;
-        // Save original styles
-        const originalBodyOverflow = body.style.overflow;
-        const originalBodyPosition = body.style.position;
-        const originalBodyTop = body.style.top;
-        const originalBodyWidth = body.style.width;
-
-        // Get current scroll position
         const scrollY = window.scrollY;
+        
+        // Save original styles
+        const originalOverflow = body.style.overflow;
+        const originalPosition = body.style.position;
+        const originalTop = body.style.top;
+        const originalWidth = body.style.width;
 
-        // Apply scroll lock styles
+        // Apply scroll lock
         body.style.overflow = 'hidden';
-        body.style.position = 'fixed';
+        body.style.position = 'fixed'; // Using 'fixed' is key for iOS
         body.style.top = `-${scrollY}px`;
         body.style.width = '100%';
-        // --- END OF NEW SCROLL LOCK LOGIC ---
 
         return () => {
-            window.removeEventListener('keydown', handleEsc);
-            
-            // --- START OF RESTORE LOGIC ---
             // Restore original styles
-            body.style.overflow = originalBodyOverflow;
-            body.style.position = originalBodyPosition;
-            body.style.top = originalBodyTop;
-            body.style.width = originalBodyWidth;
-
+            body.style.overflow = originalOverflow;
+            body.style.position = originalPosition;
+            body.style.top = originalTop;
+            body.style.width = originalWidth;
+            
             // Restore scroll position
             window.scrollTo(0, scrollY);
-            // --- END OF RESTORE LOGIC ---
         };
-    }, [onClose, trailerVideoId]);
+    }, []); // Empty dependency array ensures this runs only on mount/unmount of modal
 
 
     const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
@@ -324,8 +321,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
           </header>
 
           <div 
-            className="w-full h-full overflow-y-auto overscroll-contain"
-            style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'thin' }}
+            className="w-full h-full overflow-y-auto"
+            style={{ WebkitOverflowScrolling: 'touch' }}
             onScroll={handleScroll}
           >
             {/* Spacer to push content below header */}
