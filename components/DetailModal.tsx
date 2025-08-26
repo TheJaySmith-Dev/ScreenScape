@@ -1,6 +1,6 @@
 
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders } from '../types.ts';
 import { CloseIcon, StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon } from './icons.tsx';
 import { RecommendationCard } from './RecommendationCard.tsx';
@@ -74,6 +74,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
     const [scrollTop, setScrollTop] = useState(0);
     const { likeItem, dislikeItem, unlistItem, isLiked, isDisliked } = usePreferences();
     
+    // Effect for keyboard shortcuts
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
@@ -85,20 +86,40 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             }
         };
         window.addEventListener('keydown', handleEsc);
-
-        // Robust scroll lock to prevent background scrolling on mobile
-        const originalHtmlOverflow = document.documentElement.style.overflow;
-        const originalBodyOverflow = document.body.style.overflow;
-        
-        document.documentElement.style.overflow = 'hidden';
-        document.body.style.overflow = 'hidden';
-
         return () => {
             window.removeEventListener('keydown', handleEsc);
-            document.documentElement.style.overflow = originalHtmlOverflow;
-            document.body.style.overflow = originalBodyOverflow;
         };
     }, [onClose, trailerVideoId]);
+
+    // Robust scroll lock effect for mobile and desktop
+    useEffect(() => {
+        const scrollY = window.scrollY;
+        const body = document.body;
+        
+        // Save original styles
+        const originalPosition = body.style.position;
+        const originalTop = body.style.top;
+        const originalWidth = body.style.width;
+        const originalOverflow = body.style.overflow;
+
+        // Apply new styles to lock scroll
+        body.style.position = 'fixed';
+        body.style.top = `-${scrollY}px`;
+        body.style.width = '100%';
+        body.style.overflow = 'hidden';
+
+        return () => {
+            // Restore original styles
+            body.style.position = originalPosition;
+            body.style.top = originalTop;
+            body.style.width = originalWidth;
+            body.style.overflow = originalOverflow;
+            
+            // Restore scroll position
+            window.scrollTo(0, scrollY);
+        };
+    }, []); // Empty dependency array ensures this runs only on mount and unmount
+
 
     const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
       setScrollTop(event.currentTarget.scrollTop);
