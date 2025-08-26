@@ -1,3 +1,4 @@
+
 import type { StreamingProviderInfo } from '../types.ts';
 
 // Logos from TMDb with w500 size
@@ -35,12 +36,3 @@ export const supportedProviders: StreamingProviderInfo[] = [
     hoverGifUrl: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ3N0a2l4bHljYjU2dWNuaGhyNjJ0b2NtcXVpODN1OTZzcjVjZ2xidCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o72F5tx9CEdwAwg12/giphy.gif'
   },
 ];
-
-export const showmaxProvider: StreamingProviderInfo = {
-    id: 175,
-    key: 'showmax',
-    name: 'Showmax',
-    logoUrl: 'https://image.tmdb.org/t/p/w500/aHgS1gTjWn3GzS3f22f26Jd2dCs.jpg',
-    bgColor: '#000000',
-    hoverGifUrl: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdXRjZXVlZzVld3oyZ3U1eWJzZ2h4b3k3N3k2ZWxnbjJrcDk2Z2x2biZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l41lNx6T12t2t8812/giphy.gif'
-};

@@ -11,7 +11,7 @@ export const CollectionCard: React.FC<CollectionCardProps> = ({ collection, onSe
   return (
     <div
       onClick={onSelect}
-      className="group cursor-pointer rounded-xl overflow-hidden bg-black/30 backdrop-blur-sm border border-white/10 hover:border-white/30 hover:bg-black/50 transition-all duration-300 transform hover:-translate-y-1"
+      className="group relative cursor-pointer rounded-xl overflow-hidden bg-black/30 backdrop-blur-sm border border-white/10 hover:border-white/30 hover:bg-black/50 transition-all duration-300 transform hover:-translate-y-1"
     >
       <div className="aspect-[2/3] w-full">
         <img
@@ -21,8 +21,9 @@ export const CollectionCard: React.FC<CollectionCardProps> = ({ collection, onSe
           loading="lazy"
         />
       </div>
-      <div className="p-3">
-        <h3 className="text-white font-semibold truncate group-hover:text-blue-300 transition-colors duration-300">
+      
+      <div className="absolute inset-0 flex flex-col justify-end p-3 bg-gradient-to-t from-black/80 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+        <h3 className="text-white font-semibold truncate">
           {collection.name}
         </h3>
       </div>

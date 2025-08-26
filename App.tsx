@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -11,13 +12,16 @@ import {
   getPopularMovies,
   getPopularTv,
   getNowPlayingMovies,
+  getTopRatedMovies,
+  getTopRatedTv,
   getMovieCollections,
   getMediaByStudio,
   searchTmdb,
   getMediaByStreamingProvider,
   getMediaByNetwork,
+  fetchActorDetails,
 } from './services/tmdbService.ts';
-import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network } from './types.ts';
+import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network, ActorDetails } from './types.ts';
 import { popularStudios } from './services/studioService.ts';
 import { brands as allBrands } from './services/brandService.ts';
 import { DetailModal } from './components/DetailModal.tsx';
@@ -29,14 +33,15 @@ import { BrandDetail } from './components/BrandDetail.tsx';
 import { AccountButton } from './components/AccountButton.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
 import { ForYouPage } from './components/ForYouPage.tsx';
-import { supportedProviders, showmaxProvider } from './services/streamingService.ts';
+import { supportedProviders } from './services/streamingService.ts';
 import { StreamingGrid } from './components/StreamingGrid.tsx';
 import { popularNetworks } from './services/networkService.ts';
 import { NetworkGrid } from './components/NetworkGrid.tsx';
-import { ShowmaxHub } from './components/ShowmaxHub.tsx';
+import { ActorPage } from './components/ActorPage.tsx';
+import { WatchlistPage } from './components/WatchlistPage.tsx';
 
 
-type ActiveTab = 'home' | 'foryou' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming' | 'networks';
+type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming' | 'networks';
 type MediaTypeFilter = 'all' | 'movie' | 'show' | 'short';
 type SortBy = 'trending' | 'newest';
 
@@ -80,6 +85,9 @@ const App: React.FC = () => {
   const [selectedNetwork, setSelectedNetwork] = useState<Network | null>(null);
   const [networkMedia, setNetworkMedia] = useState<MediaDetails[]>([]);
 
+  // State for Actor pages
+  const [selectedActor, setSelectedActor] = useState<ActorDetails | null>(null);
+
 
   useEffect(() => {
     const initApp = async () => {
@@ -105,12 +113,7 @@ const App: React.FC = () => {
           setIsVpnBlocked(true);
         } else {
           setIsVpnBlocked(false);
-          const providers = [...supportedProviders];
-          // Add Showmax only for South African users
-          if (loc.code === 'ZA') {
-              providers.push(showmaxProvider);
-          }
-          setAvailableProviders(providers);
+          setAvailableProviders(supportedProviders);
         }
       } catch (error) {
         console.error('Error checking for VPN/location:', error);
@@ -118,11 +121,7 @@ const App: React.FC = () => {
         const defaultLoc = { name: 'United States', code: 'US' };
         setUserLocation(defaultLoc);
         // Fallback to showing curated providers on error
-        const providers = [...supportedProviders];
-        if (defaultLoc.code === 'ZA') { // Should not happen, but for safety
-          providers.push(showmaxProvider);
-        }
-        setAvailableProviders(providers);
+        setAvailableProviders(supportedProviders);
       }
     };
 
@@ -143,17 +142,23 @@ const App: React.FC = () => {
           popularMovies, 
           popularTv, 
           nowPlayingMovies,
+          topRatedMovies,
+          topRatedTv,
         ] = await Promise.all([
           getTrending(),
           getPopularMovies(),
           getPopularTv(),
           getNowPlayingMovies(),
+          getTopRatedMovies(),
+          getTopRatedTv(),
         ]);
         
         const sections = [];
         if (trending.length > 0) sections.push({ title: 'Trending This Week', items: trending, type: 'mixed' as const });
         if (popularMovies.length > 0) sections.push({ title: 'Popular Movies', items: popularMovies, type: 'movie' as const });
+        if (topRatedMovies.length > 0) sections.push({ title: 'Critically Acclaimed Movies', items: topRatedMovies, type: 'movie' as const });
         if (popularTv.length > 0) sections.push({ title: 'Popular TV Shows', items: popularTv, type: 'tv' as const });
+        if (topRatedTv.length > 0) sections.push({ title: 'Critically Acclaimed TV Shows', items: topRatedTv, type: 'tv' as const });
         if (nowPlayingMovies.length > 0) sections.push({ title: 'Now Playing in Theaters', items: nowPlayingMovies, type: 'movie' as const });
         setHomeSections(sections);
       } catch (err) {
@@ -194,6 +199,7 @@ const App: React.FC = () => {
     setError(null);
     setRecommendations([]);
     setSelectedItem(null);
+    setSelectedActor(null);
     setActiveTab('home');
 
     try {
@@ -213,6 +219,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleSelectMedia = useCallback(async (media: MediaDetails) => {
+    setSelectedActor(null);
     setSelectedItem(media);
     setIsModalLoading(true);
   
@@ -231,6 +238,7 @@ const App: React.FC = () => {
   }, [userLocation]);
 
   const handleSelectCollection = useCallback(async (collection: Collection) => {
+    setSelectedActor(null);
     setSelectedItem({ ...collection, overview: '', parts: [] });
     setIsModalLoading(true);
     try {
@@ -247,6 +255,7 @@ const App: React.FC = () => {
 
   const handleSelectStudio = useCallback(async (studio: Studio) => {
     setIsLoading(true);
+    setSelectedActor(null);
     setSelectedStudio(studio);
     setStudioMedia([]);
     setError(null);
@@ -304,6 +313,7 @@ const App: React.FC = () => {
   
   const handleSelectBrand = useCallback(async (brand: Brand) => {
     setIsLoading(true);
+    setSelectedActor(null);
     setSelectedBrand(brand);
     setBrandMedia([]);
     setError(null);
@@ -358,13 +368,10 @@ const App: React.FC = () => {
   };
   
   const handleSelectProvider = useCallback(async (provider: StreamingProviderInfo) => {
+    setSelectedActor(null);
     setSelectedProvider(provider);
     setProviderMedia([]);
     setError(null);
-    
-    if (provider.key === 'showmax') {
-        return; // The ShowmaxHub component has its own loading logic
-    }
 
     setIsProviderMediaLoading(true);
     try {
@@ -389,6 +396,7 @@ const App: React.FC = () => {
 
   const handleSelectNetwork = useCallback(async (network: Network) => {
     setIsLoading(true);
+    setSelectedActor(null);
     setSelectedNetwork(network);
     setNetworkMedia([]);
     setError(null);
@@ -406,6 +414,28 @@ const App: React.FC = () => {
   const handleBackToNetworks = () => {
     setSelectedNetwork(null);
     setNetworkMedia([]);
+    setError(null);
+  };
+
+  const handleSelectActor = useCallback(async (actorId: number) => {
+    setIsLoading(true);
+    setSelectedActor(null);
+    setError(null);
+    setSelectedItem(null); // Close current media/collection modal
+    
+    try {
+        const actorDetails = await fetchActorDetails(actorId);
+        setSelectedActor(actorDetails);
+    } catch (err) {
+        console.error(`Failed to load details for actor ${actorId}:`, err);
+        setError(`Could not load actor details. Please try again later.`);
+    } finally {
+        setIsLoading(false);
+    }
+  }, []);
+
+  const handleBackFromActor = () => {
+    setSelectedActor(null);
     setError(null);
   };
 
@@ -431,10 +461,21 @@ const App: React.FC = () => {
     setProviderMedia([]);
     setSelectedNetwork(null);
     setNetworkMedia([]);
+    setSelectedActor(null);
     setActiveTab(tab);
   };
 
   const renderContent = () => {
+    if (selectedActor) {
+      return (
+        <ActorPage
+          actor={selectedActor}
+          onBack={handleBackFromActor}
+          onSelectMedia={handleSelectMedia}
+        />
+      );
+    }
+
     if (isLoading) return <LoadingSpinner />;
     if (error && recommendations.length === 0 && !selectedStudio && !selectedBrand && !selectedProvider && !selectedNetwork) {
         return <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>;
@@ -444,226 +485,163 @@ const App: React.FC = () => {
       return <RecommendationGrid recommendations={recommendations} onSelect={handleSelectMedia} />;
     }
 
-    if (activeTab === 'streaming') {
-        if (selectedProvider) {
-            if (selectedProvider.key === 'showmax') {
-                return (
-                    <ShowmaxHub
-                        provider={selectedProvider}
-                        onBack={handleBackToStreaming}
-                        onSelectMedia={handleSelectMedia}
-                        userLocation={userLocation}
-                    />
-                );
-            }
-            return (
-                 <div className="w-full max-w-7xl fade-in">
-                    <div className="flex items-center gap-4 mb-6">
-                        <button onClick={handleBackToStreaming} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Streaming Services</button>
-                        <h2 className="text-3xl font-bold">{selectedProvider.name}</h2>
-                    </div>
-                    {isProviderMediaLoading && <LoadingSpinner />}
-                    {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-lg mb-4">{error}</div>}
-                    <RecommendationGrid recommendations={providerMedia} onSelect={handleSelectMedia} />
-                </div>
-            )
-        }
-        return <StreamingGrid providers={availableProviders} onSelect={handleSelectProvider} />;
-    }
-
-    if (activeTab === 'networks') {
-        if (selectedNetwork) {
-            return (
-                <div className="w-full max-w-7xl fade-in">
-                    <div className="flex items-center gap-4 mb-6">
-                        <button onClick={handleBackToNetworks} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Networks</button>
-                        <h2 className="text-3xl font-bold">{selectedNetwork.name}</h2>
-                    </div>
-                    {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-lg mb-4">{error}</div>}
-                    <RecommendationGrid recommendations={networkMedia} onSelect={handleSelectMedia} />
-                </div>
-            )
-        }
-        return <NetworkGrid networks={networks} onSelect={handleSelectNetwork} />;
-    }
-    
-    if (activeTab === 'foryou') {
-      return <ForYouPage onSelectMedia={handleSelectMedia} />;
-    }
-
-    if (activeTab === 'studios') {
-        if (selectedStudio) {
-            return (
-                <div className="w-full max-w-7xl fade-in">
-                    <div className="flex items-center gap-4 mb-6">
-                        <button onClick={handleBackToStudios} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Studios</button>
-                        <h2 className="text-3xl font-bold">{selectedStudio.name}</h2>
-                    </div>
-                    <StudioFilters 
-                      mediaTypeFilter={studioMediaTypeFilter}
-                      setMediaTypeFilter={setStudioMediaTypeFilter}
-                      sortBy={studioSortBy}
-                      setSortBy={setStudioSortBy}
-                    />
-                    {error && <div className="text-red-400 bg-red-900/50 p-4 rounded-lg mb-4">{error}</div>}
-                    <RecommendationGrid recommendations={displayedStudioMedia} onSelect={handleSelectMedia} />
-                </div>
-            )
-        }
-        return <StudioGrid studios={studios} onSelect={handleSelectStudio} />;
-    }
-
-    if (activeTab === 'brands') {
-        if (selectedBrand) {
-            return (
-                <BrandDetail
-                    brand={selectedBrand}
-                    media={displayedBrandMedia}
-                    mediaTypeFilter={brandMediaTypeFilter}
-                    setMediaTypeFilter={setBrandMediaTypeFilter}
-                    sortBy={brandSortBy}
-                    setSortBy={setBrandSortBy}
-                    onBack={handleBackToBrands}
-                    onSelectMedia={handleSelectMedia}
-                    onSelectCollection={handleSelectCollection}
-                />
-            );
-        }
-        return <BrandGrid brands={brands} onSelect={handleSelectBrand} />;
-    }
-    
-    if (isHomeLoading && homeSections.length === 0 && collections.length === 0) return <LoadingSpinner />;
-
-    if (activeTab === 'collections') {
-      return <CollectionGrid collections={collections} onSelect={handleSelectCollection} />;
-    }
-    
-    const filteredSections = homeSections.filter(section => {
-      if (activeTab === 'home') return true;
-      if (activeTab === 'movies') return section.type === 'movie';
-      if (activeTab === 'tv') return section.type === 'tv';
-      return false;
-    });
-
-    if (filteredSections.length > 0) {
+    if (selectedStudio) {
       return (
-        <div className="w-full max-w-7xl flex flex-col gap-8 md:gap-12 fade-in">
-          {filteredSections.map((section, index) => (
-            <MediaRow 
-              key={section.title} 
-              title={section.title} 
-              items={section.items} 
-              onSelect={handleSelectMedia}
-              animationDelay={`${index * 150}ms`}
+        <div className="w-full max-w-7xl">
+            <div className="flex items-center gap-4 mb-6">
+                <button onClick={handleBackToStudios} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Studios</button>
+                <h2 className="text-3xl font-bold">{selectedStudio.name}</h2>
+            </div>
+            <StudioFilters
+              mediaTypeFilter={studioMediaTypeFilter}
+              setMediaTypeFilter={setStudioMediaTypeFilter}
+              sortBy={studioSortBy}
+              setSortBy={setStudioSortBy}
             />
-          ))}
+            <RecommendationGrid recommendations={displayedStudioMedia} onSelect={handleSelectMedia} />
         </div>
       );
     }
-    
-    return (
-      <div className="text-center text-gray-400">
-        <p>What are you in the mood for?</p>
-        <p className="text-sm">e.g., "The Matrix", "Stranger Things", etc.</p>
-      </div>
-    );
-  };
-  
-  const renderBackground = () => (
-    <div 
-      className="fixed inset-0 z-[-1] bg-cover bg-center bg-no-repeat" 
-      style={{ backgroundImage: "url('https://picsum.photos/seed/watchnowbg/1920/1080')" }}
-    >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-2xl"></div>
-    </div>
-  );
 
-  const retryConnection = () => {
-    window.location.reload();
-  };
+    if (selectedBrand) {
+        return <BrandDetail 
+            brand={selectedBrand} 
+            media={displayedBrandMedia}
+            mediaTypeFilter={brandMediaTypeFilter}
+            setMediaTypeFilter={setBrandMediaTypeFilter}
+            sortBy={brandSortBy}
+            setSortBy={setBrandSortBy}
+            onBack={handleBackToBrands}
+            onSelectMedia={handleSelectMedia}
+            onSelectCollection={handleSelectCollection}
+        />;
+    }
 
-  if (isVpnBlocked === null) {
-    return (
-      <>
-        {renderBackground()}
-        <div className="min-h-screen flex items-center justify-center">
-            <LoadingSpinner />
+    if (selectedProvider) {
+      return (
+        <div className="w-full max-w-7xl">
+          <div className="flex items-center gap-4 mb-6">
+            <button onClick={handleBackToStreaming} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Services</button>
+            <h2 className="text-3xl font-bold">{selectedProvider.name}</h2>
+          </div>
+          {isProviderMediaLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={providerMedia} onSelect={handleSelectMedia} />}
         </div>
-      </>
-    );
-  }
+      );
+    }
 
-  if (isVpnBlocked) {
-    return (
-      <>
-        {renderBackground()}
-        <main className="min-h-screen flex flex-col items-center justify-center text-center p-4">
-            <div className="bg-gray-900/50 border border-white/20 rounded-2xl p-8 backdrop-blur-lg max-w-md w-full fade-in">
-                <h1 className="text-3xl font-bold text-red-400 mb-4">VPN Detected</h1>
-                {userLocation?.name && (
-                    <p className="text-gray-400 mb-4">
-                        Connection from: {userLocation.name}
-                    </p>
-                )}
-                <p className="text-gray-300 mb-6">
-                    Please disable your VPN or proxy service to continue using WatchNow. Our service requires a direct connection to provide accurate, region-specific content.
-                </p>
-                <button
-                    onClick={retryConnection}
-                    className="px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-semibold transition-colors duration-300"
-                >
-                    Retry Connection
-                </button>
-            </div>
-        </main>
-      </>
-    );
-  }
+    if (selectedNetwork) {
+      return (
+        <div className="w-full max-w-7xl">
+          <div className="flex items-center gap-4 mb-6">
+            <button onClick={handleBackToNetworks} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Networks</button>
+            <h2 className="text-3xl font-bold">{selectedNetwork.name}</h2>
+          </div>
+          <RecommendationGrid recommendations={networkMedia} onSelect={handleSelectMedia} />
+        </div>
+      );
+    }
 
+    switch(activeTab) {
+      case 'home':
+      case 'movies':
+      case 'tv': {
+        if (isHomeLoading) return <LoadingSpinner />;
+        
+        let filteredSections = homeSections;
+        if (activeTab === 'movies') {
+            filteredSections = homeSections.filter(s => s.type === 'movie' || s.title === 'Trending This Week');
+        } else if (activeTab === 'tv') {
+            filteredSections = homeSections.filter(s => s.type === 'tv' || s.title === 'Trending This Week');
+        }
+
+        return (
+          <div className="w-full max-w-7xl flex flex-col gap-8 md:gap-12">
+            {filteredSections.map((section, index) => (
+                <MediaRow 
+                    key={section.title} 
+                    title={section.title} 
+                    items={section.items} 
+                    onSelect={handleSelectMedia}
+                    animationDelay={`${index * 150}ms`}
+                />
+            ))}
+          </div>
+        );
+      }
+      case 'collections':
+        return isHomeLoading ? <LoadingSpinner /> : <CollectionGrid collections={collections} onSelect={handleSelectCollection} />;
+      case 'studios':
+        return <StudioGrid studios={studios} onSelect={handleSelectStudio} />;
+      case 'brands':
+        return <BrandGrid brands={brands} onSelect={handleSelectBrand} />;
+      case 'foryou':
+        return <ForYouPage onSelectMedia={handleSelectMedia} />;
+      case 'streaming':
+        return <StreamingGrid providers={availableProviders} onSelect={handleSelectProvider} />;
+      case 'networks':
+        return <NetworkGrid networks={networks} onSelect={handleSelectNetwork} />;
+      case 'watchlist':
+        return <WatchlistPage onSelectMedia={handleSelectMedia} />;
+      default:
+        return <p>Welcome!</p>;
+    }
+  };
 
   return (
-    <>
-      {renderBackground()}
+    <div className="bg-gray-900 text-white min-h-screen font-sans">
+      {isVpnBlocked === true && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="max-w-md text-center bg-gray-800 p-8 rounded-2xl border border-red-500/50">
+            <h2 className="text-2xl font-bold text-red-400 mb-4">VPN/Proxy Detected</h2>
+            <p className="text-gray-300">
+              This service is not available when using a VPN or proxy. Please disable it and refresh the page to continue.
+            </p>
+          </div>
+        </div>
+      )}
+      {isVpnBlocked === null && (
+         <div className="fixed inset-0 bg-gray-900 z-[100] flex items-center justify-center">
+            <LoadingSpinner />
+         </div>
+      )}
 
-      <main className="container mx-auto px-4 py-8 min-h-screen flex flex-col items-center">
-        <header className="w-full max-w-4xl mb-8 flex justify-between items-center">
-            <div>
-                <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tight bg-gradient-to-r from-white to-gray-400 text-transparent bg-clip-text cursor-pointer" onClick={() => { handleTabChange('home')}}>
-                    WatchNow
-                </h1>
-                <p className="text-gray-300 text-lg">Discover movies & TV shows.</p>
-            </div>
-            <AccountButton
-                onSignInClick={() => setIsAuthModalOpen(true)}
-                userLocation={userLocation}
-            />
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <header className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3">
+             <svg className="w-10 h-10 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 4h-4l-4-4-4 4H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H4V6h4.52l4-4 4 4H20v14zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+            </svg>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight cursor-pointer" onClick={() => handleTabChange('home')}>WatchNow</h1>
+          </div>
+          <AccountButton onSignInClick={() => setIsAuthModalOpen(true)} userLocation={userLocation} />
         </header>
-        
-        <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
 
-        <div className="w-full max-w-2xl my-8">
-          <SearchBar onSearch={handleSearch} isLoading={isLoading} />
+        <div className="mb-8 flex justify-center">
+           <SearchBar onSearch={handleSearch} isLoading={isLoading} />
         </div>
 
-        {renderContent()}
-
-        {selectedItem && (
-          <DetailModal 
-            item={selectedItem} 
-            onClose={handleCloseModal} 
-            isLoading={isModalLoading}
-            onSelectMedia={handleSelectMedia}
-            userLocation={userLocation}
-          />
-        )}
+        <div className="mb-8 flex justify-center">
+            <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+        </div>
         
-        <AuthModal 
-            isOpen={isAuthModalOpen}
-            onClose={() => setIsAuthModalOpen(false)}
-        />
-        
+        <div className="flex justify-center">
+            {renderContent()}
+        </div>
       </main>
-    </>
+
+      {selectedItem && (
+        <DetailModal 
+          item={selectedItem} 
+          onClose={handleCloseModal} 
+          isLoading={isModalLoading}
+          onSelectMedia={handleSelectMedia}
+          onSelectActor={handleSelectActor}
+          userLocation={userLocation}
+        />
+      )}
+
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+    </div>
   );
 };
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import type { ExternalRatings as ExternalRatingsType } from '../types.ts';
-import { ImdbIcon, FreshTomatometerIcon, RottenTomatometerIcon } from './icons.tsx';
+import { FreshTomatometerIcon, RottenTomatometerIcon } from './icons.tsx';
 
 interface ExternalRatingsProps {
   ratings?: ExternalRatingsType;
@@ -36,13 +36,6 @@ export const ExternalRatings: React.FC<ExternalRatingsProps> = ({ ratings }) => 
     
     return (
         <div className="flex flex-wrap items-stretch gap-3">
-            {ratings.imdb && (
-                <RatingItem 
-                    icon={<ImdbIcon className="w-8 h-8 text-yellow-400" />}
-                    value={ratings.imdb}
-                    label="IMDb"
-                />
-            )}
             {rottenTomatoesValue !== null && !isNaN(rottenTomatoesValue) && (
                 <RatingItem 
                     icon={rottenTomatoesValue >= 60 

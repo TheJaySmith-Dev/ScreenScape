@@ -36,9 +36,6 @@ export const fetchOmdbDetails = async (imdbId: string): Promise<Partial<MediaDet
         }
 
         const otherRatings: ExternalRatings = {};
-        if (data.imdbRating && data.imdbRating !== 'N/A') {
-            otherRatings.imdb = data.imdbRating;
-        }
 
         if (data.Ratings) {
             data.Ratings.forEach(rating => {

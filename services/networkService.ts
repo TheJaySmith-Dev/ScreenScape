@@ -33,15 +33,15 @@ export const popularNetworks: Network[] = [
   {
     id: 67,
     name: 'Showtime',
-    logoUrl: 'https://image.tmdb.org/t/p/w500/uYf3U7Y2s3sIeklnI563sbi5P3E.png',
-    bgColor: '#a60000',
-    hoverGifUrl: 'https://media.giphy.com/media/26n6R5HOd4wAmk0gw/giphy.gif',
+    logoUrl: 'https://cdn.brandfetch.io/id3MsPaRdF/theme/dark/logo.svg?c=1dxbfHSJFAPEGdCLU4o5B',
+    bgColor: '#E9E9E9',
+    hoverGifUrl: 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExbzNqZ2xqY2RjNWoyMjVtb2Z1NGtlYm94aHl6czZiN3Y2YTZiNHA2MSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/fAB5waeFUX3Zx7fchp/giphy.gif',
   },
   {
     id: 44,
     name: 'Disney XD',
-    logoUrl: 'https://image.tmdb.org/t/p/w500/563V18bB17YhDx1u2Yc4A94tJj.png',
-    bgColor: '#006E3C',
-    hoverGifUrl: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNTVlMDcxYjdmN2E2ZTU0ZDVmZGY1ZDY2ZDE4MTU4YjRhM2IyYWM3NSZlcD12MV9pbnRlcm5hbF9naWZzX2dpZklkJmN0PWc/y5z4p5hS2Y2dO/giphy.gif'
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/a/a8/2015_Disney_XD_logo.svg',
+    bgColor: '#520D9C',
+    hoverGifUrl: 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHl2bDFocG5lZDZwamxxMGY0Nnc0cWw0NzJib3N3M3d5dnl0NGdoaCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/dJydOqebT6tlUSfqH1/giphy.gif'
   },
 ];

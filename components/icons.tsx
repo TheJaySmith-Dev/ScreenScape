@@ -107,12 +107,6 @@ export const FullScreenExitIcon: React.FC<IconProps> = ({ className }) => (
     </svg>
 );
 
-export const ImdbIcon: React.FC<IconProps> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" className={className} fill="currentColor">
-        <path d="M44,40.12H4V12.88H44ZM46,10.88H2V42.12H46Z"/><path d="M7.3,17.17v1.7h1.4v9.85H7.3V30.42H5.9V17.17Zm6,0v11.55h1.83l.21-1.3a2.38,2.38,0,0,1,2.16,1.48,3.54,3.54,0,0,0,3.38,1.86,4.6,4.6,0,0,0,4.86-4.9c0-3.3-2.19-5.11-4.71-5.11a2.8,2.8,0,0,0-2.61,1.59,2.83,2.83,0,0,1-.18-1.28V17.17Zm5.94,6.48a2.53,2.53,0,0,1,2.67-2.73c1.61,0,2.64,1.21,2.64,2.73s-1,2.79-2.64,2.79A2.56,2.56,0,0,1,19.24,23.65ZM31,17.17,29.61,25l-1.42-7.82H26.51l1.83,11.55h1.59l1.42-7.79,1.42,7.79H34.3l1.83-11.55Zm7,0v9.85h1.4v1.7h-4.2v-1.7h1.4V17.17Z"/>
-    </svg>
-);
-
 export const FreshTomatometerIcon: React.FC<IconProps> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" className={className}>
         <path fill="#FA320A" d="M256 96c-68.3 0-128 53.8-128 128s59.7 128 128 128 128-53.8 128-128-59.7-128-128-128z"/>
@@ -125,5 +119,18 @@ export const RottenTomatometerIcon: React.FC<IconProps> = ({ className }) => (
         <path fill="#57A827" d="M400 256c0 4.5-.2 8.9-.7 13.3-11.8-31-40.4-53.3-75.3-53.3-32.9 0-60.8 20-72.9 48.3-8.8-1.4-17.7-2.1-26.9-2.1-39.7 0-75.1 13.5-102.1 36.5-1.9-5.8-3-11.9-3-18.4 0-75.1 60.9-136 136-136s136 60.9 136 136.1c0 .0-.1.1-.1.1z"/>
         <path fill="#94C121" d="M400 256c0 75.1-60.9 136-136 136S128 331.1 128 256c0-6.5 1.1-12.7 3-18.4-15.6 15.3-27.1 35.3-32.4 57.5-3.5 14.8-5.4 30.3-5.4 46.3 0 17.6 2.3 34.6 6.5 50.6 8.3 31.4 25.5 59.2 49.2 80.9 23.8 21.7 53.6 35.8 86.8 40.4 34.2 4.8 68.3-.6 98-15.8 29.7-15.2 53.4-39.2 68.6-69.5 14.5-28.9 21.3-61.2 19.3-93.5-2-32.2-12.7-62.8-30.8-88.8-18.1-26-42.6-46.3-71-58.4 4.5-1.4 8.7-2.9 12.8-4.5 31.1-11.9 53.8-40.1 53.8-73.6 0-.2-.1-.4-.1-.6z"/>
         <path fill="#68A01A" d="m302.3 98.4-46.3-2.6-46.3-2.6c-2.9 0-5.5 2.1-6.1 4.9l-11.6 49.3c15.2 2.6 31.2 4.4 47.7 5.4l11.6-49.3c.6-2.8-1.4-5.5-4-5.1z"/>
+    </svg>
+);
+
+export const CakeIcon: React.FC<IconProps> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 15.75a.75.75 0 0 1-.75.75H3.75a.75.75 0 0 1-.75-.75V14.25m18 1.5v2.25a.75.75 0 0 1-.75.75H3.75a.75.75 0 0 1-.75-.75V15.75m18-1.5V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v9.75m18-1.5-2.25-2.25-2.25 2.25m-11.25-2.25L7.5 15.75l-2.25-2.25m4.5-5.25a3 3 0 0 0-3 3h10.5a3 3 0 0 0-3-3h-4.5Z" />
+    </svg>
+);
+
+export const LocationMarkerIcon: React.FC<IconProps> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+      <path strokeLinecap="round" strokeLinejoin="round"d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
     </svg>
 );

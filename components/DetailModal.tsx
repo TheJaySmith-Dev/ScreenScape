@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders } from '../types.ts';
 import { CloseIcon, StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon } from './icons.tsx';
@@ -14,8 +15,32 @@ interface DetailModalProps {
   onClose: () => void;
   isLoading: boolean;
   onSelectMedia: (media: MediaDetails) => void;
+  onSelectActor: (actorId: number) => void;
   userLocation: UserLocation | null;
 }
+
+const formatRuntime = (minutes: number | undefined): string => {
+    if (minutes === undefined || minutes === null || minutes <= 0) return '';
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    let result = '';
+    if (hours > 0) result += `${hours}h `;
+    if (mins > 0) result += `${mins}m`;
+    return result.trim();
+};
+
+const getTvDateRange = (firstAirDate: string | undefined, lastAirDate: string | undefined, status: string | undefined): string => {
+    if (!firstAirDate) return '';
+    const startYear = firstAirDate.substring(0, 4);
+    if (status === 'Ended' && lastAirDate) {
+        const endYear = lastAirDate.substring(0, 4);
+        if (startYear === endYear) return startYear;
+        return `${startYear} – ${endYear}`;
+    }
+    if (startYear) return `${startYear} –`;
+    return '';
+};
+
 
 const ModalSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <div className="mt-6">
@@ -24,10 +49,10 @@ const ModalSection: React.FC<{ title: string; children: React.ReactNode }> = ({ 
     </div>
 );
   
-const CastCard: React.FC<{ member: CastMember }> = ({ member }) => (
-    <div className="flex-shrink-0 w-28 text-center">
-      <img src={member.profileUrl} alt={member.name} className="w-24 h-24 object-cover rounded-full mx-auto mb-2 border-2 border-white/20" loading="lazy" />
-      <p className="font-semibold text-sm text-white truncate">{member.name}</p>
+const CastCard: React.FC<{ member: CastMember; onSelect: (id: number) => void; }> = ({ member, onSelect }) => (
+    <div className="flex-shrink-0 w-28 text-center cursor-pointer group" onClick={() => onSelect(member.id)}>
+      <img src={member.profileUrl} alt={member.name} className="w-24 h-24 object-cover rounded-full mx-auto mb-2 border-2 border-white/20 group-hover:border-white/40 transition-colors" loading="lazy" />
+      <p className="font-semibold text-sm text-white truncate group-hover:text-blue-300 transition-colors">{member.name}</p>
       <p className="text-xs text-gray-400 truncate">{member.character}</p>
     </div>
 );
@@ -43,7 +68,7 @@ const providersExist = (providers: WatchProviders) => {
            (providers.buy && providers.buy.length > 0);
 }
 
-export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, userLocation }) => {
+export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, onSelectActor, userLocation }) => {
     const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
     const [scrollTop, setScrollTop] = useState(0);
     const { likeItem, dislikeItem, unlistItem, isLiked, isDisliked } = usePreferences();
@@ -182,7 +207,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
           <ModalSection title="Top Billed Cast">
             <div className="media-row flex overflow-x-auto space-x-4 -mx-6 px-6 pb-2">
               {media.cast.map(member => (
-                <CastCard key={member.name + member.character} member={member} />
+                <CastCard key={member.id} member={member} onSelect={onSelectActor} />
               ))}
               <div className="flex-shrink-0 w-1"></div>
             </div>
@@ -282,8 +307,18 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                   <>
                     <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mb-4 text-gray-300">
                         <div className="text-lg font-semibold">
-                            {item.releaseYear}
+                            {item.type === 'movie' ? item.releaseYear : getTvDateRange(item.releaseDate, item.lastAirDate, item.status) || item.releaseYear}
                         </div>
+                        {item.type === 'movie' && item.runtime && item.runtime > 0 && (
+                            <div className="font-semibold text-lg">
+                                {formatRuntime(item.runtime)}
+                            </div>
+                        )}
+                        {item.type === 'tv' && item.numberOfSeasons && (
+                            <div className="font-semibold text-lg">
+                                {`${item.numberOfSeasons} Season${item.numberOfSeasons > 1 ? 's' : ''}`}
+                            </div>
+                        )}
                         {item.rated && (
                             <div className="uppercase text-sm px-2 py-0.5 border border-gray-500 rounded">
                                 {item.rated}

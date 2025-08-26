@@ -1,3 +1,4 @@
+
 export interface TmdbSearchResult {
   id: number;
   poster_path: string | null;
@@ -12,6 +13,7 @@ export interface TmdbVideo {
 }
 
 export interface CastMember {
+  id: number;
   name: string;
   character: string;
   profileUrl: string;
@@ -46,6 +48,10 @@ export interface MediaDetails {
   otherRatings?: ExternalRatings;
   rated?: string; // MPAA rating
   awards?: string;
+  runtime?: number; // In minutes, for movies
+  numberOfSeasons?: number; // For TV shows
+  lastAirDate?: string; // For TV shows
+  status?: string; // For TV shows, e.g. "Ended", "Returning Series"
 }
 
 export interface Collection {
@@ -100,6 +106,19 @@ export interface Brand {
   characterCollections: CharacterCollection[];
 }
 
+export interface Actor {
+  id: number;
+  name: string;
+  biography: string;
+  profilePath: string;
+  birthday: string | null;
+  placeOfBirth: string | null;
+}
+
+export interface ActorDetails extends Actor {
+  filmography: MediaDetails[];
+}
+
 // New/Modified types for local auth
 export interface User {
   email: string;
@@ -119,6 +138,8 @@ export interface LikedItem {
   id: number;
   type: 'movie' | 'tv';
   title: string;
+  posterUrl: string;
+  releaseYear: string;
 }
 
 export interface DislikedItem {
@@ -143,7 +164,7 @@ export interface WatchProviders {
 
 export interface StreamingProviderInfo {
   id: number;
-  key: 'disney' | 'netflix' | 'prime' | 'max' | 'showmax';
+  key: 'disney' | 'netflix' | 'prime' | 'max';
   name: string;
   logoUrl: string;
   bgColor?: string;

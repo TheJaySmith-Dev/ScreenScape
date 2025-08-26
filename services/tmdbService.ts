@@ -1,6 +1,7 @@
-import type { MediaDetails, TmdbSearchResult, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo } from '../types.ts';
+
+import type { MediaDetails, TmdbSearchResult, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails } from '../types.ts';
 import { fetchOmdbDetails } from './omdbService.ts';
-import { showmaxProvider, supportedProviders } from './streamingService.ts';
+import { supportedProviders } from './streamingService.ts';
 
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
@@ -109,7 +110,6 @@ const formatMediaListItem = (item: any, typeOverride?: 'movie' | 'tv', subType?:
     }
     
     const overview = item.overview || 'No overview available.';
-    if (!overview) return null; // Exclude items with no overview text at all
 
     return {
         id: item.id,
@@ -133,13 +133,7 @@ const fetchTmdbList = async (endpoint: string, typeOverride?: 'movie' | 'tv', su
         const data = await fetchFromTmdb<{ results: any[] }>(endpoint);
         return data.results
             .map(item => formatMediaListItem(item, typeOverride, subType))
-            .filter((item): item is MediaDetails => 
-                item !== null && 
-                !!item.posterUrl && 
-                item.posterUrl.includes('image.tmdb.org') &&
-                !!item.backdropUrl &&
-                item.backdropUrl.includes('image.tmdb.org')
-            ); // Filter out items without valid poster/backdrop
+            .filter((item): item is MediaDetails => item !== null); // Only filter out completely invalid items
     } catch (error) {
         console.error(`Failed to fetch list from TMDb endpoint ${endpoint}:`, error);
         return []; // Return empty on error
@@ -151,6 +145,7 @@ const formatCast = (credits: any): CastMember[] => {
     return credits.cast
       .slice(0, 10) // Limit to top 10 cast members
       .map((member: any) => ({
+        id: member.id,
         name: member.name,
         character: member.character,
         profileUrl: member.profile_path
@@ -215,6 +210,15 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
           if (imdbId) {
               omdbDetails = await fetchOmdbDetails(imdbId);
           }
+          
+          const additionalDetails: Partial<MediaDetails> = {};
+          if (type === 'movie') {
+              additionalDetails.runtime = details.runtime;
+          } else { // type === 'tv'
+              additionalDetails.numberOfSeasons = details.number_of_seasons;
+              additionalDetails.lastAirDate = details.last_air_date;
+              additionalDetails.status = details.status;
+          }
   
           return {
               trailerUrl: trailer ? `https://www.youtube.com/embed/${trailer.key}` : null,
@@ -225,6 +229,7 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
               isInTheaters,
               imdbId: imdbId || null,
               ...omdbDetails,
+              ...additionalDetails,
           };
   
       } catch (error) {
@@ -251,6 +256,8 @@ export const getTrending = () => fetchTmdbList('/trending/all/week');
 export const getPopularMovies = () => fetchTmdbList('/movie/popular', 'movie');
 export const getPopularTv = () => fetchTmdbList('/tv/popular', 'tv');
 export const getNowPlayingMovies = () => fetchTmdbList('/movie/now_playing', 'movie');
+export const getTopRatedMovies = () => fetchTmdbList('/movie/top_rated', 'movie');
+export const getTopRatedTv = () => fetchTmdbList('/tv/top_rated', 'tv');
 
 export const getMovieCollections = async (): Promise<Collection[]> => {
     const popularMovies = await fetchFromTmdb<{ results: any[] }>('/movie/popular?page=1');
@@ -316,37 +323,6 @@ export const getMediaByNetwork = async (networkId: number): Promise<MediaDetails
     return fetchTmdbList(endpoint, 'tv');
 };
 
-export const getShowmaxOriginals = async (providerId: number, region: string): Promise<MediaDetails[]> => {
-    const SHOWMAX_NETWORK_ID = 1042;
-    const endpoint = `/discover/tv?with_networks=${SHOWMAX_NETWORK_ID}&with_watch_providers=${providerId}&watch_region=${region}&sort_by=popularity.desc`;
-    return fetchTmdbList(endpoint, 'tv');
-};
-
-export const getStudioContentOnProvider = async (studioId: number, providerId: number, region: string): Promise<MediaDetails[]> => {
-    const movieEndpoint = `/discover/movie?with_companies=${studioId}&with_watch_providers=${providerId}&watch_region=${region}&sort_by=popularity.desc`;
-    const tvEndpoint = `/discover/tv?with_companies=${studioId}&with_watch_providers=${providerId}&watch_region=${region}&sort_by=popularity.desc`;
-
-    const [movies, tvShows] = await Promise.all([
-        fetchTmdbList(movieEndpoint, 'movie'),
-        fetchTmdbList(tvEndpoint, 'tv')
-    ]);
-
-    const combined = [];
-    const maxLength = Math.max(movies.length, tvShows.length);
-    for (let i = 0; i < maxLength; i++) {
-        if (movies[i]) combined.push(movies[i]);
-        if (tvShows[i]) combined.push(tvShows[i]);
-    }
-    
-    return combined;
-};
-
-export const getNetworkContentOnProvider = async (networkId: number, providerId: number, region: string): Promise<MediaDetails[]> => {
-    // This discovers TV shows from a specific network available on a given provider.
-    const endpoint = `/discover/tv?with_networks=${networkId}&with_watch_providers=${providerId}&watch_region=${region}&sort_by=popularity.desc`;
-    return fetchTmdbList(endpoint, 'tv');
-};
-
 export const getRecommendationsFromTastes = async (likes: LikedItem[], dislikes: DislikedItem[]): Promise<MediaDetails[]> => {
     if (likes.length === 0) return [];
 
@@ -389,12 +365,11 @@ export const getRecommendationsFromTastes = async (likes: LikedItem[], dislikes:
 };
 
 export const getMediaByStreamingProvider = async (providerKey: StreamingProviderInfo['key'], countryCode: string): Promise<MediaDetails[]> => {
-    const allProviders = [...supportedProviders, showmaxProvider];
-    const providerId = allProviders.find(p => p.key === providerKey)?.id;
+    const providerId = supportedProviders.find(p => p.key === providerKey)?.id;
     if (!providerId) return [];
 
-    // For Showmax, use the user's region. For global providers, use 'US' for content consistency.
-    const region = providerKey === 'showmax' ? countryCode : 'US';
+    // Use 'US' for global providers for content consistency, as requested.
+    const region = 'US';
     
     const movieEndpoint = `/discover/movie?with_watch_providers=${providerId}&watch_region=${region}&sort_by=popularity.desc`;
     const tvEndpoint = `/discover/tv?with_watch_providers=${providerId}&watch_region=${region}&sort_by=popularity.desc`;
@@ -412,4 +387,34 @@ export const getMediaByStreamingProvider = async (providerKey: StreamingProvider
     }
     
     return combined;
+};
+
+export const fetchActorDetails = async (actorId: number): Promise<ActorDetails> => {
+    try {
+        const detailsPromise = fetchFromTmdb<any>(`/person/${actorId}`);
+        const creditsPromise = fetchFromTmdb<any>(`/person/${actorId}/combined_credits`);
+
+        const [details, credits] = await Promise.all([detailsPromise, creditsPromise]);
+
+        const filmography = credits.cast
+            .filter((item: any) => item.poster_path)
+            .map((item: any) => formatMediaListItem(item))
+            .filter((item: MediaDetails | null): item is MediaDetails => item !== null)
+            .sort((a: MediaDetails, b: MediaDetails) => (b.popularity ?? 0) - (a.popularity ?? 0))
+            .filter((item: MediaDetails, index: number, self: MediaDetails[]) => self.findIndex(t => t.id === item.id) === index)
+            .slice(0, 20);
+
+        return {
+            id: details.id,
+            name: details.name,
+            biography: details.biography || 'No biography available.',
+            profilePath: details.profile_path ? `https://image.tmdb.org/t/p/h632${details.profile_path}` : `https://picsum.photos/500/750?grayscale`,
+            birthday: details.birthday,
+            placeOfBirth: details.place_of_birth,
+            filmography,
+        };
+    } catch (error) {
+        console.error(`Failed to fetch details for actor ID ${actorId}:`, error);
+        throw new Error('Could not fetch actor details.');
+    }
 };

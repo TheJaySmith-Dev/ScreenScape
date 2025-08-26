@@ -1,6 +1,6 @@
 import React from 'react';
 
-type ActiveTab = 'home' | 'foryou' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming' | 'networks';
+type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming' | 'networks';
 
 interface NavigationProps {
   activeTab: ActiveTab;
@@ -32,6 +32,7 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
       <div className="flex items-center justify-center flex-wrap gap-2">
         <NavButton label="Home" isActive={activeTab === 'home'} onClick={() => onTabChange('home')} />
         <NavButton label="For You" isActive={activeTab === 'foryou'} onClick={() => onTabChange('foryou')} />
+        <NavButton label="Watchlist" isActive={activeTab === 'watchlist'} onClick={() => onTabChange('watchlist')} />
         <NavButton label="Movies" isActive={activeTab === 'movies'} onClick={() => onTabChange('movies')} />
         <NavButton label="TV" isActive={activeTab === 'tv'} onClick={() => onTabChange('tv')} />
         <NavButton label="Collections" isActive={activeTab === 'collections'} onClick={() => onTabChange('collections')} />
