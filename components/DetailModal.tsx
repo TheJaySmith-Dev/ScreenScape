@@ -276,12 +276,12 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
           </button>
           
           {/* Header with backdrop and logo/title */}
-          <header className="absolute top-0 left-0 right-0 h-56 sm:h-64 lg:h-80 z-10 overflow-hidden">
+          <header className="absolute top-0 left-0 right-0 h-56 sm:h-64 lg:h-80 z-10 overflow-hidden pointer-events-none">
             <img 
               src={item.backdropUrl} 
               alt="" 
               className="absolute inset-0 w-full h-full object-cover" 
-              style={{ transform: `translateY(${scrollTop * 0.5}px)` }}
+              style={{ transform: `translateY(-${scrollTop * 0.5}px)` }}
             />
             <div 
               className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent"
@@ -290,7 +290,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
               className="absolute inset-0 flex items-end justify-start p-6"
               style={{ 
                 opacity: Math.max(0, 1 - scrollTop / 150),
-                transform: `translateY(${scrollTop * 0.6}px)`
+                transform: `translateY(-${scrollTop * 0.4}px)`
               }}
             >
               {isMediaDetails(item) && (
