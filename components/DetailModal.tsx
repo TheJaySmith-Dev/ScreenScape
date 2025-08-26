@@ -89,34 +89,22 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         return () => window.removeEventListener('keydown', handleEsc);
     }, [onClose, trailerVideoId]);
 
-    // Effect for robust scroll locking
+    // Definitive scroll lock for mobile and desktop
     useEffect(() => {
+        const html = document.documentElement;
         const body = document.body;
-        const scrollY = window.scrollY;
-        
-        // Save original styles
-        const originalOverflow = body.style.overflow;
-        const originalPosition = body.style.position;
-        const originalTop = body.style.top;
-        const originalWidth = body.style.width;
 
-        // Apply scroll lock
+        const originalHtmlOverflow = html.style.overflow;
+        const originalBodyOverflow = body.style.overflow;
+
+        html.style.overflow = 'hidden';
         body.style.overflow = 'hidden';
-        body.style.position = 'fixed'; // Using 'fixed' is key for iOS
-        body.style.top = `-${scrollY}px`;
-        body.style.width = '100%';
 
         return () => {
-            // Restore original styles
-            body.style.overflow = originalOverflow;
-            body.style.position = originalPosition;
-            body.style.top = originalTop;
-            body.style.width = originalWidth;
-            
-            // Restore scroll position
-            window.scrollTo(0, scrollY);
+            html.style.overflow = originalHtmlOverflow;
+            body.style.overflow = originalBodyOverflow;
         };
-    }, []); // Empty dependency array ensures this runs only on mount/unmount of modal
+    }, []);
 
 
     const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
@@ -322,7 +310,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
 
           <div 
             className="w-full h-full overflow-y-auto"
-            style={{ WebkitOverflowScrolling: 'touch' }}
+            style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain' }}
             onScroll={handleScroll}
           >
             {/* Spacer to push content below header */}
