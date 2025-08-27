@@ -88,20 +88,11 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         return () => window.removeEventListener('keydown', handleEsc);
     }, [onClose, trailerVideoId]);
 
-    // Definitive scroll lock for mobile and desktop
+    // Scroll lock for body
     useEffect(() => {
-        const html = document.documentElement;
-        const body = document.body;
-
-        const originalHtmlOverflow = html.style.overflow;
-        const originalBodyOverflow = body.style.overflow;
-
-        html.style.overflow = 'hidden';
-        body.style.overflow = 'hidden';
-
+        document.body.classList.add('modal-open');
         return () => {
-            html.style.overflow = originalHtmlOverflow;
-            body.style.overflow = originalBodyOverflow;
+            document.body.classList.remove('modal-open');
         };
     }, []);
 
@@ -289,7 +280,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             {/* Scrollable Content */}
             <div 
                 className="relative z-20 w-full h-full overflow-y-auto"
-                style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain' }}
+                style={{ overscrollBehaviorY: 'contain' }}
             >
                 {/* Main Content Area */}
                 <div className="p-6 pt-24 sm:p-8 sm:pt-32">

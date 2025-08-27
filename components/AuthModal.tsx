@@ -27,6 +27,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         return () => window.removeEventListener('keydown', handleEsc);
     }, [onClose]);
 
+    // Add body scroll lock when modal is open
+    useEffect(() => {
+        if (isOpen) {
+            document.body.classList.add('modal-open');
+        }
+        return () => {
+            document.body.classList.remove('modal-open');
+        };
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     const handleSubmit = (e: React.FormEvent) => {
