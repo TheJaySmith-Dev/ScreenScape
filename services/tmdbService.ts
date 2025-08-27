@@ -51,36 +51,22 @@ const findBestTrailer = (videos: any[]): any | null => {
     return candidates[0];
 };
 
-const findBestLogo = (images: any): string | null => {
-    if (!images?.logos || images.logos.length === 0) return null;
+const findBestTextlessPoster = (images: any): string | null => {
+    if (!images?.posters || images.posters.length === 0) return null;
 
-    const logos = images.logos;
-    
-    // Prioritize English logos, then logos with no language specified, then any logo.
-    let targetLogos = logos.filter((logo: any) => logo.iso_639_1 === 'en');
-    if (targetLogos.length === 0) {
-        targetLogos = logos.filter((logo: any) => logo.iso_639_1 === null || logo.iso_639_1 === 'xx');
-    }
-    if (targetLogos.length === 0) {
-        targetLogos = logos;
-    }
-    
-    // Sort by a preference score: SVG > PNG, higher vote average
-    targetLogos.sort((a: any, b: any) => {
-        let scoreA = 0;
-        let scoreB = 0;
-        if (a.file_path.endsWith('.svg')) scoreA += 10;
-        if (b.file_path.endsWith('.svg')) scoreB += 10;
-        
-        scoreA += a.vote_average;
-        scoreB += b.vote_average;
-        
-        return scoreB - scoreA;
-    });
+    // Filter for posters with 'No Language' (xx) or unspecified (null) language codes.
+    const textlessPosters = images.posters.filter((p: any) => p.iso_639_1 === 'xx' || p.iso_639_1 === null);
 
-    const bestLogo = targetLogos[0];
-    return bestLogo ? `https://image.tmdb.org/t/p/w500${bestLogo.file_path}` : null;
+    if (textlessPosters.length === 0) {
+        return null; // Let the component use a fallback if no textless version is found.
+    }
+
+    // Sort by vote average to get the most popular/approved version.
+    textlessPosters.sort((a: any, b: any) => b.vote_average - a.vote_average);
+
+    return `https://image.tmdb.org/t/p/w780${textlessPosters[0].file_path}`;
 };
+
 
 const formatMediaDetailsFromApiResponse = (details: any, type: 'movie' | 'tv'): MediaDetails => {
     const trailer = findBestTrailer(details.videos?.results);
@@ -120,7 +106,6 @@ const formatMediaListItem = (item: any, typeOverride?: 'movie' | 'tv', subType?:
         releaseYear: (item.release_date || item.first_air_date || 'N/A').substring(0, 4),
         rating: item.vote_average ? parseFloat(item.vote_average.toFixed(1)) : 0,
         trailerUrl: null, // No trailer info in list views, will be fetched on demand
-        logoUrl: null, // No logo info in list views
         type: type,
         popularity: item.popularity || 0,
         releaseDate: item.release_date || item.first_air_date,
@@ -193,7 +178,7 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
           const details = await fetchFromTmdb<any>(endpoint);
           
           const trailer = findBestTrailer(details.videos?.results);
-          const logo = findBestLogo(details.images);
+          const textlessPoster = findBestTextlessPoster(details.images);
 
           const providersData = details['watch/providers']?.results?.[countryCode.toUpperCase()];
           const watchProviders: WatchProviders | null = providersData ? {
@@ -222,7 +207,7 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
   
           return {
               trailerUrl: trailer ? `https://www.youtube.com/embed/${trailer.key}` : null,
-              logoUrl: logo,
+              textlessPosterUrl: textlessPoster,
               cast: formatCast(details.credits),
               related: formatRelated(details.recommendations, type),
               watchProviders,
@@ -236,7 +221,6 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
           console.error(`Failed to fetch modal details for ${type} ID ${id}:`, error);
           return {
               trailerUrl: null,
-              logoUrl: null,
               cast: [],
               related: [],
               watchProviders: null,

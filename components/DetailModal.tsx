@@ -1,6 +1,6 @@
 
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders } from '../types.ts';
 import { CloseIcon, StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon } from './icons.tsx';
 import { RecommendationCard } from './RecommendationCard.tsx';
@@ -44,8 +44,8 @@ const getTvDateRange = (firstAirDate: string | undefined, lastAirDate: string | 
 
 
 const ModalSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-    <div className="mt-6">
-      <h3 className="text-xl font-semibold text-gray-200 mb-3">{title}</h3>
+    <div className="mt-8">
+      <h3 className="text-xl font-semibold text-gray-200 mb-4">{title}</h3>
       {children}
     </div>
 );
@@ -71,7 +71,6 @@ const providersExist = (providers: WatchProviders) => {
 
 export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, onSelectActor, userLocation }) => {
     const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
-    const [scrollTop, setScrollTop] = useState(0);
     const { likeItem, dislikeItem, unlistItem, isLiked, isDisliked } = usePreferences();
     
     // Effect for keyboard shortcuts
@@ -105,11 +104,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             body.style.overflow = originalBodyOverflow;
         };
     }, []);
-
-
-    const handleScroll = (event: React.UIEvent<HTMLDivElement>) => {
-      setScrollTop(event.currentTarget.scrollTop);
-    };
 
     const handleWatchTrailer = () => {
         if (isMediaDetails(item) && item.trailerUrl) {
@@ -260,6 +254,10 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
     </>
   );
 
+  const isMedia = isMediaDetails(item);
+  const mobileBgUrl = isMedia ? (item.textlessPosterUrl || item.posterUrl) : item.posterUrl;
+  const desktopBgUrl = isMedia ? item.backdropUrl : item.backdropUrl;
+
   return (
     <>
       <div 
@@ -271,105 +269,86 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
           className="relative w-full max-w-4xl max-h-[90vh] bg-gray-900 rounded-2xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
-          <button onClick={onClose} className="absolute top-4 right-4 z-40 text-white/70 hover:text-white transition-colors bg-black/30 rounded-full p-1">
-              <CloseIcon className="w-6 h-6"/>
-          </button>
-          
-          {/* Header with backdrop and logo/title */}
-          <header className="absolute top-0 left-0 right-0 h-56 sm:h-64 lg:h-80 z-10 overflow-hidden pointer-events-none">
-            <img 
-              src={item.backdropUrl} 
-              alt="" 
-              className="absolute inset-0 w-full h-full object-cover" 
-              style={{ transform: `translateY(-${scrollTop * 0.5}px)` }}
+            {/* Backgrounds */}
+            <div
+                className="absolute inset-0 bg-cover bg-center md:hidden"
+                style={{ backgroundImage: `url(${mobileBgUrl})` }}
             />
+            <div
+                className="absolute inset-0 bg-cover bg-center hidden md:block"
+                style={{ backgroundImage: `url(${desktopBgUrl})` }}
+            />
+
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent z-10 pointer-events-none" />
+
+            <button onClick={onClose} className="absolute top-4 right-4 z-30 text-white/70 hover:text-white transition-colors bg-black/30 rounded-full p-1">
+              <CloseIcon className="w-6 h-6"/>
+            </button>
+          
+            {/* Scrollable Content */}
             <div 
-              className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent"
-            ></div>
-            <div 
-              className="absolute inset-0 flex items-end justify-start p-6"
-              style={{ 
-                opacity: Math.max(0, 1 - scrollTop / 150),
-                transform: `translateY(-${scrollTop * 0.4}px)`
-              }}
+                className="relative z-20 w-full h-full overflow-y-auto"
+                style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain' }}
             >
-              {isMediaDetails(item) && (
-                isLoading ? (
-                  <div className="w-full flex justify-center items-center h-full"><LoadingSpinner /></div>
-                ) : item.logoUrl ? (
-                  <img src={item.logoUrl} alt={`${item.title} logo`} className="max-w-[60%] sm:max-w-[50%] max-h-32 object-contain drop-shadow-2xl" />
-                ) : (
-                  <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-left drop-shadow-2xl">{item.title}</h2>
-                )
-              )}
-               {!isMediaDetails(item) && (
-                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-left drop-shadow-2xl">{item.name}</h2>
-               )}
-            </div>
-          </header>
+                {/* Main Content Area */}
+                <div className="p-6 pt-24 sm:p-8 sm:pt-32">
+                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white text-left drop-shadow-2xl mb-4">
+                        {isMediaDetails(item) ? item.title : item.name}
+                    </h2>
 
-          <div 
-            className="w-full h-full overflow-y-auto"
-            style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain' }}
-            onScroll={handleScroll}
-          >
-            {/* Spacer to push content below header */}
-            <div className="h-56 sm:h-64 lg:h-80 flex-shrink-0" />
-            
-            {/* Main Content Area */}
-            <div className="relative z-20 bg-gray-900 p-6">
-                {isMediaDetails(item) && (
-                  <>
-                    <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mb-4 text-gray-300">
-                        <div className="text-lg font-semibold">
-                            {item.type === 'movie' ? item.releaseYear : getTvDateRange(item.releaseDate, item.lastAirDate, item.status) || item.releaseYear}
-                        </div>
-                        {item.type === 'movie' && item.runtime && item.runtime > 0 && (
-                            <div className="font-semibold text-lg">
-                                {formatRuntime(item.runtime)}
+                    {isMediaDetails(item) && (
+                    <>
+                        <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mb-4 text-gray-300">
+                            <div className="text-lg font-semibold">
+                                {item.type === 'movie' ? item.releaseYear : getTvDateRange(item.releaseDate, item.lastAirDate, item.status) || item.releaseYear}
                             </div>
-                        )}
-                        {item.type === 'tv' && item.numberOfSeasons && (
-                            <div className="font-semibold text-lg">
-                                {`${item.numberOfSeasons} Season${item.numberOfSeasons > 1 ? 's' : ''}`}
-                            </div>
-                        )}
-                        {item.rated && (
+                            {item.type === 'movie' && item.runtime && item.runtime > 0 && (
+                                <div className="font-semibold text-lg">
+                                    {formatRuntime(item.runtime)}
+                                </div>
+                            )}
+                            {item.type === 'tv' && item.numberOfSeasons && (
+                                <div className="font-semibold text-lg">
+                                    {`${item.numberOfSeasons} Season${item.numberOfSeasons > 1 ? 's' : ''}`}
+                                </div>
+                            )}
+                            {item.rated && (
+                                <div className="uppercase text-sm px-2 py-0.5 border border-gray-500 rounded">
+                                    {item.rated}
+                                </div>
+                            )}
                             <div className="uppercase text-sm px-2 py-0.5 border border-gray-500 rounded">
-                                {item.rated}
+                                {item.type}
                             </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-start gap-3 mb-4">
+                            <div className="flex items-center gap-2 bg-black/20 p-2 rounded-lg">
+                                <StarIcon className="w-8 h-8 text-yellow-400" />
+                                <div>
+                                    <span className="font-bold text-lg">{item.rating}</span>
+                                    <span className="text-sm">/10</span>
+                                    <p className="text-xs text-gray-400 -mt-1">TMDb</p>
+                                </div>
+                            </div>
+                            {!isLoading && <ExternalRatings ratings={item.otherRatings} />}
+                        </div>
+                        
+                        {!isLoading && item.awards && item.awards !== 'N/A' && (
+                        <div className="mb-4 p-3 bg-yellow-900/30 border-l-4 border-yellow-500 rounded-r-lg">
+                            <p className="text-sm text-yellow-300 font-semibold">🏆 {item.awards}</p>
+                        </div>
                         )}
-                        <div className="uppercase text-sm px-2 py-0.5 border border-gray-500 rounded">
-                            {item.type}
-                        </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-start gap-3 mb-4">
-                        <div className="flex items-center gap-2 bg-black/20 p-2 rounded-lg">
-                            <StarIcon className="w-8 h-8 text-yellow-400" />
-                            <div>
-                                <span className="font-bold text-lg">{item.rating}</span>
-                                <span className="text-sm">/10</span>
-                                <p className="text-xs text-gray-400 -mt-1">TMDb</p>
-                            </div>
-                        </div>
-                        {!isLoading && <ExternalRatings ratings={item.otherRatings} />}
-                    </div>
-                    
-                    {!isLoading && item.awards && item.awards !== 'N/A' && (
-                      <div className="mb-4 p-3 bg-yellow-900/30 border-l-4 border-yellow-500 rounded-r-lg">
-                          <p className="text-sm text-yellow-300 font-semibold">🏆 {item.awards}</p>
-                      </div>
+                    </>
                     )}
-                </>
-                )}
-                <p className="text-gray-300 text-sm sm:text-base">{item.overview}</p>
+                    <p className="text-gray-300 text-sm sm:text-base">{item.overview}</p>
 
-                <div className="mt-6">
-                    {isMediaDetails(item) ? renderMediaContent(item) : renderCollectionContent(item)}
+                    <div className="mt-6">
+                        {isMediaDetails(item) ? renderMediaContent(item) : renderCollectionContent(item)}
+                    </div>
                 </div>
             </div>
-          </div>
         </div>
       </div>
       
