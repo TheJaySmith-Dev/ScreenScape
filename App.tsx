@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -466,6 +467,19 @@ const App: React.FC = () => {
   };
 
   const renderContent = () => {
+    if (selectedItem) {
+        return (
+            <DetailModal 
+              item={selectedItem} 
+              onClose={handleCloseModal} 
+              isLoading={isModalLoading}
+              onSelectMedia={handleSelectMedia}
+              onSelectActor={handleSelectActor}
+              userLocation={userLocation}
+            />
+        );
+    }
+
     if (selectedActor) {
       return (
         <ActorPage
@@ -587,6 +601,8 @@ const App: React.FC = () => {
     }
   };
 
+  const showHeader = !selectedItem && !selectedActor;
+
   return (
     <div className="bg-gray-900 text-white min-h-screen font-sans">
       {isVpnBlocked === true && (
@@ -606,39 +622,30 @@ const App: React.FC = () => {
       )}
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <header className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-3">
-             <svg className="w-10 h-10 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20 4h-4l-4-4-4 4H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H4V6h4.52l4-4 4 4H20v14zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-            </svg>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight cursor-pointer" onClick={() => handleTabChange('home')}>WatchNow</h1>
-          </div>
-          <AccountButton onSignInClick={() => setIsAuthModalOpen(true)} userLocation={userLocation} />
-        </header>
-
-        <div className="mb-8 flex justify-center">
-           <SearchBar onSearch={handleSearch} isLoading={isLoading} />
-        </div>
-
-        <div className="mb-8 flex justify-center">
-            <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
-        </div>
+        {showHeader && (
+            <>
+                <header className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+                    <div className="flex items-center gap-3">
+                        <svg className="w-10 h-10 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 4h-4l-4-4-4 4H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H4V6h4.52l4-4 4 4H20v14zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                        </svg>
+                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight cursor-pointer" onClick={() => handleTabChange('home')}>WatchNow</h1>
+                    </div>
+                    <AccountButton onSignInClick={() => setIsAuthModalOpen(true)} userLocation={userLocation} />
+                </header>
+                <div className="mb-8 flex justify-center">
+                    <SearchBar onSearch={handleSearch} isLoading={isLoading} />
+                </div>
+                <div className="mb-8 flex justify-center">
+                    <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+                </div>
+            </>
+        )}
         
         <div className="flex justify-center">
             {renderContent()}
         </div>
       </main>
-
-      {selectedItem && (
-        <DetailModal 
-          item={selectedItem} 
-          onClose={handleCloseModal} 
-          isLoading={isModalLoading}
-          onSelectMedia={handleSelectMedia}
-          onSelectActor={handleSelectActor}
-          userLocation={userLocation}
-        />
-      )}
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </div>

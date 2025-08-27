@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders } from '../types.ts';
-import { CloseIcon, StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon } from './icons.tsx';
+import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon } from './icons.tsx';
 import { RecommendationCard } from './RecommendationCard.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
@@ -73,7 +73,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
     const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
     const { likeItem, dislikeItem, unlistItem, isLiked, isDisliked } = usePreferences();
     
-    // Effect for keyboard shortcuts
+    // Effect for keyboard shortcuts and scrolling to top
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
@@ -85,16 +85,9 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             }
         };
         window.addEventListener('keydown', handleEsc);
+        window.scrollTo(0, 0); // Scroll to top on page view mount
         return () => window.removeEventListener('keydown', handleEsc);
     }, [onClose, trailerVideoId]);
-
-    // Scroll lock for body
-    useEffect(() => {
-        document.body.classList.add('modal-open');
-        return () => {
-            document.body.classList.remove('modal-open');
-        };
-    }, []);
 
     const handleWatchTrailer = () => {
         if (isMediaDetails(item) && item.trailerUrl) {
@@ -246,51 +239,33 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
   );
 
   const isMedia = isMediaDetails(item);
-  const mobileBgUrl = isMedia ? (item.textlessPosterUrl || item.posterUrl) : item.posterUrl;
-  const desktopBgUrl = isMedia ? item.backdropUrl : item.backdropUrl;
+  const posterUrl = isMedia ? (item.textlessPosterUrl || item.posterUrl) : item.posterUrl;
+  const backdropUrl = isMedia ? item.backdropUrl : item.backdropUrl;
 
   return (
     <>
-      <div 
-        className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 fade-in"
-        style={{ opacity: 0 }}
-        onClick={onClose}
-      >
-        <div 
-          className="relative w-full max-w-4xl max-h-[90vh] bg-gray-900 rounded-2xl overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
-            {/* Backgrounds */}
-            <div
-                className="absolute inset-0 bg-cover bg-center md:hidden"
-                style={{ backgroundImage: `url(${mobileBgUrl})` }}
-            />
-            <div
-                className="absolute inset-0 bg-cover bg-center hidden md:block"
-                style={{ backgroundImage: `url(${desktopBgUrl})` }}
-            />
+      <div className="w-full max-w-6xl mx-auto fade-in" style={{ opacity: 0 }}>
+        <div className="my-6">
+            <button onClick={onClose} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back</button>
+        </div>
 
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent z-10 pointer-events-none" />
+        {/* Hero Section */}
+        <div className="relative rounded-2xl overflow-hidden mb-8 bg-gray-800 min-h-[400px] md:min-h-[450px] flex items-center">
+            <div className="absolute inset-0">
+                <img src={backdropUrl} alt="" className="w-full h-full object-cover opacity-30" />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent" />
+            </div>
 
-            <button onClick={onClose} className="absolute top-4 right-4 z-30 text-white/70 hover:text-white transition-colors bg-black/30 rounded-full p-1">
-              <CloseIcon className="w-6 h-6"/>
-            </button>
-          
-            {/* Scrollable Content */}
-            <div 
-                className="relative z-20 w-full h-full overflow-y-auto"
-                style={{ overscrollBehaviorY: 'contain' }}
-            >
-                {/* Main Content Area */}
-                <div className="p-6 pt-24 sm:p-8 sm:pt-32">
-                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white text-left drop-shadow-2xl mb-4">
+            <div className="relative p-6 md:p-10 flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8 w-full">
+                <img src={posterUrl} alt={isMedia ? item.title : item.name} className="w-40 md:w-52 rounded-lg shadow-2xl aspect-[2/3] object-cover flex-shrink-0" />
+                <div className="flex-grow text-center md:text-left">
+                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white drop-shadow-2xl mb-4">
                         {isMediaDetails(item) ? item.title : item.name}
                     </h2>
 
                     {isMediaDetails(item) && (
                     <>
-                        <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mb-4 text-gray-300">
+                        <div className="flex items-center justify-center md:justify-start flex-wrap gap-x-4 gap-y-1 mb-4 text-gray-300">
                             <div className="text-lg font-semibold">
                                 {item.type === 'movie' ? item.releaseYear : getTvDateRange(item.releaseDate, item.lastAirDate, item.status) || item.releaseYear}
                             </div>
@@ -314,7 +289,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                             </div>
                         </div>
 
-                        <div className="flex flex-wrap items-start gap-3 mb-4">
+                        <div className="flex flex-wrap items-start justify-center md:justify-start gap-3 mb-4">
                             <div className="flex items-center gap-2 bg-black/20 p-2 rounded-lg">
                                 <StarIcon className="w-8 h-8 text-yellow-400" />
                                 <div>
@@ -333,13 +308,14 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                         )}
                     </>
                     )}
-                    <p className="text-gray-300 text-sm sm:text-base">{item.overview}</p>
-
-                    <div className="mt-6">
-                        {isMediaDetails(item) ? renderMediaContent(item) : renderCollectionContent(item)}
-                    </div>
                 </div>
             </div>
+        </div>
+        
+        {/* Main Content Below Hero */}
+        <div className="px-4 md:px-10 pb-12">
+            <p className="text-gray-300 text-sm sm:text-base mb-6">{item.overview}</p>
+            {isMediaDetails(item) ? renderMediaContent(item) : renderCollectionContent(item)}
         </div>
       </div>
       
