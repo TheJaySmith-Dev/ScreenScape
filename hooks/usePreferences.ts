@@ -1,48 +1,47 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth.ts';
 import type { MediaDetails, LikedItem, DislikedItem } from '../types.ts';
-
-const getPreferencesFromStorage = (key: string) => {
-  try {
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch (error) {
-    console.error("Failed to parse preferences from local storage", error);
-  }
-  return { likes: [], dislikes: [] };
-};
+import * as api from '../services/apiService.ts';
 
 export const usePreferences = () => {
   const { currentUser } = useAuth();
   const [likes, setLikes] = useState<LikedItem[]>([]);
   const [dislikes, setDislikes] = useState<DislikedItem[]>([]);
-
-  const storageKey = currentUser ? `watchnow_prefs_${currentUser.email}` : null;
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (storageKey) {
-      const { likes: storedLikes, dislikes: storedDislikes } = getPreferencesFromStorage(storageKey);
-      setLikes(storedLikes || []);
-      setDislikes(storedDislikes || []);
+    if (currentUser?.email) {
+      setLoading(true);
+      const fetchPrefs = async () => {
+        try {
+          const { likes: storedLikes, dislikes: storedDislikes } = await api.getPreferences(currentUser.email!);
+          setLikes(storedLikes || []);
+          setDislikes(storedDislikes || []);
+        } catch (error) {
+          console.error("Failed to fetch preferences:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchPrefs();
     } else {
       // Clear preferences if user logs out
       setLikes([]);
       setDislikes([]);
+      setLoading(false);
     }
-  }, [storageKey]);
+  }, [currentUser]);
 
-  const savePreferences = useCallback((newLikes: LikedItem[], newDislikes: DislikedItem[]) => {
-    if (storageKey) {
+  const savePreferences = useCallback(async (newLikes: LikedItem[], newDislikes: DislikedItem[]) => {
+    if (currentUser?.email) {
       try {
-        localStorage.setItem(storageKey, JSON.stringify({ likes: newLikes, dislikes: newDislikes }));
+        await api.savePreferences(currentUser.email, newLikes, newDislikes);
       } catch (error) {
-        console.error("Failed to save preferences to local storage", error);
+        console.error("Failed to save preferences", error);
+        // In a real app, you might want to handle this with a toast notification to the user
       }
     }
-  }, [storageKey]);
+  }, [currentUser]);
 
   const likeItem = useCallback((item: MediaDetails) => {
     const newLike: LikedItem = {
@@ -53,14 +52,15 @@ export const usePreferences = () => {
       releaseYear: item.releaseYear,
     };
 
-    setLikes(prevLikes => {
-      const updatedLikes = [newLike, ...prevLikes.filter(l => l.id !== item.id)];
-      const updatedDislikes = dislikes.filter(d => d.id !== item.id);
-      setDislikes(updatedDislikes);
-      savePreferences(updatedLikes, updatedDislikes);
-      return updatedLikes;
-    });
-  }, [dislikes, savePreferences]);
+    // Optimistic UI update
+    const updatedLikes = [newLike, ...likes.filter(l => l.id !== item.id)];
+    const updatedDislikes = dislikes.filter(d => d.id !== item.id);
+    setLikes(updatedLikes);
+    setDislikes(updatedDislikes);
+    
+    // Persist change in the background
+    savePreferences(updatedLikes, updatedDislikes);
+  }, [likes, dislikes, savePreferences]);
 
   const dislikeItem = useCallback((item: MediaDetails) => {
     const newDislike: DislikedItem = {
@@ -68,26 +68,26 @@ export const usePreferences = () => {
       type: item.type,
     };
 
-    setDislikes(prevDislikes => {
-      const updatedDislikes = [newDislike, ...prevDislikes.filter(d => d.id !== item.id)];
-      const updatedLikes = likes.filter(l => l.id !== item.id);
-      setLikes(updatedLikes);
-      savePreferences(updatedLikes, updatedDislikes);
-      return updatedDislikes;
-    });
-  }, [likes, savePreferences]);
+    // Optimistic UI update
+    const updatedDislikes = [newDislike, ...dislikes.filter(d => d.id !== item.id)];
+    const updatedLikes = likes.filter(l => l.id !== item.id);
+    setDislikes(updatedDislikes);
+    setLikes(updatedLikes);
+
+    // Persist change in the background
+    savePreferences(updatedLikes, updatedDislikes);
+  }, [likes, dislikes, savePreferences]);
 
   const unlistItem = useCallback((item: MediaDetails) => {
-    setLikes(prevLikes => {
-      const updatedLikes = prevLikes.filter(l => l.id !== item.id);
-      setDislikes(prevDislikes => {
-        const updatedDislikes = prevDislikes.filter(d => d.id !== item.id);
-        savePreferences(updatedLikes, updatedDislikes);
-        return updatedDislikes;
-      });
-      return updatedLikes;
-    });
-  }, [savePreferences]);
+    // Optimistic UI update
+    const updatedLikes = likes.filter(l => l.id !== item.id);
+    const updatedDislikes = dislikes.filter(d => d.id !== item.id);
+    setLikes(updatedLikes);
+    setDislikes(updatedDislikes);
+    
+    // Persist change in the background
+    savePreferences(updatedLikes, updatedDislikes);
+  }, [likes, dislikes, savePreferences]);
 
   const isLiked = useCallback((itemId: number) => likes.some(l => l.id === itemId), [likes]);
   const isDisliked = useCallback((itemId: number) => dislikes.some(d => d.id === itemId), [dislikes]);
@@ -95,6 +95,7 @@ export const usePreferences = () => {
   return {
     likes,
     dislikes,
+    loading,
     likeItem,
     dislikeItem,
     unlistItem,

@@ -39,16 +39,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!email.trim() || !email.includes('@')) return;
         setIsLoading(true);
-        // Simulate a small delay for better UX
-        setTimeout(() => {
-            login(email);
-            setIsLoading(false);
-            onClose();
-        }, 500);
+        await login(email);
+        setIsLoading(false);
+        onClose();
     };
 
     return (

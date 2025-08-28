@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import type { AuthContextType, User } from '../types.ts';
 import { LoadingSpinner } from '../components/LoadingSpinner.tsx';
+import * as api from '../services/apiService.ts';
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -8,45 +9,42 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-const LOCAL_STORAGE_KEY = 'watchnow_user';
-
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (storedUser) {
-        setCurrentUser(JSON.parse(storedUser));
+    const checkUser = async () => {
+      try {
+        const user = await api.getUser();
+        if (user) {
+          setCurrentUser(user);
+        }
+      } catch (error) {
+        console.error("Failed to get current user", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to parse user from local storage", error);
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
-    }
-    setLoading(false);
+    };
+    checkUser();
   }, []);
 
-  const login = useCallback((email: string) => {
-    // Create a simple user object
-    const user: User = {
-      email,
-      displayName: email.split('@')[0],
-    };
+  const login = useCallback(async (email: string) => {
     try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(user));
+      const user = await api.login(email);
       setCurrentUser(user);
     } catch (error) {
-      console.error("Failed to save user to local storage", error);
+      console.error("Failed to login", error);
+      // In a real app, you might want to display an error message to the user
     }
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     try {
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      await api.logout();
       setCurrentUser(null);
     } catch (error) {
-      console.error("Failed to remove user from local storage", error);
+      console.error("Failed to logout", error);
     }
   }, []);
 
