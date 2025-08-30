@@ -15,7 +15,7 @@ export const supportedProviders: StreamingProviderInfo[] = [
     id: 337,
     key: 'disney',
     name: 'Disney+',
-    logoUrl: 'https://image.tmdb.org/t/p/w500/dgPSo2h2cozZf7b6x4B5s3g4H2A.jpg',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg',
     bgColor: '#0A193C',
     hoverGifUrl: 'https://media.giphy.com/media/C669q14vk6dsG7M449/giphy.gif',
   },
@@ -23,7 +23,7 @@ export const supportedProviders: StreamingProviderInfo[] = [
     id: 9,
     key: 'prime',
     name: 'Prime Video',
-    logoUrl: 'https://image.tmdb.org/t/p/w500/dQeAar5H991dsB4hM5jSAnjhI6.jpg',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video_logo.svg',
     bgColor: '#00A8E1',
     hoverGifUrl: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExN3ZzOHp4eGg2NThnYXgyOW96d2RnbW13MnFuN2kzcTFwZWdxbmxsbiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/9J1rsK6c84wsQ2r5sA/giphy.gif'
   },
