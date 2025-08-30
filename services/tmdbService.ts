@@ -1,18 +1,18 @@
-
 import type { MediaDetails, TmdbSearchResult, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails } from '../types.ts';
 import { fetchOmdbDetails } from './omdbService.ts';
 import { supportedProviders } from './streamingService.ts';
+import { getTmdbApiKey } from './apiService.ts';
 
 
 const TMDB_API_BASE_URL = 'https://api.themoviedb.org/3';
-const TMDB_API_KEY = '09b97a49759876f2fde9eadb163edc44';
 
-const fetchFromTmdb = async <T,>(endpoint: string): Promise<T> => {
-    if (!TMDB_API_KEY) {
+const fetchFromTmdb = async <T,>(endpoint: string, apiKeyOverride?: string): Promise<T> => {
+    const apiKey = apiKeyOverride || getTmdbApiKey();
+    if (!apiKey) {
         throw new Error("TMDb API key is not available.");
     }
     const separator = endpoint.includes('?') ? '&' : '?';
-    const url = `${TMDB_API_BASE_URL}${endpoint}${separator}api_key=${TMDB_API_KEY}&language=en-US`;
+    const url = `${TMDB_API_BASE_URL}${endpoint}${separator}api_key=${apiKey}&language=en-US`;
     const response = await fetch(url);
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({})); // Try to get error details from TMDb
@@ -21,6 +21,17 @@ const fetchFromTmdb = async <T,>(endpoint: string): Promise<T> => {
         throw new Error(`TMDb API request failed: ${response.status} ${errorMessage}`);
     }
     return response.json();
+};
+
+export const verifyTmdbApiKey = async (apiKey: string): Promise<boolean> => {
+    try {
+        // A simple, lightweight endpoint to verify the key.
+        await fetchFromTmdb('/configuration', apiKey);
+        return true;
+    } catch (error) {
+        console.error("TMDb API key verification failed:", error);
+        return false;
+    }
 };
 
 const findBestTrailer = (videos: any[]): any | null => {
@@ -152,7 +163,7 @@ const checkIfInTheaters = (releaseDatesData: any, countryCode: string): boolean 
         return false;
     }
 
-    const countryReleases = releaseDatesData.results.find((r: any) => r.iso_3166_1 === countryCode.toUpperCase());
+    const countryReleases = releaseDatesData.results.find((r: any) => r.iso_31_6_1 === countryCode.toUpperCase());
     if (!countryReleases || !countryReleases.release_dates) {
         return false;
     }
@@ -243,26 +254,37 @@ export const getNowPlayingMovies = () => fetchTmdbList('/movie/now_playing', 'mo
 export const getTopRatedMovies = () => fetchTmdbList('/movie/top_rated', 'movie');
 export const getTopRatedTv = () => fetchTmdbList('/tv/top_rated', 'tv');
 
-export const getMovieCollections = async (): Promise<Collection[]> => {
-    const popularMovies = await fetchFromTmdb<{ results: any[] }>('/movie/popular?page=1');
-    const collectionPromises = popularMovies.results
-        .filter(movie => movie.belongs_to_collection)
-        .map(movie => fetchFromTmdb<any>(`/collection/${movie.belongs_to_collection.id}`));
+export const getComingSoonMedia = async (): Promise<MediaDetails[]> => {
+    const today = new Date().toISOString().split('T')[0];
+    const inSixMonths = new Date();
+    inSixMonths.setMonth(inSixMonths.getMonth() + 6);
+    const inSixMonthsStr = inSixMonths.toISOString().split('T')[0];
 
-    const collectionsData = await Promise.all(collectionPromises);
+    const upcomingMoviesEndpoint = `/movie/upcoming?region=US&page=1`;
+    const upcomingTvEndpoint = `/discover/tv?sort_by=popularity.desc&first_air_date.gte=${today}&first_air_date.lte=${inSixMonthsStr}&air_date.gte=${today}&air_date.lte=${inSixMonthsStr}&with_original_language=en`;
+    
+    try {
+        const [movies, tvShows] = await Promise.all([
+            fetchTmdbList(upcomingMoviesEndpoint, 'movie'),
+            fetchTmdbList(upcomingTvEndpoint, 'tv')
+        ]);
+        
+        const combined = [...movies, ...tvShows];
 
-    const collectionsMap = new Map<number, Collection>();
-    collectionsData.forEach(coll => {
-        if (coll.id && coll.poster_path && coll.backdrop_path) {
-            collectionsMap.set(coll.id, {
-                id: coll.id,
-                name: coll.name,
-                posterUrl: `https://image.tmdb.org/t/p/w500${coll.poster_path}`,
-                backdropUrl: `https://image.tmdb.org/t/p/w1280${coll.backdrop_path}`
+        // Filter out items without a valid release date and sort them
+        const sorted = combined
+            .filter(item => item.releaseDate && new Date(item.releaseDate) >= new Date(today))
+            .sort((a, b) => {
+                const dateA = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
+                const dateB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
+                return dateA - dateB;
             });
-        }
-    });
-    return Array.from(collectionsMap.values());
+
+        return sorted;
+    } catch (error) {
+        console.error("Failed to fetch coming soon media:", error);
+        return [];
+    }
 };
 
 export const fetchCollectionDetails = async (id: number): Promise<CollectionDetails> => {

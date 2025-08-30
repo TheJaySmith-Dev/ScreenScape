@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -15,19 +13,18 @@ import {
   getNowPlayingMovies,
   getTopRatedMovies,
   getTopRatedTv,
-  getMovieCollections,
   getMediaByStudio,
   searchTmdb,
   getMediaByStreamingProvider,
   getMediaByNetwork,
   fetchActorDetails,
+  getComingSoonMedia,
 } from './services/tmdbService.ts';
 import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network, ActorDetails } from './types.ts';
 import { popularStudios } from './services/studioService.ts';
 import { brands as allBrands } from './services/brandService.ts';
 import { DetailModal } from './components/DetailModal.tsx';
 import { StudioGrid } from './components/StudioGrid.tsx';
-import { CollectionGrid } from './components/CollectionGrid.tsx';
 import { StudioFilters } from './components/StudioFilters.tsx';
 import { BrandGrid } from './components/BrandGrid.tsx';
 import { BrandDetail } from './components/BrandDetail.tsx';
@@ -40,6 +37,9 @@ import { popularNetworks } from './services/networkService.ts';
 import { NetworkGrid } from './components/NetworkGrid.tsx';
 import { ActorPage } from './components/ActorPage.tsx';
 import { WatchlistPage } from './components/WatchlistPage.tsx';
+import { ComingSoonPage } from './components/ComingSoonPage.tsx';
+import { ApiKeyModal } from './components/ApiKeyModal.tsx';
+import { getTmdbApiKey } from './services/apiService.ts';
 
 
 type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming' | 'networks';
@@ -55,12 +55,15 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   
   const [homeSections, setHomeSections] = useState<{title: string, items: MediaDetails[], type: 'movie' | 'tv' | 'mixed'}[]>([]);
-  const [collections, setCollections] = useState<Collection[]>([]);
   const [isHomeLoading, setIsHomeLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [isVpnBlocked, setIsVpnBlocked] = useState<boolean | null>(null); // null: checking, false: ok, true: blocked
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+
+  // State for API Key onboarding
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(false);
 
   // State for Streaming hubs
   const [availableProviders, setAvailableProviders] = useState<StreamingProviderInfo[]>([]);
@@ -89,6 +92,20 @@ const App: React.FC = () => {
   // State for Actor pages
   const [selectedActor, setSelectedActor] = useState<ActorDetails | null>(null);
 
+  // State for Coming Soon page
+  const [comingSoonMedia, setComingSoonMedia] = useState<MediaDetails[]>([]);
+  const [isComingSoonLoading, setIsComingSoonLoading] = useState(true);
+
+  // Initial app setup for API Key
+  useEffect(() => {
+    const key = getTmdbApiKey();
+    if (key) {
+        setHasApiKey(true);
+    } else {
+        setHasApiKey(false);
+        setIsApiKeyModalOpen(true);
+    }
+  }, []);
 
   useEffect(() => {
     const initApp = async () => {
@@ -126,13 +143,15 @@ const App: React.FC = () => {
       }
     };
 
-    initApp();
-  }, []);
+    if (hasApiKey) {
+        initApp();
+    }
+  }, [hasApiKey]);
 
 
   // Effect for loading primary content based on tab.
   useEffect(() => {
-    if (isVpnBlocked !== false) return;
+    if (isVpnBlocked !== false || !hasApiKey) return;
 
     const loadHomeAndSharedData = async () => {
       setIsHomeLoading(true);
@@ -169,18 +188,18 @@ const App: React.FC = () => {
         setIsHomeLoading(false);
       }
     };
-    
-    const loadCollectionsData = async () => {
-        setIsHomeLoading(true);
+
+    const loadComingSoonData = async () => {
+        setIsComingSoonLoading(true);
         setError(null);
         try {
-            const movieCollections = await getMovieCollections();
-            setCollections(movieCollections);
+            const media = await getComingSoonMedia();
+            setComingSoonMedia(media);
         } catch (err) {
-            console.error("Failed to load collections:", err);
-            setError("Could not load collections. Please try again later.");
+            console.error("Failed to load coming soon data:", err);
+            setError("Could not load upcoming content. Please try again later.");
         } finally {
-            setIsHomeLoading(false);
+            setIsComingSoonLoading(false);
         }
     };
     
@@ -188,9 +207,9 @@ const App: React.FC = () => {
     if (['home', 'movies', 'tv'].includes(activeTab)) {
         loadHomeAndSharedData();
     } else if (activeTab === 'collections') {
-        loadCollectionsData();
+        loadComingSoonData();
     }
-  }, [activeTab, isVpnBlocked]);
+  }, [activeTab, isVpnBlocked, hasApiKey]);
 
 
   const handleSearch = useCallback(async (query: string) => {
@@ -377,6 +396,7 @@ const App: React.FC = () => {
     setIsProviderMediaLoading(true);
     try {
         const media = await getMediaByStreamingProvider(provider.key, userLocation?.code || 'US');
+
         setProviderMedia(media);
         if (media.length === 0) {
             setError(`Could not find popular content for ${provider.name} in your region (${userLocation?.name || 'US'}).`);
@@ -453,7 +473,6 @@ const App: React.FC = () => {
     clearSearch();
     // Reset states for other tabs to ensure fresh content on navigation
     setHomeSections([]);
-    setCollections([]);
     setSelectedStudio(null);
     setStudioMedia([]);
     setSelectedBrand(null);
@@ -463,7 +482,13 @@ const App: React.FC = () => {
     setSelectedNetwork(null);
     setNetworkMedia([]);
     setSelectedActor(null);
+    setComingSoonMedia([]);
     setActiveTab(tab);
+  };
+
+  const handleApiKeySaved = () => {
+    setHasApiKey(true);
+    setIsApiKeyModalOpen(false);
   };
 
   const renderHomePageContent = () => {
@@ -560,7 +585,8 @@ const App: React.FC = () => {
         );
       }
       case 'collections':
-        return isHomeLoading ? <LoadingSpinner /> : <CollectionGrid collections={collections} onSelect={handleSelectCollection} />;
+        if (isComingSoonLoading) return <LoadingSpinner />;
+        return <ComingSoonPage media={comingSoonMedia} onSelectMedia={handleSelectMedia} />;
       case 'studios':
         return <StudioGrid studios={studios} onSelect={handleSelectStudio} />;
       case 'brands':
@@ -581,7 +607,14 @@ const App: React.FC = () => {
 
   return (
     <div className="bg-gray-900 text-white min-h-screen font-sans">
-      {isVpnBlocked === true && (
+      <ApiKeyModal
+        isOpen={isApiKeyModalOpen}
+        onSave={handleApiKeySaved}
+        isDismissable={hasApiKey}
+        onClose={() => hasApiKey && setIsApiKeyModalOpen(false)}
+      />
+
+      {hasApiKey && isVpnBlocked === true && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="max-w-md text-center bg-gray-800 p-8 rounded-2xl border border-red-500/50">
             <h2 className="text-2xl font-bold text-red-400 mb-4">VPN/Proxy Detected</h2>
@@ -591,53 +624,67 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
-      {isVpnBlocked === null && (
+      {hasApiKey && isVpnBlocked === null && (
          <div className="fixed inset-0 bg-gray-900 z-[100] flex items-center justify-center">
             <LoadingSpinner />
          </div>
       )}
+      {!hasApiKey && !isApiKeyModalOpen && (
+        <div className="fixed inset-0 bg-gray-900 z-[100] flex items-center justify-center">
+          <LoadingSpinner />
+        </div>
+      )}
 
-      {selectedItem ? (
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <DetailModal 
-              item={selectedItem} 
-              onClose={handleCloseModal} 
-              isLoading={isModalLoading}
-              onSelectMedia={handleSelectMedia}
-              onSelectActor={handleSelectActor}
-              userLocation={userLocation}
-            />
-        </main>
-      ) : selectedActor ? (
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <ActorPage
-                actor={selectedActor}
-                onBack={handleBackFromActor}
-                onSelectMedia={handleSelectMedia}
-            />
-        </main>
-      ) : (
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <header className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-                <div className="flex items-center gap-3">
-                    <svg className="w-10 h-10 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20 4h-4l-4-4-4 4H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H4V6h4.52l4-4 4 4H20v14zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-                    </svg>
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight cursor-pointer" onClick={() => handleTabChange('home')}>WatchNow</h1>
+
+      {hasApiKey && (
+        <>
+        {selectedItem ? (
+            <main className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <DetailModal 
+                  item={selectedItem} 
+                  onClose={handleCloseModal} 
+                  isLoading={isModalLoading}
+                  onSelectMedia={handleSelectMedia}
+                  onSelectActor={handleSelectActor}
+                  userLocation={userLocation}
+                />
+            </main>
+        ) : selectedActor ? (
+            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <ActorPage
+                    actor={selectedActor}
+                    onBack={handleBackFromActor}
+                    onSelectMedia={handleSelectMedia}
+                />
+            </main>
+        ) : (
+            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <header className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+                    <div className="flex items-center gap-3">
+                        <svg className="w-10 h-10 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 4h-4l-4-4-4 4H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H4V6h4.52l4-4 4 4H20v14zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                        </svg>
+                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight cursor-pointer" onClick={() => handleTabChange('home')}>WatchNow</h1>
+                    </div>
+                    <AccountButton 
+                        onSignInClick={() => setIsAuthModalOpen(true)} 
+                        userLocation={userLocation} 
+                        onApiKeySettingsClick={() => setIsApiKeyModalOpen(true)}
+                    />
+                </header>
+                <div className="mb-8 flex justify-center">
+                    <SearchBar onSearch={handleSearch} isLoading={isLoading} />
                 </div>
-                <AccountButton onSignInClick={() => setIsAuthModalOpen(true)} userLocation={userLocation} />
-            </header>
-            <div className="mb-8 flex justify-center">
-                <SearchBar onSearch={handleSearch} isLoading={isLoading} />
-            </div>
-            <div className="mb-8 flex justify-center">
-                <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
-            </div>
-            
-            <div className="flex justify-center">
-                {renderHomePageContent()}
-            </div>
-        </main>
+                <div className="mb-8 flex justify-center">
+                    <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+                </div>
+                
+                <div className="flex justify-center">
+                    {renderHomePageContent()}
+                </div>
+            </main>
+        )}
+        </>
       )}
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />

@@ -6,9 +6,10 @@ import type { UserLocation } from '../types.ts';
 interface AccountButtonProps {
     onSignInClick: () => void;
     userLocation: UserLocation | null;
+    onApiKeySettingsClick: () => void;
 }
 
-export const AccountButton: React.FC<AccountButtonProps> = ({ onSignInClick, userLocation }) => {
+export const AccountButton: React.FC<AccountButtonProps> = ({ onSignInClick, userLocation, onApiKeySettingsClick }) => {
     const { currentUser, logout } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -73,6 +74,15 @@ export const AccountButton: React.FC<AccountButtonProps> = ({ onSignInClick, use
                         </div>
                     )}
                     <div className="p-2">
+                         <button
+                            onClick={() => {
+                                onApiKeySettingsClick();
+                                setIsMenuOpen(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-colors"
+                        >
+                            API Key Settings
+                        </button>
                          <button
                             onClick={handleLogout}
                             className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/10 rounded-md transition-colors"

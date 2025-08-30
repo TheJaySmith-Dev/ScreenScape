@@ -1,4 +1,6 @@
 
+
+
 export interface TmdbSearchResult {
   id: number;
   poster_path: string | null;

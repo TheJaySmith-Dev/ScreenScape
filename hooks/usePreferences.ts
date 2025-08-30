@@ -1,105 +1,91 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth.ts';
-import type { MediaDetails, LikedItem, DislikedItem } from '../types.ts';
 import * as api from '../services/apiService.ts';
+import type { MediaDetails, LikedItem, DislikedItem } from '../types.ts';
 
 export const usePreferences = () => {
-  const { currentUser } = useAuth();
-  const [likes, setLikes] = useState<LikedItem[]>([]);
-  const [dislikes, setDislikes] = useState<DislikedItem[]>([]);
-  const [loading, setLoading] = useState(true);
+    const { currentUser } = useAuth();
+    const [likes, setLikes] = useState<LikedItem[]>([]);
+    const [dislikes, setDislikes] = useState<DislikedItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (currentUser?.email) {
-      setLoading(true);
-      const fetchPrefs = async () => {
-        try {
-          const { likes: storedLikes, dislikes: storedDislikes } = await api.getPreferences(currentUser.email!);
-          setLikes(storedLikes || []);
-          setDislikes(storedDislikes || []);
-        } catch (error) {
-          console.error("Failed to fetch preferences:", error);
-        } finally {
-          setLoading(false);
+    useEffect(() => {
+        const loadPreferences = async () => {
+            if (currentUser) {
+                setIsLoading(true);
+                try {
+                    const prefs = await api.getPreferences(currentUser.email);
+                    setLikes(prefs.likes);
+                    setDislikes(prefs.dislikes);
+                } catch (error) {
+                    console.error("Failed to load preferences:", error);
+                } finally {
+                    setIsLoading(false);
+                }
+            } else {
+                // If no user, clear preferences
+                setLikes([]);
+                setDislikes([]);
+                setIsLoading(false);
+            }
+        };
+        loadPreferences();
+    }, [currentUser]);
+
+    const savePreferences = useCallback(async (newLikes: LikedItem[], newDislikes: DislikedItem[]) => {
+        if (currentUser) {
+            try {
+                await api.savePreferences(currentUser.email, newLikes, newDislikes);
+            } catch (error) {
+                console.error("Failed to save preferences:", error);
+            }
         }
-      };
-      fetchPrefs();
-    } else {
-      // Clear preferences if user logs out
-      setLikes([]);
-      setDislikes([]);
-      setLoading(false);
-    }
-  }, [currentUser]);
+    }, [currentUser]);
 
-  const savePreferences = useCallback(async (newLikes: LikedItem[], newDislikes: DislikedItem[]) => {
-    if (currentUser?.email) {
-      try {
-        await api.savePreferences(currentUser.email, newLikes, newDislikes);
-      } catch (error) {
-        console.error("Failed to save preferences", error);
-        // In a real app, you might want to handle this with a toast notification to the user
-      }
-    }
-  }, [currentUser]);
+    const likeItem = useCallback((item: MediaDetails) => {
+        if (!currentUser) return;
+        const newItem: LikedItem = {
+            id: item.id,
+            type: item.type,
+            title: item.title,
+            posterUrl: item.posterUrl,
+            releaseYear: item.releaseYear,
+        };
+        const newLikes = [...likes.filter(l => l.id !== item.id), newItem];
+        const newDislikes = dislikes.filter(d => d.id !== item.id);
+        
+        setLikes(newLikes);
+        setDislikes(newDislikes);
+        savePreferences(newLikes, newDislikes);
 
-  const likeItem = useCallback((item: MediaDetails) => {
-    const newLike: LikedItem = {
-      id: item.id,
-      type: item.type,
-      title: item.title,
-      posterUrl: item.posterUrl,
-      releaseYear: item.releaseYear,
-    };
+    }, [likes, dislikes, savePreferences, currentUser]);
 
-    // Optimistic UI update
-    const updatedLikes = [newLike, ...likes.filter(l => l.id !== item.id)];
-    const updatedDislikes = dislikes.filter(d => d.id !== item.id);
-    setLikes(updatedLikes);
-    setDislikes(updatedDislikes);
+    const dislikeItem = useCallback((item: MediaDetails) => {
+        if (!currentUser) return;
+        const newItem: DislikedItem = {
+            id: item.id,
+            type: item.type,
+        };
+        const newLikes = likes.filter(l => l.id !== item.id);
+        const newDislikes = [...dislikes.filter(d => d.id !== item.id), newItem];
+
+        setLikes(newLikes);
+        setDislikes(newDislikes);
+        savePreferences(newLikes, newDislikes);
+    }, [likes, dislikes, savePreferences, currentUser]);
     
-    // Persist change in the background
-    savePreferences(updatedLikes, updatedDislikes);
-  }, [likes, dislikes, savePreferences]);
+    const unlistItem = useCallback((item: MediaDetails) => {
+        if (!currentUser) return;
+        const newLikes = likes.filter(l => l.id !== item.id);
+        const newDislikes = dislikes.filter(d => d.id !== item.id);
 
-  const dislikeItem = useCallback((item: MediaDetails) => {
-    const newDislike: DislikedItem = {
-      id: item.id,
-      type: item.type,
-    };
+        setLikes(newLikes);
+        setDislikes(newDislikes);
+        savePreferences(newLikes, newDislikes);
+    }, [likes, dislikes, savePreferences, currentUser]);
 
-    // Optimistic UI update
-    const updatedDislikes = [newDislike, ...dislikes.filter(d => d.id !== item.id)];
-    const updatedLikes = likes.filter(l => l.id !== item.id);
-    setDislikes(updatedDislikes);
-    setLikes(updatedLikes);
+    const isLiked = (id: number) => likes.some(l => l.id === id);
+    const isDisliked = (id: number) => dislikes.some(d => d.id === id);
 
-    // Persist change in the background
-    savePreferences(updatedLikes, updatedDislikes);
-  }, [likes, dislikes, savePreferences]);
-
-  const unlistItem = useCallback((item: MediaDetails) => {
-    // Optimistic UI update
-    const updatedLikes = likes.filter(l => l.id !== item.id);
-    const updatedDislikes = dislikes.filter(d => d.id !== item.id);
-    setLikes(updatedLikes);
-    setDislikes(updatedDislikes);
-    
-    // Persist change in the background
-    savePreferences(updatedLikes, updatedDislikes);
-  }, [likes, dislikes, savePreferences]);
-
-  const isLiked = useCallback((itemId: number) => likes.some(l => l.id === itemId), [likes]);
-  const isDisliked = useCallback((itemId: number) => dislikes.some(d => d.id === itemId), [dislikes]);
-
-  return {
-    likes,
-    dislikes,
-    loading,
-    likeItem,
-    dislikeItem,
-    unlistItem,
-    isLiked,
-    isDisliked,
-  };
+    return { likes, dislikes, likeItem, dislikeItem, unlistItem, isLiked, isDisliked, isLoading };
 };

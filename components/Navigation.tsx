@@ -35,7 +35,7 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
         <NavButton label="Watchlist" isActive={activeTab === 'watchlist'} onClick={() => onTabChange('watchlist')} />
         <NavButton label="Movies" isActive={activeTab === 'movies'} onClick={() => onTabChange('movies')} />
         <NavButton label="TV" isActive={activeTab === 'tv'} onClick={() => onTabChange('tv')} />
-        <NavButton label="Collections" isActive={activeTab === 'collections'} onClick={() => onTabChange('collections')} />
+        <NavButton label="Coming Soon" isActive={activeTab === 'collections'} onClick={() => onTabChange('collections')} />
         <NavButton label="Studios" isActive={activeTab === 'studios'} onClick={() => onTabChange('studios')} />
         <NavButton label="Brands" isActive={activeTab === 'brands'} onClick={() => onTabChange('brands')} />
         <NavButton label="Streaming" isActive={activeTab === 'streaming'} onClick={() => onTabChange('streaming')} />
