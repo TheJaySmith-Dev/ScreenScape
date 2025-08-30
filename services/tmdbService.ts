@@ -1,3 +1,4 @@
+
 import type { MediaDetails, TmdbSearchResult, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails } from '../types.ts';
 import { fetchOmdbDetails } from './omdbService.ts';
 import { supportedProviders } from './streamingService.ts';
@@ -188,7 +189,7 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
           const endpoint = `/${type}/${id}?append_to_response=${appendToResponse}&include_image_language=en,null`;
           const details = await fetchFromTmdb<any>(endpoint);
           
-          const trailer = findBestTrailer(details.videos?.results);
+          const baseDetails = formatMediaDetailsFromApiResponse(details, type);
           const textlessPoster = findBestTextlessPoster(details.images);
 
           const providersData = details['watch/providers']?.results?.[countryCode.toUpperCase()];
@@ -217,13 +218,13 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
           }
   
           return {
-              trailerUrl: trailer ? `https://www.youtube.com/embed/${trailer.key}` : null,
+              ...baseDetails,
               textlessPosterUrl: textlessPoster,
               cast: formatCast(details.credits),
               related: formatRelated(details.recommendations, type),
               watchProviders,
               isInTheaters,
-              imdbId: imdbId || null,
+              imdbId: imdbId || baseDetails.imdbId,
               ...omdbDetails,
               ...additionalDetails,
           };

@@ -34,7 +34,6 @@ export const ComingSoonCard: React.FC<ComingSoonCardProps> = ({ media, onSelect 
       tabIndex={0}
       role="button"
       aria-label={`View details for ${media.title}`}
-      // FIX: Pass the 'media' object to the onSelect callback to match its signature.
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect(media)}
     >
       <img 

@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -148,79 +149,144 @@ const App: React.FC = () => {
     }
   }, [hasApiKey]);
 
-
-  // Effect for loading primary content based on tab.
+  // Main routing effect
   useEffect(() => {
-    if (isVpnBlocked !== false || !hasApiKey) return;
-
-    const loadHomeAndSharedData = async () => {
-      setIsHomeLoading(true);
+    const handleRouteChange = async () => {
+      // Clear all page-specific content to avoid showing stale data from previous view
+      setSelectedItem(null);
+      setSelectedActor(null);
+      setSelectedStudio(null);
+      setSelectedBrand(null);
+      setSelectedProvider(null);
+      setSelectedNetwork(null);
+      setRecommendations([]);
       setError(null);
+      
+      const hash = window.location.hash.substring(1); // remove '#'
+      const parts = hash.split('/').filter(Boolean);
+      const [page, ...params] = parts;
+
+      const mainTabs: ActiveTab[] = ['home', 'foryou', 'watchlist', 'movies', 'tv', 'collections', 'studios', 'brands', 'streaming', 'networks'];
+      const currentTab = mainTabs.includes(page as ActiveTab) ? (page as ActiveTab) : 'home';
+      setActiveTab(currentTab);
+
+      // Don't load content if VPN is blocked or no API key
+      if (!hasApiKey || isVpnBlocked) {
+        if(isVpnBlocked === false) setIsLoading(false);
+        return;
+      }
+      
+      setIsLoading(true);
+
       try {
-        const [
-          trending, 
-          popularMovies, 
-          popularTv, 
-          nowPlayingMovies,
-          topRatedMovies,
-          topRatedTv,
-        ] = await Promise.all([
-          getTrending(),
-          getPopularMovies(),
-          getPopularTv(),
-          getNowPlayingMovies(),
-          getTopRatedMovies(),
-          getTopRatedTv(),
-        ]);
-        
-        const sections = [];
-        if (trending.length > 0) sections.push({ title: 'Trending This Week', items: trending, type: 'mixed' as const });
-        if (popularMovies.length > 0) sections.push({ title: 'Popular Movies', items: popularMovies, type: 'movie' as const });
-        if (topRatedMovies.length > 0) sections.push({ title: 'Critically Acclaimed Movies', items: topRatedMovies, type: 'movie' as const });
-        if (popularTv.length > 0) sections.push({ title: 'Popular TV Shows', items: popularTv, type: 'tv' as const });
-        if (topRatedTv.length > 0) sections.push({ title: 'Critically Acclaimed TV Shows', items: topRatedTv, type: 'tv' as const });
-        if (nowPlayingMovies.length > 0) sections.push({ title: 'Now Playing in Theaters', items: nowPlayingMovies, type: 'movie' as const });
-        setHomeSections(sections);
+        switch (page) {
+          case 'media': {
+            const [type, idStr] = params;
+            if ((type === 'movie' || type === 'tv') && idStr) {
+              await handleSelectMedia(parseInt(idStr, 10), type);
+            }
+            break;
+          }
+          case 'collection': {
+            const [idStr] = params;
+            if (idStr) await handleSelectCollection(parseInt(idStr, 10));
+            break;
+          }
+          case 'actor': {
+            const [idStr] = params;
+            if (idStr) await handleSelectActor(parseInt(idStr, 10));
+            break;
+          }
+          case 'studios': {
+            const [idStr] = params;
+            const studio = studios.find(s => s.id === parseInt(idStr));
+            if (studio) await handleSelectStudio(studio);
+            break;
+          }
+          case 'brands': {
+            const [idStr] = params;
+            const brand = brands.find(b => b.id === idStr);
+            if (brand) await handleSelectBrand(brand);
+            break;
+          }
+          case 'streaming': {
+            const [key] = params;
+            const provider = availableProviders.find(p => p.key === key);
+            if (provider) await handleSelectProvider(provider);
+            break;
+          }
+          case 'networks': {
+            const [idStr] = params;
+            const network = networks.find(n => n.id === parseInt(idStr));
+            if (network) await handleSelectNetwork(network);
+            break;
+          }
+          case 'home':
+          case 'movies':
+          case 'tv':
+          default: { // Also handles empty hash
+            if (isVpnBlocked === false) {
+                setIsHomeLoading(true);
+                setError(null);
+                try {
+                  const [trending, popularMovies, popularTv, nowPlayingMovies, topRatedMovies, topRatedTv] = await Promise.all([
+                    getTrending(), getPopularMovies(), getPopularTv(), getNowPlayingMovies(), getTopRatedMovies(), getTopRatedTv(),
+                  ]);
+                  const sections = [
+                    { title: 'Trending This Week', items: trending, type: 'mixed' as const },
+                    { title: 'Popular Movies', items: popularMovies, type: 'movie' as const },
+                    { title: 'Critically Acclaimed Movies', items: topRatedMovies, type: 'movie' as const },
+                    { title: 'Popular TV Shows', items: popularTv, type: 'tv' as const },
+                    { title: 'Critically Acclaimed TV Shows', items: topRatedTv, type: 'tv' as const },
+                    { title: 'Now Playing in Theaters', items: nowPlayingMovies, type: 'movie' as const },
+                  ];
+                  setHomeSections(sections.filter(s => s.items.length > 0));
+                } catch (err) {
+                  console.error("Failed to load home data:", err);
+                  setError("Could not load content. Please try again later.");
+                } finally {
+                  setIsHomeLoading(false);
+                }
+            }
+            break;
+          }
+          case 'collections': {
+              setIsComingSoonLoading(true);
+              setError(null);
+              try {
+                  const media = await getComingSoonMedia();
+                  setComingSoonMedia(media);
+              } catch (err) {
+                  console.error("Failed to load coming soon data:", err);
+                  setError("Could not load upcoming content. Please try again later.");
+              } finally {
+                  setIsComingSoonLoading(false);
+              }
+              break;
+          }
+        }
       } catch (err) {
-        console.error("Failed to load home data:", err);
-        setError("Could not load content. Please try again later.");
+          console.error("Routing error:", err);
+          setError("An error occurred. Please try again.");
       } finally {
-        setIsHomeLoading(false);
+          setIsLoading(false);
       }
     };
 
-    const loadComingSoonData = async () => {
-        setIsComingSoonLoading(true);
-        setError(null);
-        try {
-            const media = await getComingSoonMedia();
-            setComingSoonMedia(media);
-        } catch (err) {
-            console.error("Failed to load coming soon data:", err);
-            setError("Could not load upcoming content. Please try again later.");
-        } finally {
-            setIsComingSoonLoading(false);
-        }
-    };
-    
-    // Router-like logic to fetch data for the active tab
-    if (['home', 'movies', 'tv'].includes(activeTab)) {
-        loadHomeAndSharedData();
-    } else if (activeTab === 'collections') {
-        loadComingSoonData();
-    }
-  }, [activeTab, isVpnBlocked, hasApiKey]);
+    window.addEventListener('hashchange', handleRouteChange, false);
+    handleRouteChange(); // initial load
+
+    return () => window.removeEventListener('hashchange', handleRouteChange, false);
+  }, [hasApiKey, isVpnBlocked, userLocation]); // Re-run if key/VPN status changes.
 
 
   const handleSearch = useCallback(async (query: string) => {
     if (!query) return;
 
+    window.location.hash = '#/home'; // Navigate to home to show search results
     setIsLoading(true);
     setError(null);
     setRecommendations([]);
-    setSelectedItem(null);
-    setSelectedActor(null);
-    setActiveTab('home');
 
     try {
       const searchResults = await searchTmdb(query);
@@ -238,47 +304,52 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const handleSelectMedia = useCallback(async (media: MediaDetails) => {
-    setSelectedActor(null);
-    setSelectedItem(media);
+  const handleSelectMedia = useCallback(async (id: number, type: 'movie' | 'tv') => {
+    // Set a minimal object first for faster perceived load
+    setSelectedItem({ id, type, title: 'Loading...', posterUrl: '', backdropUrl: '', overview: '', rating: 0, releaseYear: '', trailerUrl: null });
     setIsModalLoading(true);
   
     try {
-      const details = await fetchDetailsForModal(media.id, media.type, userLocation?.code || 'US');
-      setSelectedItem(currentMedia => 
-        currentMedia && 'id' in currentMedia && currentMedia.id === media.id
-          ? { ...currentMedia, ...details } 
-          : currentMedia
+      const details = await fetchDetailsForModal(id, type, userLocation?.code || 'US');
+      setSelectedItem(current => 
+        // FIX: Added 'type' in current as a type guard to ensure `current` is MediaDetails before accessing `title`.
+        current && 'type' in current && current.id === id
+          ? { ...current, ...details, title: details.title || current.title } 
+          : current
       );
     } catch (err) {
       console.error("Failed to fetch additional details for modal:", err);
+      setError("Failed to load details for this item.");
     } finally {
       setIsModalLoading(false);
     }
   }, [userLocation]);
-
-  const handleSelectCollection = useCallback(async (collection: Collection) => {
-    setSelectedActor(null);
-    setSelectedItem({ ...collection, overview: '', parts: [] });
+  
+  const navigateToMedia = (media: MediaDetails) => {
+    window.location.hash = `#/media/${media.type}/${media.id}`;
+  };
+  
+  const handleSelectCollection = useCallback(async (id: number) => {
+    setSelectedItem({ id, name: 'Loading...', posterUrl: '', backdropUrl: '', overview: '', parts: [] });
     setIsModalLoading(true);
     try {
-        const details = await fetchCollectionDetails(collection.id);
+        const details = await fetchCollectionDetails(id);
         setSelectedItem(details);
     } catch(err) {
         console.error("Failed to fetch collection details:", err);
-        // Fallback to basic info if details fail
-        setSelectedItem({ ...collection, overview: 'Failed to fetch collection details.', parts: [] });
+        setError("Failed to load collection details.");
     } finally {
         setIsModalLoading(false);
     }
   }, []);
 
+  const navigateToCollection = (collection: Collection) => {
+    window.location.hash = `#/collection/${collection.id}`;
+  };
+
   const handleSelectStudio = useCallback(async (studio: Studio) => {
-    setIsLoading(true);
-    setSelectedActor(null);
     setSelectedStudio(studio);
     setStudioMedia([]);
-    setError(null);
     setStudioMediaTypeFilter('all');
     setStudioSortBy('trending');
     try {
@@ -286,57 +357,31 @@ const App: React.FC = () => {
         setStudioMedia(media);
     } catch (err) {
         console.error(`Failed to load media for ${studio.name}:`, err);
-        setError(`Could not load media for ${studio.name}. Please try again later.`);
-    } finally {
-        setIsLoading(false);
+        setError(`Could not load media for ${studio.name}.`);
     }
   }, []);
 
   const displayedStudioMedia = useMemo(() => {
     let filtered = [...studioMedia];
-
-    // Apply media type filter
     if (studioMediaTypeFilter !== 'all') {
         filtered = filtered.filter(media => {
-            if (studioMediaTypeFilter === 'movie') {
-                return media.type === 'movie' && media.mediaSubType !== 'short';
-            }
-            if (studioMediaTypeFilter === 'show') {
-                return media.type === 'tv';
-            }
-            if (studioMediaTypeFilter === 'short') {
-                return media.mediaSubType === 'short';
-            }
+            if (studioMediaTypeFilter === 'movie') return media.type === 'movie' && media.mediaSubType !== 'short';
+            if (studioMediaTypeFilter === 'show') return media.type === 'tv';
+            if (studioMediaTypeFilter === 'short') return media.mediaSubType === 'short';
             return true;
         });
     }
-    
-    // Apply sort
     if (studioSortBy === 'newest') {
-        filtered.sort((a, b) => {
-            const dateA = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
-            const dateB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
-            return dateB - dateA;
-        });
-    } else { // 'trending' is the default sort from the API, but we re-sort to be safe
+        filtered.sort((a, b) => (new Date(b.releaseDate || 0).getTime()) - (new Date(a.releaseDate || 0).getTime()));
+    } else {
          filtered.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
     }
-
     return filtered;
   }, [studioMedia, studioMediaTypeFilter, studioSortBy]);
-
-  const handleBackToStudios = () => {
-    setSelectedStudio(null);
-    setStudioMedia([]);
-    setError(null);
-  };
   
   const handleSelectBrand = useCallback(async (brand: Brand) => {
-    setIsLoading(true);
-    setSelectedActor(null);
     setSelectedBrand(brand);
     setBrandMedia([]);
-    setError(null);
     setBrandMediaTypeFilter('all');
     setBrandSortBy('trending');
     try {
@@ -344,146 +389,70 @@ const App: React.FC = () => {
         setBrandMedia(media);
     } catch (err) {
         console.error(`Failed to load media for ${brand.name}:`, err);
-        setError(`Could not load media for ${brand.name}. Please try again later.`);
-    } finally {
-        setIsLoading(false);
+        setError(`Could not load media for ${brand.name}.`);
     }
   }, []);
 
   const displayedBrandMedia = useMemo(() => {
     let filtered = [...brandMedia];
-
     if (brandMediaTypeFilter !== 'all') {
         filtered = filtered.filter(media => {
-            if (brandMediaTypeFilter === 'movie') {
-                return media.type === 'movie' && media.mediaSubType !== 'short';
-            }
-            if (brandMediaTypeFilter === 'show') {
-                return media.type === 'tv';
-            }
-            if (brandMediaTypeFilter === 'short') {
-                return media.mediaSubType === 'short';
-            }
+            if (brandMediaTypeFilter === 'movie') return media.type === 'movie' && media.mediaSubType !== 'short';
+            if (brandMediaTypeFilter === 'show') return media.type === 'tv';
+            if (brandMediaTypeFilter === 'short') return media.mediaSubType === 'short';
             return true;
         });
     }
-    
     if (brandSortBy === 'newest') {
-        filtered.sort((a, b) => {
-            const dateA = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
-            const dateB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
-            return dateB - dateA;
-        });
+        filtered.sort((a, b) => (new Date(b.releaseDate || 0).getTime()) - (new Date(a.releaseDate || 0).getTime()));
     } else {
          filtered.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
     }
-
     return filtered;
   }, [brandMedia, brandMediaTypeFilter, brandSortBy]);
-
-  const handleBackToBrands = () => {
-    setSelectedBrand(null);
-    setBrandMedia([]);
-    setError(null);
-  };
   
   const handleSelectProvider = useCallback(async (provider: StreamingProviderInfo) => {
-    setSelectedActor(null);
     setSelectedProvider(provider);
     setProviderMedia([]);
-    setError(null);
-
     setIsProviderMediaLoading(true);
     try {
         const media = await getMediaByStreamingProvider(provider.key, userLocation?.code || 'US');
-
         setProviderMedia(media);
         if (media.length === 0) {
             setError(`Could not find popular content for ${provider.name} in your region (${userLocation?.name || 'US'}).`);
         }
     } catch (err) {
         console.error(`Failed to load data for ${provider.name}:`, err);
-        setError(`Could not load content for ${provider.name}. Please try again later.`);
+        setError(`Could not load content for ${provider.name}.`);
     } finally {
         setIsProviderMediaLoading(false);
     }
   }, [userLocation]);
 
-  const handleBackToStreaming = () => {
-    setSelectedProvider(null);
-    setProviderMedia([]);
-    setError(null);
-  };
-
   const handleSelectNetwork = useCallback(async (network: Network) => {
-    setIsLoading(true);
-    setSelectedActor(null);
     setSelectedNetwork(network);
     setNetworkMedia([]);
-    setError(null);
     try {
         const media = await getMediaByNetwork(network.id);
         setNetworkMedia(media);
     } catch (err) {
         console.error(`Failed to load media for ${network.name}:`, err);
-        setError(`Could not load media for ${network.name}. Please try again later.`);
-    } finally {
-        setIsLoading(false);
+        setError(`Could not load media for ${network.name}.`);
     }
   }, []);
 
-  const handleBackToNetworks = () => {
-    setSelectedNetwork(null);
-    setNetworkMedia([]);
-    setError(null);
-  };
-
   const handleSelectActor = useCallback(async (actorId: number) => {
-    setIsLoading(true);
-    setSelectedActor(null);
-    setError(null);
-    setSelectedItem(null); // Close current media/collection modal
-    
     try {
         const actorDetails = await fetchActorDetails(actorId);
         setSelectedActor(actorDetails);
     } catch (err) {
         console.error(`Failed to load details for actor ${actorId}:`, err);
-        setError(`Could not load actor details. Please try again later.`);
-    } finally {
-        setIsLoading(false);
+        setError(`Could not load actor details.`);
     }
   }, []);
-
-  const handleBackFromActor = () => {
-    setSelectedActor(null);
-    setError(null);
-  };
-
-  const handleCloseModal = useCallback(() => {
-    setSelectedItem(null);
-  }, []);
-
-  const clearSearch = () => {
-    setRecommendations([]);
-    setError(null);
-  }
-
-  const handleTabChange = (tab: ActiveTab) => {
-    clearSearch();
-    // Reset states for other tabs to ensure fresh content on navigation
-    setHomeSections([]);
-    setSelectedStudio(null);
-    setStudioMedia([]);
-    setSelectedBrand(null);
-    setBrandMedia([]);
-    setSelectedProvider(null);
-    setProviderMedia([]);
-    setSelectedNetwork(null);
-    setNetworkMedia([]);
-    setSelectedActor(null);
-    setComingSoonMedia([]);
-    setActiveTab(tab);
+  
+  const handleBack = () => {
+    window.history.back();
   };
 
   const handleApiKeySaved = () => {
@@ -492,20 +461,20 @@ const App: React.FC = () => {
   };
 
   const renderHomePageContent = () => {
-    if (isLoading) return <LoadingSpinner />;
+    if (isLoading && !selectedStudio && !selectedBrand && !selectedProvider && !selectedNetwork) return <LoadingSpinner />;
     if (error && recommendations.length === 0 && !selectedStudio && !selectedBrand && !selectedProvider && !selectedNetwork) {
         return <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>;
     }
     
     if (recommendations.length > 0) {
-      return <RecommendationGrid recommendations={recommendations} onSelect={handleSelectMedia} />;
+      return <RecommendationGrid recommendations={recommendations} onSelect={navigateToMedia} />;
     }
 
     if (selectedStudio) {
       return (
         <div className="w-full max-w-7xl">
             <div className="flex items-center gap-4 mb-6">
-                <button onClick={handleBackToStudios} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Studios</button>
+                <button onClick={() => window.location.hash = '#/studios'} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Studios</button>
                 <h2 className="text-3xl font-bold">{selectedStudio.name}</h2>
             </div>
             <StudioFilters
@@ -514,7 +483,7 @@ const App: React.FC = () => {
               sortBy={studioSortBy}
               setSortBy={setStudioSortBy}
             />
-            <RecommendationGrid recommendations={displayedStudioMedia} onSelect={handleSelectMedia} />
+            {isLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={displayedStudioMedia} onSelect={navigateToMedia} />}
         </div>
       );
     }
@@ -527,9 +496,9 @@ const App: React.FC = () => {
             setMediaTypeFilter={setBrandMediaTypeFilter}
             sortBy={brandSortBy}
             setSortBy={setBrandSortBy}
-            onBack={handleBackToBrands}
-            onSelectMedia={handleSelectMedia}
-            onSelectCollection={handleSelectCollection}
+            onBack={() => window.location.hash = '#/brands'}
+            onSelectMedia={navigateToMedia}
+            onSelectCollection={navigateToCollection}
         />;
     }
 
@@ -537,10 +506,10 @@ const App: React.FC = () => {
       return (
         <div className="w-full max-w-7xl">
           <div className="flex items-center gap-4 mb-6">
-            <button onClick={handleBackToStreaming} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Services</button>
+            <button onClick={() => window.location.hash = '#/streaming'} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Services</button>
             <h2 className="text-3xl font-bold">{selectedProvider.name}</h2>
           </div>
-          {isProviderMediaLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={providerMedia} onSelect={handleSelectMedia} />}
+          {isProviderMediaLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={providerMedia} onSelect={navigateToMedia} />}
         </div>
       );
     }
@@ -549,10 +518,10 @@ const App: React.FC = () => {
       return (
         <div className="w-full max-w-7xl">
           <div className="flex items-center gap-4 mb-6">
-            <button onClick={handleBackToNetworks} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Networks</button>
+            <button onClick={() => window.location.hash = '#/networks'} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Networks</button>
             <h2 className="text-3xl font-bold">{selectedNetwork.name}</h2>
           </div>
-          <RecommendationGrid recommendations={networkMedia} onSelect={handleSelectMedia} />
+          {isLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={networkMedia} onSelect={navigateToMedia} />}
         </div>
       );
     }
@@ -577,7 +546,7 @@ const App: React.FC = () => {
                     key={section.title} 
                     title={section.title} 
                     items={section.items} 
-                    onSelect={handleSelectMedia}
+                    onSelect={navigateToMedia}
                     animationDelay={`${index * 150}ms`}
                 />
             ))}
@@ -586,19 +555,19 @@ const App: React.FC = () => {
       }
       case 'collections':
         if (isComingSoonLoading) return <LoadingSpinner />;
-        return <ComingSoonPage media={comingSoonMedia} onSelectMedia={handleSelectMedia} />;
+        return <ComingSoonPage media={comingSoonMedia} onSelectMedia={navigateToMedia} />;
       case 'studios':
-        return <StudioGrid studios={studios} onSelect={handleSelectStudio} />;
+        return <StudioGrid studios={studios} onSelect={(studio) => window.location.hash = `#/studios/${studio.id}`} />;
       case 'brands':
-        return <BrandGrid brands={brands} onSelect={handleSelectBrand} />;
+        return <BrandGrid brands={brands} onSelect={(brand) => window.location.hash = `#/brands/${brand.id}`} />;
       case 'foryou':
-        return <ForYouPage onSelectMedia={handleSelectMedia} />;
+        return <ForYouPage onSelectMedia={navigateToMedia} />;
       case 'streaming':
-        return <StreamingGrid providers={availableProviders} onSelect={handleSelectProvider} />;
+        return <StreamingGrid providers={availableProviders} onSelect={(provider) => window.location.hash = `#/streaming/${provider.key}`} />;
       case 'networks':
-        return <NetworkGrid networks={networks} onSelect={handleSelectNetwork} />;
+        return <NetworkGrid networks={networks} onSelect={(network) => window.location.hash = `#/networks/${network.id}`} />;
       case 'watchlist':
-        return <WatchlistPage onSelectMedia={handleSelectMedia} />;
+        return <WatchlistPage onSelectMedia={navigateToMedia} />;
       default:
         return <p>Welcome!</p>;
     }
@@ -642,10 +611,10 @@ const App: React.FC = () => {
             <main className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <DetailModal 
                   item={selectedItem} 
-                  onClose={handleCloseModal} 
+                  onClose={handleBack} 
                   isLoading={isModalLoading}
-                  onSelectMedia={handleSelectMedia}
-                  onSelectActor={handleSelectActor}
+                  onSelectMedia={(media) => window.location.hash = `#/media/${media.type}/${media.id}`}
+                  onSelectActor={(actorId) => window.location.hash = `#/actor/${actorId}`}
                   userLocation={userLocation}
                 />
             </main>
@@ -653,8 +622,8 @@ const App: React.FC = () => {
             <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <ActorPage
                     actor={selectedActor}
-                    onBack={handleBackFromActor}
-                    onSelectMedia={handleSelectMedia}
+                    onBack={handleBack}
+                    onSelectMedia={navigateToMedia}
                 />
             </main>
         ) : (
@@ -664,7 +633,7 @@ const App: React.FC = () => {
                         <svg className="w-10 h-10 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M20 4h-4l-4-4-4 4H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H4V6h4.52l4-4 4 4H20v14zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                         </svg>
-                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight cursor-pointer" onClick={() => handleTabChange('home')}>WatchNow</h1>
+                        <a href="#/home" className="text-2xl sm:text-3xl font-bold tracking-tight">WatchNow</a>
                     </div>
                     <AccountButton 
                         onSignInClick={() => setIsAuthModalOpen(true)} 
@@ -676,7 +645,7 @@ const App: React.FC = () => {
                     <SearchBar onSearch={handleSearch} isLoading={isLoading} />
                 </div>
                 <div className="mb-8 flex justify-center">
-                    <Navigation activeTab={activeTab} onTabChange={handleTabChange} />
+                    <Navigation activeTab={activeTab} />
                 </div>
                 
                 <div className="flex justify-center">

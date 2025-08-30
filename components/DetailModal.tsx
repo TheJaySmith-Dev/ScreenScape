@@ -85,7 +85,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             }
         };
         window.addEventListener('keydown', handleEsc);
-        window.scrollTo(0, 0); // Scroll to top on page view mount
+        document.querySelector('#root')?.scrollTo(0, 0); // Scroll page view to top on mount
         return () => window.removeEventListener('keydown', handleEsc);
     }, [onClose, trailerVideoId]);
 
@@ -212,7 +212,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
              <div className="media-row flex overflow-x-auto space-x-4 -mx-6 px-6 pb-2">
               {media.related.map(rel => (
                 <div key={rel.id} className="flex-shrink-0 w-32 sm:w-36 md:w-40">
-                  <RecommendationCard media={rel} onSelect={() => { onClose(); onSelectMedia(rel); }} />
+                  <RecommendationCard media={rel} onSelect={() => onSelectMedia(rel)} />
                 </div>
               ))}
                <div className="flex-shrink-0 w-1"></div>
@@ -230,7 +230,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             <ModalSection title="Movies in this collection">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {collection.parts.map(part => (
-                        <RecommendationCard key={part.id} media={part} onSelect={() => { onClose(); onSelectMedia(part); }} />
+                        <RecommendationCard key={part.id} media={part} onSelect={() => onSelectMedia(part)} />
                     ))}
                 </div>
             </ModalSection>

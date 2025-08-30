@@ -4,17 +4,16 @@ type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collection
 
 interface NavigationProps {
   activeTab: ActiveTab;
-  onTabChange: (tab: ActiveTab) => void;
 }
 
-const NavButton: React.FC<{
+const NavLink: React.FC<{
     label: string;
+    href: string;
     isActive: boolean;
-    onClick: () => void;
-}> = ({ label, isActive, onClick }) => {
+}> = ({ label, href, isActive }) => {
     return (
-        <button
-            onClick={onClick}
+        <a
+            href={href}
             className={`px-3 py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${
                 isActive 
                 ? 'bg-white text-gray-900' 
@@ -22,24 +21,24 @@ const NavButton: React.FC<{
             }`}
         >
             {label}
-        </button>
+        </a>
     )
 }
 
-export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
+export const Navigation: React.FC<NavigationProps> = ({ activeTab }) => {
   return (
     <nav className="w-full max-w-2xl p-2 bg-black/30 backdrop-blur-sm border border-white/10 rounded-2xl">
       <div className="flex items-center justify-center flex-wrap gap-2">
-        <NavButton label="Home" isActive={activeTab === 'home'} onClick={() => onTabChange('home')} />
-        <NavButton label="For You" isActive={activeTab === 'foryou'} onClick={() => onTabChange('foryou')} />
-        <NavButton label="Watchlist" isActive={activeTab === 'watchlist'} onClick={() => onTabChange('watchlist')} />
-        <NavButton label="Movies" isActive={activeTab === 'movies'} onClick={() => onTabChange('movies')} />
-        <NavButton label="TV" isActive={activeTab === 'tv'} onClick={() => onTabChange('tv')} />
-        <NavButton label="Coming Soon" isActive={activeTab === 'collections'} onClick={() => onTabChange('collections')} />
-        <NavButton label="Studios" isActive={activeTab === 'studios'} onClick={() => onTabChange('studios')} />
-        <NavButton label="Brands" isActive={activeTab === 'brands'} onClick={() => onTabChange('brands')} />
-        <NavButton label="Streaming" isActive={activeTab === 'streaming'} onClick={() => onTabChange('streaming')} />
-        <NavButton label="Networks" isActive={activeTab === 'networks'} onClick={() => onTabChange('networks')} />
+        <NavLink label="Home" href="#/home" isActive={activeTab === 'home'} />
+        <NavLink label="For You" href="#/foryou" isActive={activeTab === 'foryou'} />
+        <NavLink label="Watchlist" href="#/watchlist" isActive={activeTab === 'watchlist'} />
+        <NavLink label="Movies" href="#/movies" isActive={activeTab === 'movies'} />
+        <NavLink label="TV" href="#/tv" isActive={activeTab === 'tv'} />
+        <NavLink label="Coming Soon" href="#/collections" isActive={activeTab === 'collections'} />
+        <NavLink label="Studios" href="#/studios" isActive={activeTab === 'studios'} />
+        <NavLink label="Brands" href="#/brands" isActive={activeTab === 'brands'} />
+        <NavLink label="Streaming" href="#/streaming" isActive={activeTab === 'streaming'} />
+        <NavLink label="Networks" href="#/networks" isActive={activeTab === 'networks'} />
       </div>
     </nav>
   );
