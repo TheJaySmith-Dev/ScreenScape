@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { Studio } from '../types.ts';
 
@@ -13,14 +14,11 @@ export const StudioCard: React.FC<StudioCardProps> = ({ studio, onSelect }) => {
   const bgColor = studio.bgColor || defaultBgColor;
   const hoverGif = studio.hoverGifUrl || defaultHoverGifUrl;
   const imageStyle = studio.forceWhiteLogo ? { filter: 'brightness(0) invert(1)' } : {};
-  
-  const defaultSizeClass = "max-w-[60%] max-h-[40%]";
-  const sizeClass = studio.sizeClass || defaultSizeClass;
 
   return (
     <div
       onClick={onSelect}
-      className="relative group cursor-pointer aspect-video rounded-xl overflow-hidden backdrop-blur-sm border-2 border-white/10 hover:border-white/30 transition-all duration-300 transform hover:scale-105 flex items-center justify-center p-4"
+      className="relative group cursor-pointer aspect-video rounded-xl overflow-hidden backdrop-blur-sm border-2 border-white/10 hover:border-white/30 transition-all duration-300 transform hover:scale-105 flex items-center justify-center"
       style={{ backgroundColor: bgColor }}
     >
       {/* Background GIF for hover effect */}
@@ -33,7 +31,7 @@ export const StudioCard: React.FC<StudioCardProps> = ({ studio, onSelect }) => {
       <img
         src={studio.logoUrl}
         alt={`${studio.name} logo`}
-        className={`relative ${sizeClass} object-contain drop-shadow-[0_5px_5px_rgba(0,0,0,0.7)] transition-opacity duration-500 group-hover:opacity-0`}
+        className="relative w-full h-full object-contain p-4 sm:p-6 drop-shadow-[0_5px_5px_rgba(0,0,0,0.7)] transition-opacity duration-500 group-hover:opacity-0"
         style={imageStyle}
         loading="lazy"
       />
