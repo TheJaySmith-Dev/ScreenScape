@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Backend services for WatchNow",
   "scripts": {
+    "build": "echo \"No build required for this project. Netlify handles function compilation automatically.\"",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push"
   },
