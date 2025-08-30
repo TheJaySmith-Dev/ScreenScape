@@ -169,4 +169,6 @@ export interface StreamingProviderInfo {
   logoUrl: string;
   bgColor?: string;
   hoverGifUrl?: string;
+  borderColor?: string;
+  edgeToEdge?: boolean;
 }
