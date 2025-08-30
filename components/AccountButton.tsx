@@ -1,20 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAuth } from '../hooks/useAuth.ts';
+import { useAuth0 } from '@auth0/auth0-react';
 import { UserIcon, GlobeIcon } from './icons.tsx';
 import type { UserLocation } from '../types.ts';
 
 interface AccountButtonProps {
-    onSignInClick: () => void;
     userLocation: UserLocation | null;
 }
 
-export const AccountButton: React.FC<AccountButtonProps> = ({ onSignInClick, userLocation }) => {
-    const { currentUser, logout } = useAuth();
+export const AccountButton: React.FC<AccountButtonProps> = ({ userLocation }) => {
+    const { loginWithRedirect, logout, user, isAuthenticated, isLoading } = useAuth0();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
     const handleLogout = () => {
-        logout();
+        logout({ logoutParams: { returnTo: window.location.origin } });
         setIsMenuOpen(false);
     };
 
@@ -31,10 +30,14 @@ export const AccountButton: React.FC<AccountButtonProps> = ({ onSignInClick, use
         };
     }, []);
 
-    if (!currentUser) {
+    if (isLoading) {
+      return <div className="w-28 h-10 bg-white/10 rounded-full animate-pulse" />;
+    }
+
+    if (!isAuthenticated) {
         return (
             <button
-                onClick={onSignInClick}
+                onClick={() => loginWithRedirect()}
                 className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white font-semibold transition-colors duration-300"
             >
                 <UserIcon className="w-5 h-5" />
@@ -43,13 +46,17 @@ export const AccountButton: React.FC<AccountButtonProps> = ({ onSignInClick, use
         );
     }
 
-    const photoURL = currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName)}&background=374151&color=fff`;
+    const photoURL = user?.picture;
+    const displayName = user?.name || 'User';
+    const email = user?.email;
 
     return (
         <div className="relative" ref={menuRef}>
             <button
                 onClick={() => setIsMenuOpen(prev => !prev)}
-                className="flex items-center gap-2 p-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white font-semibold transition-colors duration-300"
+                className="flex items-center gap-2 p-1 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white font-semibold transition-colors duration-300"
+                aria-label="Open user menu"
+                aria-expanded={isMenuOpen}
             >
                 {photoURL ? (
                     <img src={photoURL} alt="User" className="w-8 h-8 rounded-full" />
@@ -63,8 +70,8 @@ export const AccountButton: React.FC<AccountButtonProps> = ({ onSignInClick, use
             {isMenuOpen && (
                 <div className="absolute top-full right-0 mt-2 w-64 bg-gray-800 border border-white/20 rounded-lg shadow-lg z-50 fade-in" style={{ animationDuration: '200ms', opacity: 0 }}>
                     <div className="p-4 border-b border-white/10">
-                        <p className="font-semibold truncate">{currentUser.displayName || 'User'}</p>
-                        <p className="text-sm text-gray-400 truncate">{currentUser.email}</p>
+                        <p className="font-semibold truncate">{displayName}</p>
+                        <p className="text-sm text-gray-400 truncate">{email}</p>
                     </div>
                     {userLocation?.name && (
                         <div className="p-4 flex items-center gap-2 text-sm text-gray-300 border-b border-white/10">

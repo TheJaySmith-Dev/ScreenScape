@@ -1,8 +1,12 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
-import { AuthProvider } from './contexts/AuthContext.tsx';
+import { Auth0Provider } from '@auth0/auth0-react';
+
+// --- Auth0 Configuration ---
+const auth0Domain = 'thejaysmith1.us.auth0.com';
+const auth0ClientId = 'IXdcDi6pOhltKzt7htPp1RP8uE7cpAnx';
+const auth0Audience = 'api.thejaysmith.net';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -10,10 +14,18 @@ if (!rootElement) {
 }
 
 const root = ReactDOM.createRoot(rootElement);
+
 root.render(
   <React.StrictMode>
-    <AuthProvider>
+    <Auth0Provider
+      domain={auth0Domain}
+      clientId={auth0ClientId}
+      authorizationParams={{
+        redirect_uri: window.location.origin,
+        audience: auth0Audience,
+      }}
+    >
       <App />
-    </AuthProvider>
+    </Auth0Provider>
   </React.StrictMode>
 );

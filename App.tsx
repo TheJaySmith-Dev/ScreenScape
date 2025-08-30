@@ -1,6 +1,8 @@
 
 
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
 import { LoadingSpinner } from './components/LoadingSpinner.tsx';
@@ -22,6 +24,7 @@ import {
   getMediaByNetwork,
   fetchActorDetails,
 } from './services/tmdbService.ts';
+import { initializeApiService } from './services/apiService.ts';
 import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network, ActorDetails } from './types.ts';
 import { popularStudios } from './services/studioService.ts';
 import { brands as allBrands } from './services/brandService.ts';
@@ -32,7 +35,6 @@ import { StudioFilters } from './components/StudioFilters.tsx';
 import { BrandGrid } from './components/BrandGrid.tsx';
 import { BrandDetail } from './components/BrandDetail.tsx';
 import { AccountButton } from './components/AccountButton.tsx';
-import { AuthModal } from './components/AuthModal.tsx';
 import { ForYouPage } from './components/ForYouPage.tsx';
 import { supportedProviders } from './services/streamingService.ts';
 import { StreamingGrid } from './components/StreamingGrid.tsx';
@@ -60,7 +62,6 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [isVpnBlocked, setIsVpnBlocked] = useState<boolean | null>(null); // null: checking, false: ok, true: blocked
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
   // State for Streaming hubs
   const [availableProviders, setAvailableProviders] = useState<StreamingProviderInfo[]>([]);
@@ -88,6 +89,13 @@ const App: React.FC = () => {
 
   // State for Actor pages
   const [selectedActor, setSelectedActor] = useState<ActorDetails | null>(null);
+  
+  const { getAccessTokenSilently, isLoading: isAuthLoading } = useAuth0();
+
+  // Initialize the API service with the token provider from Auth0
+  useEffect(() => {
+    initializeApiService(getAccessTokenSilently);
+  }, [getAccessTokenSilently]);
 
 
   useEffect(() => {
@@ -581,6 +589,11 @@ const App: React.FC = () => {
 
   return (
     <div className="bg-gray-900 text-white min-h-screen font-sans">
+      {isAuthLoading && (
+         <div className="fixed inset-0 bg-gray-900 z-[100] flex items-center justify-center">
+            <LoadingSpinner />
+         </div>
+      )}
       {isVpnBlocked === true && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="max-w-md text-center bg-gray-800 p-8 rounded-2xl border border-red-500/50">
@@ -625,7 +638,7 @@ const App: React.FC = () => {
                     </svg>
                     <h1 className="text-2xl sm:text-3xl font-bold tracking-tight cursor-pointer" onClick={() => handleTabChange('home')}>WatchNow</h1>
                 </div>
-                <AccountButton onSignInClick={() => setIsAuthModalOpen(true)} userLocation={userLocation} />
+                <AccountButton userLocation={userLocation} />
             </header>
             <div className="mb-8 flex justify-center">
                 <SearchBar onSearch={handleSearch} isLoading={isLoading} />
@@ -639,8 +652,6 @@ const App: React.FC = () => {
             </div>
         </main>
       )}
-
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </div>
   );
 };
