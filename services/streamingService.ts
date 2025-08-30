@@ -15,7 +15,7 @@ export const supportedProviders: StreamingProviderInfo[] = [
     id: 337,
     key: 'disney',
     name: 'Disney+',
-    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg',
+    logoUrl: 'https://platform.theverge.com/wp-content/uploads/sites/2/chorus/uploads/chorus_asset/file/25357066/Disney__Logo_March_2024.png?quality=90&strip=all&crop=7.8125%2C0%2C84.375%2C100&w=750',
     bgColor: '#0A193C',
     hoverGifUrl: 'https://media.giphy.com/media/C669q14vk6dsG7M449/giphy.gif',
   },
