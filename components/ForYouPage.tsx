@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
 import { usePreferences } from '../hooks/usePreferences.ts';
 import { getRecommendationsFromTastes } from '../services/tmdbService.ts';
 import type { MediaDetails } from '../types.ts';
@@ -12,7 +11,6 @@ interface ForYouPageProps {
 
 export const ForYouPage: React.FC<ForYouPageProps> = ({ onSelectMedia }) => {
   const { likes, dislikes } = usePreferences();
-  const { user } = useAuth0();
   const [recommendations, setRecommendations] = useState<MediaDetails[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,16 +44,6 @@ export const ForYouPage: React.FC<ForYouPageProps> = ({ onSelectMedia }) => {
     fetchForYouRecommendations();
   }, [fetchForYouRecommendations]);
 
-  const getFirstName = (name: string | undefined): string | null => {
-    if (!name) return null;
-    // Avoid using an email address as a name
-    if (name.includes('@')) return null;
-    return name.split(' ')[0];
-  }
-
-  const displayName = getFirstName(user?.name);
-  const heading = displayName ? `For You, ${displayName}` : 'For You';
-
   if (likes.length === 0) {
     return (
       <div className="text-center text-gray-400 fade-in">
@@ -76,7 +64,7 @@ export const ForYouPage: React.FC<ForYouPageProps> = ({ onSelectMedia }) => {
 
   return (
     <div className="w-full max-w-7xl fade-in">
-      <h2 className="text-3xl font-bold mb-6">{heading}</h2>
+      <h2 className="text-3xl font-bold mb-6">For You</h2>
       <RecommendationGrid recommendations={recommendations} onSelect={onSelectMedia} />
     </div>
   );

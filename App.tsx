@@ -1,8 +1,4 @@
-
-
-
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { useAuth0 } from '@auth0/auth0-react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
 import { LoadingSpinner } from './components/LoadingSpinner.tsx';
@@ -24,7 +20,6 @@ import {
   getMediaByNetwork,
   fetchActorDetails,
 } from './services/tmdbService.ts';
-import { initializeApiService } from './services/apiService.ts';
 import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network, ActorDetails } from './types.ts';
 import { popularStudios } from './services/studioService.ts';
 import { brands as allBrands } from './services/brandService.ts';
@@ -34,7 +29,6 @@ import { CollectionGrid } from './components/CollectionGrid.tsx';
 import { StudioFilters } from './components/StudioFilters.tsx';
 import { BrandGrid } from './components/BrandGrid.tsx';
 import { BrandDetail } from './components/BrandDetail.tsx';
-import { AccountButton } from './components/AccountButton.tsx';
 import { ForYouPage } from './components/ForYouPage.tsx';
 import { supportedProviders } from './services/streamingService.ts';
 import { StreamingGrid } from './components/StreamingGrid.tsx';
@@ -90,13 +84,6 @@ const App: React.FC = () => {
   // State for Actor pages
   const [selectedActor, setSelectedActor] = useState<ActorDetails | null>(null);
   
-  const { getAccessTokenSilently, isLoading: isAuthLoading } = useAuth0();
-
-  // Initialize the API service with the token provider from Auth0
-  useEffect(() => {
-    initializeApiService(getAccessTokenSilently);
-  }, [getAccessTokenSilently]);
-
 
   useEffect(() => {
     const initApp = async () => {
@@ -589,11 +576,6 @@ const App: React.FC = () => {
 
   return (
     <div className="bg-gray-900 text-white min-h-screen font-sans">
-      {isAuthLoading && (
-         <div className="fixed inset-0 bg-gray-900 z-[100] flex items-center justify-center">
-            <LoadingSpinner />
-         </div>
-      )}
       {isVpnBlocked === true && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="max-w-md text-center bg-gray-800 p-8 rounded-2xl border border-red-500/50">
@@ -631,14 +613,13 @@ const App: React.FC = () => {
         </main>
       ) : (
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <header className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+            <header className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-4 mb-8">
                 <div className="flex items-center gap-3">
                     <svg className="w-10 h-10 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M20 4h-4l-4-4-4 4H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H4V6h4.52l4-4 4 4H20v14zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                     </svg>
                     <h1 className="text-2xl sm:text-3xl font-bold tracking-tight cursor-pointer" onClick={() => handleTabChange('home')}>WatchNow</h1>
                 </div>
-                <AccountButton userLocation={userLocation} />
             </header>
             <div className="mb-8 flex justify-center">
                 <SearchBar onSearch={handleSearch} isLoading={isLoading} />
