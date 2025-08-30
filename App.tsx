@@ -1,3 +1,5 @@
+
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -29,6 +31,8 @@ import { CollectionGrid } from './components/CollectionGrid.tsx';
 import { StudioFilters } from './components/StudioFilters.tsx';
 import { BrandGrid } from './components/BrandGrid.tsx';
 import { BrandDetail } from './components/BrandDetail.tsx';
+import { AccountButton } from './components/AccountButton.tsx';
+import { AuthModal } from './components/AuthModal.tsx';
 import { ForYouPage } from './components/ForYouPage.tsx';
 import { supportedProviders } from './services/streamingService.ts';
 import { StreamingGrid } from './components/StreamingGrid.tsx';
@@ -56,6 +60,7 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [isVpnBlocked, setIsVpnBlocked] = useState<boolean | null>(null); // null: checking, false: ok, true: blocked
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
   // State for Streaming hubs
   const [availableProviders, setAvailableProviders] = useState<StreamingProviderInfo[]>([]);
@@ -83,7 +88,7 @@ const App: React.FC = () => {
 
   // State for Actor pages
   const [selectedActor, setSelectedActor] = useState<ActorDetails | null>(null);
-  
+
 
   useEffect(() => {
     const initApp = async () => {
@@ -613,13 +618,14 @@ const App: React.FC = () => {
         </main>
       ) : (
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <header className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-4 mb-8">
+            <header className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
                 <div className="flex items-center gap-3">
                     <svg className="w-10 h-10 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M20 4h-4l-4-4-4 4H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H4V6h4.52l4-4 4 4H20v14zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                     </svg>
                     <h1 className="text-2xl sm:text-3xl font-bold tracking-tight cursor-pointer" onClick={() => handleTabChange('home')}>WatchNow</h1>
                 </div>
+                <AccountButton onSignInClick={() => setIsAuthModalOpen(true)} userLocation={userLocation} />
             </header>
             <div className="mb-8 flex justify-center">
                 <SearchBar onSearch={handleSearch} isLoading={isLoading} />
@@ -633,6 +639,8 @@ const App: React.FC = () => {
             </div>
         </main>
       )}
+
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </div>
   );
 };
