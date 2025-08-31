@@ -1,6 +1,4 @@
 
-
-
 import type { StreamingProviderInfo } from '../types.ts';
 
 // Logos from TMDb with w500 size
@@ -11,7 +9,7 @@ export const supportedProviders: StreamingProviderInfo[] = [
     name: 'Netflix',
     logoUrl: 'https://images.ctfassets.net/y2ske730sjqp/1aONibCke6niZhgPxuiilC/2c401b05a07288746ddf3bd3943fbc76/BrandAssets_Logos_01-Wordmark.jpg?w=940',
     bgColor: '#000000',
-    hoverGifUrl: 'https://media.tenor.com/biAoUAAAAC/tudum-netflix.gif',
+    hoverGifUrl: 'https://media1.tenor.com/m/Xen-IZjB4fAAAAAC/netflix-intro.gif',
     borderColor: '#E50914',
     edgeToEdge: true,
   },
