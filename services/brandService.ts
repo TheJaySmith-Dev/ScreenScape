@@ -236,7 +236,7 @@ export const brands: Brand[] = [
         { id: 10764, type: 'movie' },  // Quantum of Solace
         { id: 37724, type: 'movie' },  // Skyfall
         { id: 206647, type: 'movie' }, // Spectre
-        { id: 354912, type: 'movie' }, // No Time to Die
+        { id: 370172, type: 'movie' }, // No Time to Die
     ]
   }
 ];
