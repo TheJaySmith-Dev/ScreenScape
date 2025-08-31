@@ -7,10 +7,9 @@ import { RecommendationGrid } from './RecommendationGrid.tsx';
 
 interface ForYouPageProps {
   onSelectMedia: (media: MediaDetails) => void;
-  onPlayTrailer: (media: MediaDetails) => void;
 }
 
-export const ForYouPage: React.FC<ForYouPageProps> = ({ onSelectMedia, onPlayTrailer }) => {
+export const ForYouPage: React.FC<ForYouPageProps> = ({ onSelectMedia }) => {
   const { likes, dislikes } = usePreferences();
   const [recommendations, setRecommendations] = useState<MediaDetails[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -66,7 +65,7 @@ export const ForYouPage: React.FC<ForYouPageProps> = ({ onSelectMedia, onPlayTra
   return (
     <div className="w-full max-w-7xl fade-in">
       <h2 className="text-3xl font-bold mb-6">For You</h2>
-      <RecommendationGrid recommendations={recommendations} onSelect={onSelectMedia} onPlayTrailer={onPlayTrailer} />
+      <RecommendationGrid recommendations={recommendations} onSelect={onSelectMedia} />
     </div>
   );
 };

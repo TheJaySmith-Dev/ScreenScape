@@ -5,10 +5,9 @@ import type { MediaDetails } from '../types.ts';
 interface RecommendationGridProps {
   recommendations: MediaDetails[];
   onSelect: (media: MediaDetails) => void;
-  onPlayTrailer: (media: MediaDetails) => void;
 }
 
-export const RecommendationGrid: React.FC<RecommendationGridProps> = ({ recommendations, onSelect, onPlayTrailer }) => {
+export const RecommendationGrid: React.FC<RecommendationGridProps> = ({ recommendations, onSelect }) => {
   if (recommendations.length === 0) {
     return null;
   }
@@ -18,10 +17,10 @@ export const RecommendationGrid: React.FC<RecommendationGridProps> = ({ recommen
       {recommendations.map((media, index) => (
         <div 
           key={media.id} 
-          className="fade-in relative aspect-[2/3]" 
-          style={{ animationDelay: `${index * 100}ms`, opacity: 0, contain: 'paint' }}
+          className="fade-in" 
+          style={{ animationDelay: `${index * 100}ms`, opacity: 0 }}
         >
-          <RecommendationCard media={media} onSelect={() => onSelect(media)} onPlayTrailer={() => onPlayTrailer(media)} />
+          <RecommendationCard media={media} onSelect={() => onSelect(media)} />
         </div>
       ))}
     </div>

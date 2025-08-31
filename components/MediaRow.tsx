@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { RecommendationCard } from './RecommendationCard.tsx';
 import type { MediaDetails } from '../types.ts';
@@ -8,12 +7,10 @@ interface MediaRowProps {
   title: string;
   items: MediaDetails[];
   onSelect: (media: MediaDetails) => void;
-  // FIX: Added onPlayTrailer prop to be passed to RecommendationCard.
-  onPlayTrailer: (media: MediaDetails) => void;
   animationDelay?: string;
 }
 
-export const MediaRow: React.FC<MediaRowProps> = ({ title, items, onSelect, onPlayTrailer, animationDelay = '0ms' }) => {
+export const MediaRow: React.FC<MediaRowProps> = ({ title, items, onSelect, animationDelay = '0ms' }) => {
   if (items.length === 0) return null;
 
   return (
@@ -28,7 +25,7 @@ export const MediaRow: React.FC<MediaRowProps> = ({ title, items, onSelect, onPl
             key={`${item.id}-${index}`} 
             className="flex-shrink-0 w-40 sm:w-44 md:w-48"
           >
-            <RecommendationCard media={item} onSelect={() => onSelect(item)} onPlayTrailer={() => onPlayTrailer(item)} />
+            <RecommendationCard media={item} onSelect={() => onSelect(item)} />
           </div>
         ))}
          <div className="flex-shrink-0 w-1"></div>

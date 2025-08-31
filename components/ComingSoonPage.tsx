@@ -5,10 +5,9 @@ import { ComingSoonCard } from './ComingSoonCard.tsx';
 interface ComingSoonPageProps {
   media: MediaDetails[];
   onSelectMedia: (media: MediaDetails) => void;
-  onPlayTrailer: (media: MediaDetails) => void;
 }
 
-export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ media, onSelectMedia, onPlayTrailer }) => {
+export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ media, onSelectMedia }) => {
   if (media.length === 0) {
     return (
         <div className="text-center text-gray-400 fade-in">
@@ -25,10 +24,10 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ media, onSelectM
         {media.map((item, index) => (
           <div 
             key={item.id} 
-            className="fade-in relative aspect-[2/3]" 
-            style={{ animationDelay: `${index * 100}ms`, opacity: 0, contain: 'paint' }}
+            className="fade-in" 
+            style={{ animationDelay: `${index * 100}ms`, opacity: 0 }}
           >
-            <ComingSoonCard media={item} onSelect={() => onSelectMedia(item)} onPlayTrailer={() => onPlayTrailer(item)} />
+            <ComingSoonCard media={item} onSelect={onSelectMedia} />
           </div>
         ))}
       </div>

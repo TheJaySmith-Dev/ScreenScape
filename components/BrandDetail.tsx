@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import type { Brand, MediaDetails, Collection } from '../types.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
@@ -19,7 +18,6 @@ interface BrandDetailProps {
     onBack: () => void;
     onSelectMedia: (media: MediaDetails) => void;
     onSelectCollection: (collection: Collection) => void;
-    onPlayTrailer: (media: MediaDetails) => void;
 }
 
 export const BrandDetail: React.FC<BrandDetailProps> = ({
@@ -32,7 +30,6 @@ export const BrandDetail: React.FC<BrandDetailProps> = ({
     onBack,
     onSelectMedia,
     onSelectCollection,
-    onPlayTrailer,
 }) => {
     return (
         <>
@@ -75,7 +72,7 @@ export const BrandDetail: React.FC<BrandDetailProps> = ({
                   sortBy={sortBy}
                   setSortBy={setSortBy}
                 />
-                <RecommendationGrid recommendations={media} onSelect={onSelectMedia} onPlayTrailer={onPlayTrailer} />
+                <RecommendationGrid recommendations={media} onSelect={onSelectMedia} />
             </div>
         </>
     );

@@ -1,5 +1,4 @@
 
-
 import React, { useState } from 'react';
 import type { ActorDetails, MediaDetails } from '../types.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
@@ -9,7 +8,6 @@ interface ActorPageProps {
   actor: ActorDetails;
   onBack: () => void;
   onSelectMedia: (media: MediaDetails) => void;
-  onPlayTrailer: (media: MediaDetails) => void;
 }
 
 const ActorInfo: React.FC<{ icon: React.ReactNode; label: string; value: string | null }> = ({ icon, label, value }) => {
@@ -25,7 +23,7 @@ const ActorInfo: React.FC<{ icon: React.ReactNode; label: string; value: string 
   );
 };
 
-export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMedia, onPlayTrailer }) => {
+export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMedia }) => {
   const [showFullBio, setShowFullBio] = useState(false);
   const bioWords = actor.biography.split(' ');
   const canTruncate = bioWords.length > 100;
@@ -70,7 +68,7 @@ export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMed
       </div>
 
       <h2 className="text-3xl font-bold mb-6">Known For</h2>
-      <RecommendationGrid recommendations={actor.filmography} onSelect={onSelectMedia} onPlayTrailer={onPlayTrailer} />
+      <RecommendationGrid recommendations={actor.filmography} onSelect={onSelectMedia} />
     </div>
   );
 };
