@@ -277,7 +277,7 @@ const App: React.FC = () => {
     handleRouteChange(); // initial load
 
     return () => window.removeEventListener('hashchange', handleRouteChange, false);
-  }, [hasApiKey, isVpnBlocked, userLocation]); // Re-run if key/VPN status changes.
+  }, [hasApiKey, isVpnBlocked, userLocation, availableProviders]); // Re-run if key/VPN status changes.
 
 
   const handleSearch = useCallback(async (query: string) => {
