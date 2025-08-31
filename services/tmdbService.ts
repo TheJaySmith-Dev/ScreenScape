@@ -41,27 +41,38 @@ const findBestTrailer = (videos: any[]): any | null => {
     const candidates = videos.filter(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
     if (candidates.length === 0) return null;
 
-    // Sort to find the "best" trailer: official > unofficial, trailer > teaser, newer > older
+    // Sort to find the "best" trailer: official > original > trailer > teaser, older > newer
     candidates.sort((a, b) => {
         let scoreA = 0;
         let scoreB = 0;
 
-        if (a.official) scoreA += 4;
-        if (b.official) scoreB += 4;
+        // Official status has the highest weight
+        if (a.official) scoreA += 8;
+        if (b.official) scoreB += 8;
         
+        // Prefer trailers with "Original" in the name
+        if (a.name && a.name.toLowerCase().includes('original')) scoreA += 4;
+        if (b.name && b.name.toLowerCase().includes('original')) scoreB += 4;
+
+        // Prefer "Trailer" over "Teaser"
         if (a.type === 'Trailer') scoreA += 2;
         if (b.type === 'Trailer') scoreB += 2;
         
+        // Prefer older trailers to find the first one released
         const dateA = new Date(a.published_at).getTime();
         const dateB = new Date(b.published_at).getTime();
-        if (dateA > dateB) scoreA += 1;
-        else scoreB += 1;
+        if (dateA < dateB) {
+            scoreA += 1;
+        } else if (dateB < dateA) {
+            scoreB += 1;
+        }
 
-        return scoreB - scoreA; // Sort descending by score
+        return scoreB - scoreA; // Sort descending by score to get the best candidate first
     });
 
     return candidates[0];
 };
+
 
 const findBestTextlessPoster = (images: any): string | null => {
     if (!images?.posters || images.posters.length === 0) return null;
