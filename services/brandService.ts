@@ -1,6 +1,3 @@
-
-
-
 import type { Brand } from '../types.ts';
 
 const MARVEL_COMPANY_ID = 420;
@@ -187,6 +184,26 @@ export const brands: Brand[] = [
         { id: 177677, type: 'movie' },  // Mission: Impossible - Rogue Nation
         { id: 353081, type: 'movie' },  // Mission: Impossible - Fallout
         { id: 575264, type: 'movie' },  // Mission: Impossible - Dead Reckoning Part One
+    ]
+  },
+  {
+    id: 'fastandfurious',
+    name: 'Fast & Furious',
+    posterUrl: 'https://image.tmdb.org/t/p/w500_and_h282_face/abproxa0V1h7BZ2tcZpACkGc8LG.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/h3X1A2G3D2s2k8tTsrD6P7n5S2R.jpg',
+    characterCollections: [],
+    mediaIds: [
+        { id: 9799, type: 'movie' },    // The Fast and the Furious
+        { id: 584, type: 'movie' },     // 2 Fast 2 Furious
+        { id: 9615, type: 'movie' },    // The Fast and the Furious: Tokyo Drift
+        { id: 13804, type: 'movie' },   // Fast & Furious
+        { id: 51497, type: 'movie' },   // Fast Five
+        { id: 82992, type: 'movie' },   // Fast & Furious 6
+        { id: 168259, type: 'movie' },  // Furious 7
+        { id: 337339, type: 'movie' },  // The Fate of the Furious
+        { id: 384018, type: 'movie' },  // Fast & Furious Presents: Hobbs & Shaw
+        { id: 385128, type: 'movie' },  // F9: The Fast Saga
+        { id: 667538, type: 'movie' },  // Fast X
     ]
   }
 ];
