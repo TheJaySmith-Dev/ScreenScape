@@ -106,6 +106,7 @@ export interface Brand {
   id: string;
   name: string;
   posterUrl: string;
+  backdropUrl?: string;
   companyId?: number;
   characterCollections: CharacterCollection[];
   mediaIds?: { id: number; type: 'movie' | 'tv' }[];

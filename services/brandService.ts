@@ -25,7 +25,7 @@ const marvelCharacterCollections: Brand['characterCollections'] = [
     { 
         id: 86062, 
         name: 'Hulk Collection', 
-        posterUrl: 'https://image.tmdb.org/t/p/w500/25QZ5wK1y3bH22auO2iW3iA4p3.jpg', 
+        posterUrl: 'https://images.theposterdb.com/prod/public/images/posters/optimized/collections/4702/UHMyXvRn4B0BRHx7gLdALkxrUABUtqdp0el2ig86.webp', 
         backdropUrl: 'https://image.tmdb.org/t/p/original/p3rKiC2yMW6R2O2sV1gI2btrj3x.jpg',
         mediaIds: [
             { id: 1724, type: 'movie' },   // The Incredible Hulk
@@ -142,9 +142,10 @@ export const brands: Brand[] = [
   {
     id: 'marvel',
     name: 'Marvel',
-    posterUrl: 'https://disney.images.edge.bamgrid.com/ripcut-delivery/v2/variant/disney/CCC3F8712F781DC1ECDDC406924EF0569A30DB0F0BF628CA9EAF60B97C9ABC4B/compose?aspectRatio=1.78&format=webp&width=1600',
+    posterUrl: 'https://wallpapers.com/images/featured/marvel-logo-3p16v5avq80km4ns.jpg',
     companyId: MARVEL_COMPANY_ID,
-    characterCollections: marvelCharacterCollections
+    characterCollections: marvelCharacterCollections,
+    backdropUrl: 'https://disney.images.edge.bamgrid.com/ripcut-delivery/v2/variant/disney/CCC3F8712F781DC1ECDDC406924EF0569A30DB0F0BF628CA9EAF60B97C9ABC4B/compose?aspectRatio=1.78&format=webp&width=1600'
   },
   {
     id: 'backtothefuture',
