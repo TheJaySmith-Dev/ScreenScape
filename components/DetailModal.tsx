@@ -1,5 +1,6 @@
 
 
+
 import React, { useEffect, useState } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders } from '../types.ts';
 import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon } from './icons.tsx';
@@ -18,6 +19,8 @@ interface DetailModalProps {
   onSelectMedia: (media: MediaDetails) => void;
   onSelectActor: (actorId: number) => void;
   userLocation: UserLocation | null;
+  // FIX: Changed onPlayTrailer signature to accept a MediaDetails object for consistency.
+  onPlayTrailer: (media: MediaDetails) => void;
 }
 
 const formatRuntime = (minutes: number | undefined): string => {
@@ -69,32 +72,24 @@ const providersExist = (providers: WatchProviders) => {
            (providers.buy && providers.buy.length > 0);
 }
 
-export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, onSelectActor, userLocation }) => {
-    const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
+export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, onSelectActor, userLocation, onPlayTrailer }) => {
     const { likeItem, dislikeItem, unlistItem, isLiked, isDisliked } = usePreferences();
     
     // Effect for keyboard shortcuts and scrolling to top
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
-                if (trailerVideoId) {
-                    setTrailerVideoId(null); // Close trailer first if open
-                } else {
-                    onClose();
-                }
+                onClose();
             }
         };
         window.addEventListener('keydown', handleEsc);
         document.querySelector('#root')?.scrollTo(0, 0); // Scroll page view to top on mount
         return () => window.removeEventListener('keydown', handleEsc);
-    }, [onClose, trailerVideoId]);
+    }, [onClose]);
 
     const handleWatchTrailer = () => {
-        if (isMediaDetails(item) && item.trailerUrl) {
-            const videoId = item.trailerUrl.split('embed/')[1]?.split('?')[0];
-            if (videoId) {
-                setTrailerVideoId(videoId);
-            }
+        if (isMediaDetails(item)) {
+            onPlayTrailer(item);
         }
     };
     
@@ -212,7 +207,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
              <div className="media-row flex overflow-x-auto space-x-4 -mx-6 px-6 pb-2">
               {media.related.map(rel => (
                 <div key={rel.id} className="flex-shrink-0 w-32 sm:w-36 md:w-40">
-                  <RecommendationCard media={rel} onSelect={() => onSelectMedia(rel)} />
+                  {/* FIX: Added onPlayTrailer prop. */}
+                  <RecommendationCard media={rel} onSelect={() => onSelectMedia(rel)} onPlayTrailer={() => onPlayTrailer(rel)} />
                 </div>
               ))}
                <div className="flex-shrink-0 w-1"></div>
@@ -230,7 +226,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             <ModalSection title="Movies in this collection">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {collection.parts.map(part => (
-                        <RecommendationCard key={part.id} media={part} onSelect={() => onSelectMedia(part)} />
+                        // FIX: Added onPlayTrailer prop.
+                        <RecommendationCard key={part.id} media={part} onSelect={() => onSelectMedia(part)} onPlayTrailer={() => onPlayTrailer(part)} />
                     ))}
                 </div>
             </ModalSection>
@@ -318,13 +315,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             {isMediaDetails(item) ? renderMediaContent(item) : renderCollectionContent(item)}
         </div>
       </div>
-      
-      {trailerVideoId && (
-        <CustomVideoPlayer 
-          videoId={trailerVideoId}
-          onClose={() => setTrailerVideoId(null)}
-        />
-      )}
     </>
   );
 };

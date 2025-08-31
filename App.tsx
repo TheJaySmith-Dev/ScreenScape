@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -43,6 +44,7 @@ import { ComingSoonPage } from './components/ComingSoonPage.tsx';
 import { ApiKeyModal } from './components/ApiKeyModal.tsx';
 import { getTmdbApiKey } from './services/apiService.ts';
 import { GitHubIcon } from './components/icons.tsx';
+import { CustomVideoPlayer } from './components/CustomVideoPlayer.tsx';
 
 
 type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming' | 'networks';
@@ -63,6 +65,7 @@ const App: React.FC = () => {
   const [isVpnBlocked, setIsVpnBlocked] = useState<boolean | null>(null); // null: checking, false: ok, true: blocked
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
 
   // State for API Key onboarding
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
@@ -281,6 +284,25 @@ const App: React.FC = () => {
     return () => window.removeEventListener('hashchange', handleRouteChange, false);
   }, [hasApiKey, isVpnBlocked, userLocation, availableProviders]); // Re-run if key/VPN status changes.
 
+
+  const handlePlayTrailer = useCallback(async (media: MediaDetails) => {
+    try {
+      const details = await fetchDetailsForModal(media.id, media.type, userLocation?.code || 'US');
+      if (details.trailerUrl) {
+        const videoId = details.trailerUrl.split('embed/')[1]?.split('?')[0];
+        if (videoId) {
+          setTrailerVideoId(videoId);
+        } else {
+          alert("Trailer not available for this title.");
+        }
+      } else {
+        alert("Trailer not available for this title.");
+      }
+    } catch (err) {
+      console.error("Failed to fetch trailer details:", err);
+      alert("Could not load trailer.");
+    }
+  }, [userLocation]);
 
   const handleSearch = useCallback(async (query: string) => {
     if (!query) return;
@@ -511,7 +533,7 @@ const App: React.FC = () => {
     }
     
     if (recommendations.length > 0) {
-      return <RecommendationGrid recommendations={recommendations} onSelect={navigateToMedia} />;
+      return <RecommendationGrid recommendations={recommendations} onSelect={navigateToMedia} onPlayTrailer={handlePlayTrailer} />;
     }
 
     if (selectedStudio) {
@@ -527,7 +549,7 @@ const App: React.FC = () => {
               sortBy={studioSortBy}
               setSortBy={setStudioSortBy}
             />
-            {isLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={displayedStudioMedia} onSelect={navigateToMedia} />}
+            {isLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={displayedStudioMedia} onSelect={navigateToMedia} onPlayTrailer={handlePlayTrailer} />}
         </div>
       );
     }
@@ -543,6 +565,7 @@ const App: React.FC = () => {
             onBack={() => window.location.hash = '#/brands'}
             onSelectMedia={navigateToMedia}
             onSelectCollection={handleBrandCollectionSelect}
+            onPlayTrailer={handlePlayTrailer}
         />;
     }
 
@@ -553,7 +576,7 @@ const App: React.FC = () => {
             <button onClick={() => window.location.hash = '#/streaming'} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Services</button>
             <h2 className="text-3xl font-bold">{selectedProvider.name}</h2>
           </div>
-          {isProviderMediaLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={providerMedia} onSelect={navigateToMedia} />}
+          {isProviderMediaLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={providerMedia} onSelect={navigateToMedia} onPlayTrailer={handlePlayTrailer} />}
         </div>
       );
     }
@@ -565,7 +588,7 @@ const App: React.FC = () => {
             <button onClick={() => window.location.hash = '#/networks'} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Networks</button>
             <h2 className="text-3xl font-bold">{selectedNetwork.name}</h2>
           </div>
-          {isLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={networkMedia} onSelect={navigateToMedia} />}
+          {isLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={networkMedia} onSelect={navigateToMedia} onPlayTrailer={handlePlayTrailer} />}
         </div>
       );
     }
@@ -591,6 +614,8 @@ const App: React.FC = () => {
                     title={section.title} 
                     items={section.items} 
                     onSelect={navigateToMedia}
+                    // FIX: Pass down the onPlayTrailer handler.
+                    onPlayTrailer={handlePlayTrailer}
                     animationDelay={`${index * 150}ms`}
                 />
             ))}
@@ -599,19 +624,19 @@ const App: React.FC = () => {
       }
       case 'collections':
         if (isComingSoonLoading) return <LoadingSpinner />;
-        return <ComingSoonPage media={comingSoonMedia} onSelectMedia={navigateToMedia} />;
+        return <ComingSoonPage media={comingSoonMedia} onSelectMedia={navigateToMedia} onPlayTrailer={handlePlayTrailer} />;
       case 'studios':
         return <StudioGrid studios={studios} onSelect={(studio) => window.location.hash = `#/studios/${studio.id}`} />;
       case 'brands':
         return <BrandGrid brands={brands} onSelect={(brand) => window.location.hash = `#/brands/${brand.id}`} />;
       case 'foryou':
-        return <ForYouPage onSelectMedia={navigateToMedia} />;
+        return <ForYouPage onSelectMedia={navigateToMedia} onPlayTrailer={handlePlayTrailer} />;
       case 'streaming':
         return <StreamingGrid providers={availableProviders} onSelect={(provider) => window.location.hash = `#/streaming/${provider.key}`} />;
       case 'networks':
         return <NetworkGrid networks={networks} onSelect={(network) => window.location.hash = `#/networks/${network.id}`} />;
       case 'watchlist':
-        return <WatchlistPage onSelectMedia={navigateToMedia} />;
+        return <WatchlistPage onSelectMedia={navigateToMedia} onPlayTrailer={handlePlayTrailer} />;
       default:
         return <p>Welcome!</p>;
     }
@@ -660,6 +685,8 @@ const App: React.FC = () => {
                   onSelectMedia={(media) => window.location.hash = `#/media/${media.type}/${media.id}`}
                   onSelectActor={(actorId) => window.location.hash = `#/actor/${actorId}`}
                   userLocation={userLocation}
+                  // FIX: Pass the generic handlePlayTrailer function instead of the URL-specific one.
+                  onPlayTrailer={handlePlayTrailer}
                 />
             </main>
         ) : selectedActor ? (
@@ -668,6 +695,7 @@ const App: React.FC = () => {
                     actor={selectedActor}
                     onBack={handleBack}
                     onSelectMedia={navigateToMedia}
+                    onPlayTrailer={handlePlayTrailer}
                 />
             </main>
         ) : (
@@ -712,6 +740,12 @@ const App: React.FC = () => {
       )}
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      {trailerVideoId && (
+        <CustomVideoPlayer 
+          videoId={trailerVideoId}
+          onClose={() => setTrailerVideoId(null)}
+        />
+      )}
     </div>
   );
 };
