@@ -9,9 +9,10 @@ export const supportedProviders: StreamingProviderInfo[] = [
     id: 8,
     key: 'netflix',
     name: 'Netflix',
-    logoUrl: 'https://cdn.brandfetch.io/ideQwN5lBE/theme/light/logo.svg?c=1dxbfHSJFAPEGdCLU4o5B',
+    logoUrl: 'https://images.ctfassets.net/y2ske730sjqp/1aONibCke6niZhgPxuiilC/2c401b05a07288746ddf3bd3943fbc76/BrandAssets_Logos_01-Wordmark.jpg?w=940',
     bgColor: '#000000',
-    hoverGifUrl: 'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDYyeXgzMmszYmM5b200ZTFmNjE3eG5zNThhcGQ2NDd6YnUxOWdkdSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/c69RGBBRK8SKwMO78n/giphy.gif'
+    hoverGifUrl: 'https://c.tenor.com/xT1i6Yls8C4AAAAC/netflix-logo.gif',
+    borderColor: '#E50914',
   },
   {
     id: 337,
