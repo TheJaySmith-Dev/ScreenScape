@@ -56,8 +56,8 @@ const marvelCharacterCollections: Brand['characterCollections'] = [
     { 
         id: 131295, 
         name: 'Thor Collection', 
-        posterUrl: 'https://image.tmdb.org/t/p/w500/3F4HzC6y25gIFlG3y2GckD1sT3R.jpg', 
-        backdropUrl: 'https://image.tmdb.org/t/p/original/sI2lH1a02GO6z17t0qgODx1YYxW.jpg',
+        posterUrl: 'https://image.tmdb.org/t/p/w220_and_h330_face/1fGblAmaE2wU6ts2A83eWBgkmHs.jpg', 
+        backdropUrl: 'https://image.tmdb.org/t/p/original/bH86CbUSgkQ08zKhXcbODVHdi8yi.jpg',
         mediaIds: [
             { id: 10195, type: 'movie' },  // Thor
             { id: 24428, type: 'movie' },  // The Avengers
