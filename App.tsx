@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -22,7 +24,7 @@ import {
   getComingSoonMedia,
   fetchMediaByIds,
 } from './services/tmdbService.ts';
-import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network, ActorDetails } from './types.ts';
+import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network, ActorDetails, CharacterCollection } from './types.ts';
 import { popularStudios } from './services/studioService.ts';
 import { brands as allBrands } from './services/brandService.ts';
 import { DetailModal } from './components/DetailModal.tsx';
@@ -348,6 +350,7 @@ const App: React.FC = () => {
     window.location.hash = `#/collection/${collection.id}`;
   };
 
+  // FIX: Renamed function to `handleSelectStudio` for consistency and to fix reference error.
   const handleSelectStudio = useCallback(async (studio: Studio) => {
     setSelectedStudio(studio);
     setStudioMedia([]);
@@ -466,6 +469,36 @@ const App: React.FC = () => {
     setIsApiKeyModalOpen(false);
   };
 
+  const handleBrandCollectionSelect = useCallback(async (collection: CharacterCollection) => {
+    if (collection.mediaIds && collection.mediaIds.length > 0) {
+      // It's a curated list, fetch directly and show in modal
+      setIsModalLoading(true);
+      setSelectedItem({ id: collection.id, name: collection.name, posterUrl: collection.posterUrl, backdropUrl: collection.backdropUrl, overview: 'Loading collection...', parts: [] });
+      
+      try {
+        const media = await fetchMediaByIds(collection.mediaIds);
+        const curatedDetails: CollectionDetails = {
+          id: collection.id,
+          name: collection.name,
+          overview: `A curated collection of essential appearances for ${collection.name}.`,
+          posterUrl: collection.posterUrl,
+          backdropUrl: collection.backdropUrl,
+          parts: media,
+        };
+        setSelectedItem(curatedDetails);
+      } catch (err) {
+        console.error('Failed to fetch curated collection details:', err);
+        setError('Could not load curated collection details.');
+        setSelectedItem(null);
+      } finally {
+        setIsModalLoading(false);
+      }
+    } else {
+      // It's a standard TMDb collection, use the existing hash-based navigation
+      navigateToCollection(collection);
+    }
+  }, []);
+
   const renderHomePageContent = () => {
     if (isLoading && !selectedStudio && !selectedBrand && !selectedProvider && !selectedNetwork) return <LoadingSpinner />;
     if (error && recommendations.length === 0 && !selectedStudio && !selectedBrand && !selectedProvider && !selectedNetwork) {
@@ -504,7 +537,7 @@ const App: React.FC = () => {
             setSortBy={setBrandSortBy}
             onBack={() => window.location.hash = '#/brands'}
             onSelectMedia={navigateToMedia}
-            onSelectCollection={navigateToCollection}
+            onSelectCollection={handleBrandCollectionSelect}
         />;
     }
 

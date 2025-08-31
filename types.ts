@@ -98,7 +98,9 @@ export interface Network {
   sizeClass?: string;
 }
 
-export interface CharacterCollection extends Collection {}
+export interface CharacterCollection extends Collection {
+  mediaIds?: { id: number; type: 'movie' | 'tv' }[];
+}
 
 export interface Brand {
   id: string;
