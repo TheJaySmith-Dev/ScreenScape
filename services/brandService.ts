@@ -164,7 +164,7 @@ export const brands: Brand[] = [
     characterCollections: [],
     mediaIds: [
         { id: 620, type: 'movie' },     // Ghostbusters (1984)
-        { id: 9603, type: 'movie' },    // Ghostbusters II
+        { id: 2932, type: 'movie' },    // Ghostbusters II (1989)
         { id: 425909, type: 'movie' },  // Ghostbusters: Afterlife
         { id: 967847, type: 'movie' },  // Ghostbusters: Frozen Empire
     ]
