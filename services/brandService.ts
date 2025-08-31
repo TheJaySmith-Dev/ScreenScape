@@ -1,5 +1,6 @@
 
 
+
 import type { Brand } from '../types.ts';
 
 const MARVEL_COMPANY_ID = 420;
@@ -73,8 +74,8 @@ const marvelCharacterCollections: Brand['characterCollections'] = [
     { 
         id: 86311, 
         name: 'The Avengers Collection', 
-        posterUrl: 'https://image.tmdb.org/t/p/w500/tYcmmUR1G0i2i5F4t2I1AbLhYQi.jpg', 
-        backdropUrl: 'https://image.tmdb.org/t/p/original/zuW6fOiusv4X9nnW3paqfXzFlWe.jpg',
+        posterUrl: 'https://image.tmdb.org/t/p/w220_and_h330_face/yaC8DTvarpMU5QsOiLVgATIMovp.jpg', 
+        backdropUrl: 'https://image.tmdb.org/t/p/w500_and_h282_face/smLccpWC4ElF5xyjD9Xt0Zu2gna.jpg',
         mediaIds: [
             { id: 24428, type: 'movie' },  // The Avengers
             { id: 99861, type: 'movie' },  // Avengers: Age of Ultron
@@ -170,6 +171,22 @@ export const brands: Brand[] = [
         { id: 43074, type: 'movie' },   // Ghostbusters (2016)
         { id: 425909, type: 'movie' },  // Ghostbusters: Afterlife
         { id: 967847, type: 'movie' },  // Ghostbusters: Frozen Empire
+    ]
+  },
+  {
+    id: 'missionimpossible',
+    name: 'Mission: Impossible',
+    posterUrl: 'https://image.tmdb.org/t/p/w500_and_h282_face/jNjhxBEU3RAdki0xIAZvrsTseZn.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/dJ6yT7vJ2y3fI4T6W7k3upTj8T.jpg',
+    characterCollections: [],
+    mediaIds: [
+        { id: 954, type: 'movie' },     // Mission: Impossible
+        { id: 955, type: 'movie' },     // Mission: Impossible 2
+        { id: 956, type: 'movie' },     // Mission: Impossible III
+        { id: 56292, type: 'movie' },   // Mission: Impossible - Ghost Protocol
+        { id: 177677, type: 'movie' },  // Mission: Impossible - Rogue Nation
+        { id: 353081, type: 'movie' },  // Mission: Impossible - Fallout
+        { id: 575264, type: 'movie' },  // Mission: Impossible - Dead Reckoning Part One
     ]
   }
 ];
