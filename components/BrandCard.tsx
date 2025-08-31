@@ -31,7 +31,7 @@ export const BrandCard: React.FC<BrandCardProps> = ({ brand, onSelect }) => {
   return (
     <div
       onClick={onSelect}
-      className="group cursor-pointer rounded-xl overflow-hidden bg-gray-900 border-2 border-transparent hover:border-blue-500/80 focus-within:border-blue-500/80 focus-within:ring-2 focus-within:ring-blue-500/50 transition-all duration-300 transform hover:-translate-y-1 aspect-video relative flex flex-col justify-end text-white shadow-lg"
+      className="group cursor-pointer rounded-xl overflow-hidden bg-gray-900 border-2 border-transparent hover:border-blue-500/80 focus-within:border-blue-500/80 focus-within:ring-2 focus-within:ring-blue-500/50 transition-all duration-300 transform hover:-translate-y-1 aspect-video relative shadow-lg"
       tabIndex={0}
       role="button"
       aria-label={`View details for ${brand.name}`}
@@ -43,12 +43,6 @@ export const BrandCard: React.FC<BrandCardProps> = ({ brand, onSelect }) => {
         className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
         loading="lazy"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-      <div className="relative p-3 z-10">
-        <h3 className="font-bold text-base leading-tight drop-shadow-lg truncate">
-          {brand.name}
-        </h3>
-      </div>
     </div>
   );
 };

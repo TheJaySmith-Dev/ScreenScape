@@ -142,7 +142,7 @@ export const brands: Brand[] = [
   {
     id: 'marvel',
     name: 'Marvel',
-    posterUrl: 'https://image.tmdb.org/t/p/w1280/avjMS5q2i32f22tJ1a6nS2pB3sC.jpg',
+    posterUrl: 'https://disney.images.edge.bamgrid.com/ripcut-delivery/v2/variant/disney/CCC3F8712F781DC1ECDDC406924EF0569A30DB0F0BF628CA9EAF60B97C9ABC4B/compose?aspectRatio=1.78&format=webp&width=1600',
     companyId: MARVEL_COMPANY_ID,
     characterCollections: marvelCharacterCollections
   },
