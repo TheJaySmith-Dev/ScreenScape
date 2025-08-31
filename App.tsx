@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -45,6 +42,7 @@ import { WatchlistPage } from './components/WatchlistPage.tsx';
 import { ComingSoonPage } from './components/ComingSoonPage.tsx';
 import { ApiKeyModal } from './components/ApiKeyModal.tsx';
 import { getTmdbApiKey } from './services/apiService.ts';
+import { GitHubIcon } from './components/icons.tsx';
 
 
 type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming' | 'networks';
@@ -681,11 +679,22 @@ const App: React.FC = () => {
                         </svg>
                         <a href="#/home" className="text-2xl sm:text-3xl font-bold tracking-tight">WatchNow</a>
                     </div>
-                    <AccountButton 
-                        onSignInClick={() => setIsAuthModalOpen(true)} 
-                        userLocation={userLocation} 
-                        onApiKeySettingsClick={() => setIsApiKeyModalOpen(true)}
-                    />
+                    <div className="flex items-center gap-3">
+                        <a 
+                            href="https://github.com/TheJaySmith-Dev/WatchNow" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="p-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white transition-colors duration-300"
+                            aria-label="View source code on GitHub"
+                        >
+                            <GitHubIcon className="w-6 h-6" />
+                        </a>
+                        <AccountButton 
+                            onSignInClick={() => setIsAuthModalOpen(true)} 
+                            userLocation={userLocation} 
+                            onApiKeySettingsClick={() => setIsApiKeyModalOpen(true)}
+                        />
+                    </div>
                 </header>
                 <div className="mb-8 flex justify-center">
                     <SearchBar onSearch={handleSearch} isLoading={isLoading} />
