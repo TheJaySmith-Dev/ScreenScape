@@ -204,5 +204,39 @@ export const brands: Brand[] = [
         { id: 385128, type: 'movie' },  // F9: The Fast Saga
         { id: 385687, type: 'movie' },  // Fast X
     ]
+  },
+  {
+    id: 'jamesbond',
+    name: 'James Bond',
+    posterUrl: 'https://image.tmdb.org/t/p/original/A6N0JJonAz5Gk0trIqvhGOHLSzi.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/y4aC3nfi1n2aQMy1k2moVqu3b6d.jpg',
+    characterCollections: [],
+    mediaIds: [
+        { id: 646, type: 'movie' },    // Dr. No
+        { id: 657, type: 'movie' },    // From Russia with Love
+        { id: 658, type: 'movie' },    // Goldfinger
+        { id: 660, type: 'movie' },    // Thunderball
+        { id: 667, type: 'movie' },    // You Only Live Twice
+        { id: 668, type: 'movie' },    // On Her Majesty's Secret Service
+        { id: 681, type: 'movie' },    // Diamonds Are Forever
+        { id: 253, type: 'movie' },    // Live and Let Die
+        { id: 36647, type: 'movie' },  // The Man with the Golden Gun
+        { id: 682, type: 'movie' },    // The Spy Who Loved Me
+        { id: 691, type: 'movie' },    // Moonraker
+        { id: 698, type: 'movie' },    // For Your Eyes Only
+        { id: 699, type: 'movie' },    // Octopussy
+        { id: 700, type: 'movie' },    // A View to a Kill
+        { id: 707, type: 'movie' },    // The Living Daylights
+        { id: 708, type: 'movie' },    // Licence to Kill
+        { id: 710, type: 'movie' },    // GoldenEye
+        { id: 714, type: 'movie' },    // Tomorrow Never Dies
+        { id: 718, type: 'movie' },    // The World Is Not Enough
+        { id: 720, type: 'movie' },    // Die Another Day
+        { id: 36557, type: 'movie' },  // Casino Royale
+        { id: 10764, type: 'movie' },  // Quantum of Solace
+        { id: 37724, type: 'movie' },  // Skyfall
+        { id: 206647, type: 'movie' }, // Spectre
+        { id: 354912, type: 'movie' }, // No Time to Die
+    ]
   }
 ];
