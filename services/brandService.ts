@@ -203,7 +203,7 @@ export const brands: Brand[] = [
         { id: 337339, type: 'movie' },  // The Fate of the Furious
         { id: 384018, type: 'movie' },  // Fast & Furious Presents: Hobbs & Shaw
         { id: 385128, type: 'movie' },  // F9: The Fast Saga
-        { id: 667538, type: 'movie' },  // Fast X
+        { id: 385687, type: 'movie' },  // Fast X
     ]
   }
 ];
