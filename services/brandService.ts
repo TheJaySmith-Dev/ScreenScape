@@ -1,6 +1,7 @@
 import type { Brand } from '../types.ts';
 
 const MARVEL_COMPANY_ID = 420;
+const UNIVERSAL_COMPANY_ID = 33;
 
 const marvelCharacterCollections: Brand['characterCollections'] = [
     { id: 131292, name: 'Iron Man Collection', posterUrl: 'https://theposterdb.com/api/assets/73396', backdropUrl: 'https://image.tmdb.org/t/p/original/rI8zOWkRQJdlAyQ6WJOSlYK6JxZ.jpg' },
@@ -21,5 +22,12 @@ export const brands: Brand[] = [
     posterUrl: 'https://theposterdb.com/api/assets/584349',
     companyId: MARVEL_COMPANY_ID,
     characterCollections: marvelCharacterCollections
+  },
+  {
+    id: 'backtothefuture',
+    name: 'Back to the Future',
+    posterUrl: 'https://image.tmdb.org/t/p/original/gLLfp2AeuaSfjyIcLEMppXggE4U.jpg',
+    companyId: UNIVERSAL_COMPANY_ID,
+    characterCollections: []
   }
 ];
