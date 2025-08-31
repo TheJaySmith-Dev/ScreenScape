@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -461,7 +462,13 @@ const App: React.FC = () => {
   }, []);
   
   const handleBack = () => {
-    window.history.back();
+    // If a curated collection is open inside a brand page (selectedItem is a collection and selectedBrand exists),
+    // simply close the modal by clearing selectedItem. Otherwise, use browser history.
+    if (selectedItem && 'parts' in selectedItem && selectedBrand) {
+      setSelectedItem(null);
+    } else {
+      window.history.back();
+    }
   };
 
   const handleApiKeySaved = () => {

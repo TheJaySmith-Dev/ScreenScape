@@ -157,5 +157,19 @@ export const brands: Brand[] = [
         { id: 165, type: 'movie' },
         { id: 196, type: 'movie' },
     ]
+  },
+  {
+    id: 'ghostbusters',
+    name: 'Ghostbusters',
+    posterUrl: 'https://image.tmdb.org/t/p/original/tV6ESBQp9bzUZU3swuYYsA94SCR.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/c3o5247P3ORfQA322T2p1P9ZDSs.jpg',
+    characterCollections: [],
+    mediaIds: [
+        { id: 620, type: 'movie' },     // Ghostbusters (1984)
+        { id: 9603, type: 'movie' },    // Ghostbusters II
+        { id: 43074, type: 'movie' },   // Ghostbusters (2016)
+        { id: 425909, type: 'movie' },  // Ghostbusters: Afterlife
+        { id: 967847, type: 'movie' },  // Ghostbusters: Frozen Empire
+    ]
   }
 ];
