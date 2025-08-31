@@ -396,6 +396,20 @@ export const getMediaByStreamingProvider = async (providerKey: StreamingProvider
     return combined;
 };
 
+export const fetchMediaByIds = async (mediaToFetch: { id: number; type: 'movie' | 'tv' }[]): Promise<MediaDetails[]> => {
+    const promises = mediaToFetch.map(item =>
+        fetchFromTmdb<any>(`/${item.type}/${item.id}`)
+            .then(details => formatMediaDetailsFromApiResponse(details, item.type))
+            .catch(err => {
+                console.error(`Failed to fetch details for ${item.type} ID ${item.id}:`, err);
+                return null;
+            })
+    );
+
+    const results = await Promise.all(promises);
+    return results.filter((item): item is MediaDetails => item !== null);
+};
+
 export const fetchActorDetails = async (actorId: number): Promise<ActorDetails> => {
     try {
         const detailsPromise = fetchFromTmdb<any>(`/person/${actorId}`);

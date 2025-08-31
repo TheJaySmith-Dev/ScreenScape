@@ -20,6 +20,7 @@ import {
   getMediaByNetwork,
   fetchActorDetails,
   getComingSoonMedia,
+  fetchMediaByIds,
 } from './services/tmdbService.ts';
 import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network, ActorDetails } from './types.ts';
 import { popularStudios } from './services/studioService.ts';
@@ -385,7 +386,12 @@ const App: React.FC = () => {
     setBrandMediaTypeFilter('all');
     setBrandSortBy('trending');
     try {
-        const media = await getMediaByStudio(brand.companyId);
+        let media: MediaDetails[] = [];
+        if (brand.mediaIds && brand.mediaIds.length > 0) {
+            media = await fetchMediaByIds(brand.mediaIds);
+        } else if (brand.companyId) {
+            media = await getMediaByStudio(brand.companyId);
+        }
         setBrandMedia(media);
     } catch (err) {
         console.error(`Failed to load media for ${brand.name}:`, err);

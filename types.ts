@@ -104,8 +104,9 @@ export interface Brand {
   id: string;
   name: string;
   posterUrl: string;
-  companyId: number;
+  companyId?: number;
   characterCollections: CharacterCollection[];
+  mediaIds?: { id: number; type: 'movie' | 'tv' }[];
 }
 
 export interface Actor {
