@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -22,7 +23,7 @@ import {
   getComingSoonMedia,
   fetchMediaByIds,
 } from './services/tmdbService.ts';
-import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network, ActorDetails, CharacterCollection } from './types.ts';
+import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network, ActorDetails, CharacterCollection, MediaTypeFilter, SortBy } from './types.ts';
 import { popularStudios } from './services/studioService.ts';
 import { brands as allBrands } from './services/brandService.ts';
 import { DetailModal } from './components/DetailModal.tsx';
@@ -46,8 +47,6 @@ import { GitHubIcon } from './components/icons.tsx';
 
 
 type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming' | 'networks';
-type MediaTypeFilter = 'all' | 'movie' | 'show' | 'short';
-type SortBy = 'trending' | 'newest';
 
 
 const App: React.FC = () => {
@@ -386,7 +385,7 @@ const App: React.FC = () => {
     setSelectedBrand(brand);
     setBrandMedia([]);
     setBrandMediaTypeFilter('all');
-    setBrandSortBy('trending');
+    setBrandSortBy(brand.defaultSort || 'trending');
     try {
         let media: MediaDetails[] = [];
         if (brand.mediaIds && brand.mediaIds.length > 0) {
@@ -413,7 +412,9 @@ const App: React.FC = () => {
     }
     if (brandSortBy === 'newest') {
         filtered.sort((a, b) => (new Date(b.releaseDate || 0).getTime()) - (new Date(a.releaseDate || 0).getTime()));
-    } else {
+    } else if (brandSortBy === 'timeline') {
+        filtered.sort((a, b) => (new Date(a.releaseDate || 0).getTime()) - (new Date(b.releaseDate || 0).getTime()));
+    } else { // 'trending'
          filtered.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
     }
     return filtered;

@@ -1,6 +1,9 @@
 
 
 
+export type MediaTypeFilter = 'all' | 'movie' | 'show' | 'short';
+export type SortBy = 'trending' | 'newest' | 'timeline';
+
 export interface TmdbSearchResult {
   id: number;
   poster_path: string | null;
@@ -110,6 +113,7 @@ export interface Brand {
   companyId?: number;
   characterCollections: CharacterCollection[];
   mediaIds?: { id: number; type: 'movie' | 'tv' }[];
+  defaultSort?: SortBy;
 }
 
 export interface Actor {

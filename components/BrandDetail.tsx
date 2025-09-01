@@ -1,12 +1,14 @@
 
 import React from 'react';
-import type { Brand, MediaDetails, Collection } from '../types.ts';
+// FIX: Import correct and consistent types from the central types file.
+import type { Brand, MediaDetails, Collection, MediaTypeFilter, SortBy } from '../types.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { StudioFilters } from './StudioFilters.tsx';
 import { CollectionCard } from './CollectionCard.tsx';
 
-type MediaTypeFilter = 'all' | 'movie' | 'show' | 'short';
-type SortBy = 'trending' | 'newest';
+// FIX: Removed incorrect local type definitions that were too restrictive.
+// type MediaTypeFilter = 'all' | 'movie' | 'show' | 'short';
+// type SortBy = 'trending' | 'newest';
 
 interface BrandDetailProps {
     brand: Brand;
@@ -71,6 +73,8 @@ export const BrandDetail: React.FC<BrandDetailProps> = ({
                   setMediaTypeFilter={setMediaTypeFilter}
                   sortBy={sortBy}
                   setSortBy={setSortBy}
+                  // FIX: Pass prop to enable timeline sort for brand pages.
+                  showTimelineSort
                 />
                 <RecommendationGrid recommendations={media} onSelect={onSelectMedia} />
             </div>

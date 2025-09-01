@@ -240,7 +240,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
 
   const isMedia = isMediaDetails(item);
   const posterUrl = isMedia ? (item.textlessPosterUrl || item.posterUrl) : item.posterUrl;
-  const backdropUrl = isMedia ? item.backdropUrl : item.backdropUrl;
 
   return (
     <>
@@ -252,8 +251,9 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         {/* Hero Section */}
         <div className="relative rounded-2xl overflow-hidden mb-8 bg-gray-800 min-h-[400px] md:min-h-[450px] flex items-center">
             <div className="absolute inset-0">
-                <img src={backdropUrl} alt="" className="w-full h-full object-cover opacity-30" />
+                <img src={posterUrl} alt="" className="w-full h-full object-cover opacity-20 blur-xl scale-110" />
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent" />
+                <div className="absolute inset-0 bg-black/30" />
             </div>
 
             <div className="relative p-6 md:p-10 flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8 w-full">

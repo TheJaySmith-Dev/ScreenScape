@@ -143,135 +143,27 @@ export const brands: Brand[] = [
     posterUrl: 'https://wallpapers.com/images/featured/marvel-logo-3p16v5avq80km4ns.jpg',
     companyId: MARVEL_COMPANY_ID,
     characterCollections: marvelCharacterCollections,
-    backdropUrl: 'https://disney.images.edge.bamgrid.com/ripcut-delivery/v2/variant/disney/CCC3F8712F781DC1ECDDC406924EF0569A30DB0F0BF628CA9EAF60B97C9ABC4B/compose?aspectRatio=1.78&format=webp&width=1600'
-  },
-  {
-    id: 'backtothefuture',
-    name: 'Back to the Future',
-    posterUrl: 'https://image.tmdb.org/t/p/original/5qpt23LxPU68FsQnQJslah4VF6C.jpg',
-    characterCollections: [],
-    mediaIds: [
-        { id: 105, type: 'movie' },
-        { id: 165, type: 'movie' },
-        { id: 196, type: 'movie' },
-    ]
-  },
-  {
-    id: 'ghostbusters',
-    name: 'Ghostbusters',
-    posterUrl: 'https://image.tmdb.org/t/p/original/tV6ESBQp9bzUZU3swuYYsA94SCR.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/c3o5247P3ORfQA322T2p1P9ZDSs.jpg',
-    characterCollections: [],
-    mediaIds: [
-        { id: 620, type: 'movie' },     // Ghostbusters (1984)
-        { id: 2978, type: 'movie' },    // Ghostbusters II (1989)
-        { id: 425909, type: 'movie' },  // Ghostbusters: Afterlife
-        { id: 967847, type: 'movie' },  // Ghostbusters: Frozen Empire
-    ]
-  },
-  {
-    id: 'missionimpossible',
-    name: 'Mission: Impossible',
-    posterUrl: 'https://image.tmdb.org/t/p/w500_and_h282_face/jNjhxBEU3RAdki0xIAZvrsTseZn.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/dJ6yT7vJ2y3fI4T6W7k3upTj8T.jpg',
-    characterCollections: [],
-    mediaIds: [
-        { id: 954, type: 'movie' },     // Mission: Impossible
-        { id: 955, type: 'movie' },     // Mission: Impossible 2
-        { id: 956, type: 'movie' },     // Mission: Impossible III
-        { id: 56292, type: 'movie' },   // Mission: Impossible - Ghost Protocol
-        { id: 177677, type: 'movie' },  // Mission: Impossible - Rogue Nation
-        { id: 353081, type: 'movie' },  // Mission: Impossible - Fallout
-        { id: 575264, type: 'movie' },  // Mission: Impossible - Dead Reckoning Part One
-    ]
-  },
-  {
-    id: 'fastandfurious',
-    name: 'Fast & Furious',
-    posterUrl: 'https://image.tmdb.org/t/p/w500_and_h282_face/abproxa0V1h7BZ2tcZpACkGc8LG.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/h3X1A2G3D2s2k8tTsrD6P7n5S2R.jpg',
-    characterCollections: [],
-    mediaIds: [
-        { id: 9799, type: 'movie' },    // The Fast and the Furious
-        { id: 584, type: 'movie' },     // 2 Fast 2 Furious
-        { id: 9615, type: 'movie' },    // The Fast and the Furious: Tokyo Drift
-        { id: 13804, type: 'movie' },   // Fast & Furious
-        { id: 51497, type: 'movie' },   // Fast Five
-        { id: 82992, type: 'movie' },   // Fast & Furious 6
-        { id: 168259, type: 'movie' },  // Furious 7
-        { id: 337339, type: 'movie' },  // The Fate of the Furious
-        { id: 384018, type: 'movie' },  // Fast & Furious Presents: Hobbs & Shaw
-        { id: 385128, type: 'movie' },  // F9: The Fast Saga
-        { id: 385687, type: 'movie' },  // Fast X
-    ]
-  },
-  {
-    id: 'jamesbond',
-    name: 'James Bond',
-    posterUrl: 'https://image.tmdb.org/t/p/original/A6N0JJonAz5Gk0trIqvhGOHLSzi.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/y4aC3nfi1n2aQMy1k2moVqu3b6d.jpg',
-    characterCollections: [],
-    mediaIds: [
-        { id: 646, type: 'movie' },    // Dr. No
-        { id: 657, type: 'movie' },    // From Russia with Love
-        { id: 658, type: 'movie' },    // Goldfinger
-        { id: 660, type: 'movie' },    // Thunderball
-        { id: 667, type: 'movie' },    // You Only Live Twice
-        { id: 668, type: 'movie' },    // On Her Majesty's Secret Service
-        { id: 681, type: 'movie' },    // Diamonds Are Forever
-        { id: 253, type: 'movie' },    // Live and Let Die
-        { id: 36647, type: 'movie' },  // The Man with the Golden Gun
-        { id: 682, type: 'movie' },    // The Spy Who Loved Me
-        { id: 691, type: 'movie' },    // Moonraker
-        { id: 698, type: 'movie' },    // For Your Eyes Only
-        { id: 699, type: 'movie' },    // Octopussy
-        { id: 700, type: 'movie' },    // A View to a Kill
-        { id: 707, type: 'movie' },    // The Living Daylights
-        { id: 708, type: 'movie' },    // Licence to Kill
-        { id: 710, type: 'movie' },    // GoldenEye
-        { id: 714, type: 'movie' },    // Tomorrow Never Dies
-        { id: 718, type: 'movie' },    // The World Is Not Enough
-        { id: 720, type: 'movie' },    // Die Another Day
-        { id: 36557, type: 'movie' },  // Casino Royale
-        { id: 10764, type: 'movie' },  // Quantum of Solace
-        { id: 37724, type: 'movie' },  // Skyfall
-        { id: 206647, type: 'movie' }, // Spectre
-        { id: 370172, type: 'movie' }, // No Time to Die
-    ]
+    backdropUrl: 'https://disney.images.edge.bamgrid.com/ripcut-delivery/v2/variant/disney/CCC3F8712F781DC1ECDDC406924EF0569A30DB0F0BF628CA9EAF60B97C9ABC4B/compose?aspectRatio=1.78',
   },
   {
     id: 'wizardingworld',
     name: 'Wizarding World',
-    posterUrl: 'https://musicart.xboxlive.com/7/b5d65e00-0000-0000-0000-000000000002/504/image.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/5jkE2SzR5uR2egEb1rZGgduFjBN.jpg',
-    characterCollections: [
-      {
-        id: 121, 
-        name: 'Harry Potter', 
-        posterUrl: 'https://image.tmdb.org/t/p/w500/p3KaBIJAbQo32yOcsfC2s2T2Srr.jpg', 
-        backdropUrl: 'https://image.tmdb.org/t/p/original/qWfpSWopkKMCBI0pDi6RDNBqmBa.jpg',
-        mediaIds: [
-            { id: 671, type: 'movie' },   // and the Philosopher's Stone
-            { id: 672, type: 'movie' },   // and the Chamber of Secrets
-            { id: 673, type: 'movie' },   // and the Prisoner of Azkaban
-            { id: 674, type: 'movie' },   // and the Goblet of Fire
-            { id: 675, type: 'movie' },   // and the Order of the Phoenix
-            { id: 767, type: 'movie' },   // and the Half-Blood Prince
-            { id: 12444, type: 'movie' }, // and the Deathly Hallows: Part 1
-            { id: 12445, type: 'movie' }, // and the Deathly Hallows: Part 2
-        ]
-      },
-      {
-        id: 404608,
-        name: 'Fantastic Beasts',
-        posterUrl: 'https://image.tmdb.org/t/p/w500/fTCqgEDe5Flv9a3NnC22L91Cza7.jpg',
-        backdropUrl: 'https://image.tmdb.org/t/p/original/3ybt95EcivmtIynUq6kisWsGnEo.jpg',
-        mediaIds: [
-            { id: 259316, type: 'movie' }, // and Where to Find Them
-            { id: 338952, type: 'movie' }, // The Crimes of Grindelwald
-            { id: 338954, type: 'movie' }, // The Secrets of Dumbledore
-        ]
-      }
+    posterUrl: 'https://images.ctfassets.net/usf1vwtuqyxm/235FNw3G2zGdw3AjVCR5Z3/78229b35959310850d99032759e5e783/WW_Hero_Desktop_2000x1270_CTA.jpg?w=1200&fit=fill&f=top',
+    backdropUrl: 'https://images.alphacoders.com/133/1332794.png',
+    characterCollections: [],
+    mediaIds: [
+      { id: 671, type: 'movie' },    // Harry Potter and the Sorcerer's Stone (2001)
+      { id: 672, type: 'movie' },    // Harry Potter and the Chamber of Secrets (2002)
+      { id: 673, type: 'movie' },    // Harry Potter and the Prisoner of Azkaban (2004)
+      { id: 674, type: 'movie' },    // Harry Potter and the Goblet of Fire (2005)
+      { id: 675, type: 'movie' },    // Harry Potter and the Order of the Phoenix (2007)
+      { id: 767, type: 'movie' },    // Harry Potter and the Half-Blood Prince (2009)
+      { id: 12444, type: 'movie' },  // Harry Potter and the Deathly Hallows: Part 1 (2010)
+      { id: 12445, type: 'movie' },  // Harry Potter and the Deathly Hallows: Part 2 (2011)
+      { id: 259316, type: 'movie' }, // Fantastic Beasts and Where to Find Them (2016)
+      { id: 338952, type: 'movie' }, // Fantastic Beasts: The Crimes of Grindelwald (2018)
+      { id: 338953, type: 'movie' }, // Fantastic Beasts: The Secrets of Dumbledore (2022)
     ],
+    defaultSort: 'timeline',
   }
 ];
