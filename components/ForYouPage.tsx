@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { usePreferences } from '../hooks/usePreferences.ts';
-import { getRecommendationsFromTastes } from '../services/tmdbService.ts';
+import { getRecommendationsFromTastes } from '../services/mediaService.ts';
 import type { MediaDetails } from '../types.ts';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { RecommendationGrid } from './RecommendationGrid.tsx';

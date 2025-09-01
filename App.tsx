@@ -1,5 +1,4 @@
 
-
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -16,13 +15,13 @@ import {
   getTopRatedMovies,
   getTopRatedTv,
   getMediaByStudio,
-  searchTmdb,
+  searchMedia,
   getMediaByStreamingProvider,
   getMediaByNetwork,
   fetchActorDetails,
   getComingSoonMedia,
   fetchMediaByIds,
-} from './services/tmdbService.ts';
+} from './services/mediaService.ts';
 import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network, ActorDetails, CharacterCollection, MediaTypeFilter, SortBy } from './types.ts';
 import { popularStudios } from './services/studioService.ts';
 import { brands as allBrands } from './services/brandService.ts';
@@ -41,8 +40,6 @@ import { NetworkGrid } from './components/NetworkGrid.tsx';
 import { ActorPage } from './components/ActorPage.tsx';
 import { WatchlistPage } from './components/WatchlistPage.tsx';
 import { ComingSoonPage } from './components/ComingSoonPage.tsx';
-import { ApiKeyModal } from './components/ApiKeyModal.tsx';
-import { getTmdbApiKey } from './services/apiService.ts';
 import { GitHubIcon } from './components/icons.tsx';
 
 
@@ -62,10 +59,6 @@ const App: React.FC = () => {
   const [isVpnBlocked, setIsVpnBlocked] = useState<boolean | null>(null); // null: checking, false: ok, true: blocked
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
-
-  // State for API Key onboarding
-  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
-  const [hasApiKey, setHasApiKey] = useState(false);
 
   // State for Streaming hubs
   const [availableProviders, setAvailableProviders] = useState<StreamingProviderInfo[]>([]);
@@ -97,17 +90,6 @@ const App: React.FC = () => {
   // State for Coming Soon page
   const [comingSoonMedia, setComingSoonMedia] = useState<MediaDetails[]>([]);
   const [isComingSoonLoading, setIsComingSoonLoading] = useState(true);
-
-  // Initial app setup for API Key
-  useEffect(() => {
-    const key = getTmdbApiKey();
-    if (key) {
-        setHasApiKey(true);
-    } else {
-        setHasApiKey(false);
-        setIsApiKeyModalOpen(true);
-    }
-  }, []);
 
   useEffect(() => {
     const initApp = async () => {
@@ -144,11 +126,8 @@ const App: React.FC = () => {
         setAvailableProviders(supportedProviders);
       }
     };
-
-    if (hasApiKey) {
-        initApp();
-    }
-  }, [hasApiKey]);
+    initApp();
+  }, []);
 
   // Main routing effect
   useEffect(() => {
@@ -171,9 +150,9 @@ const App: React.FC = () => {
       const currentTab = mainTabs.includes(page as ActiveTab) ? (page as ActiveTab) : 'home';
       setActiveTab(currentTab);
 
-      // Don't load content if VPN is blocked or no API key
-      if (!hasApiKey || isVpnBlocked) {
-        if(isVpnBlocked === false) setIsLoading(false);
+      // Don't load content if VPN is blocked
+      if (isVpnBlocked) {
+        setIsLoading(false);
         return;
       }
       
@@ -244,7 +223,7 @@ const App: React.FC = () => {
                   setHomeSections(sections.filter(s => s.items.length > 0));
                 } catch (err) {
                   console.error("Failed to load home data:", err);
-                  setError("Could not load content. Please try again later.");
+                  setError("Could not load content. Please check your network connection.");
                 } finally {
                   setIsHomeLoading(false);
                 }
@@ -278,7 +257,7 @@ const App: React.FC = () => {
     handleRouteChange(); // initial load
 
     return () => window.removeEventListener('hashchange', handleRouteChange, false);
-  }, [hasApiKey, isVpnBlocked, userLocation, availableProviders]); // Re-run if key/VPN status changes.
+  }, [isVpnBlocked, userLocation, availableProviders]); // Re-run if VPN status changes.
 
 
   const handleSearch = useCallback(async (query: string) => {
@@ -290,7 +269,7 @@ const App: React.FC = () => {
     setRecommendations([]);
 
     try {
-      const searchResults = await searchTmdb(query);
+      const searchResults = await searchMedia(query);
       if (!searchResults || searchResults.length === 0) {
         setError(`No results found for "${query}".`);
       } else {
@@ -313,7 +292,6 @@ const App: React.FC = () => {
     try {
       const details = await fetchDetailsForModal(id, type, userLocation?.code || 'US');
       setSelectedItem(current => 
-        // FIX: Added 'type' in current as a type guard to ensure `current` is MediaDetails before accessing `title`.
         current && 'type' in current && current.id === id
           ? { ...current, ...details, title: details.title || current.title } 
           : current
@@ -348,7 +326,6 @@ const App: React.FC = () => {
     window.location.hash = `#/collection/${collection.id}`;
   };
 
-  // FIX: Renamed function to `handleSelectStudio` for consistency and to fix reference error.
   const handleSelectStudio = useCallback(async (studio: Studio) => {
     setSelectedStudio(studio);
     setStudioMedia([]);
@@ -461,8 +438,6 @@ const App: React.FC = () => {
   }, []);
   
   const handleBack = () => {
-    // If a curated collection is open inside a brand page (selectedItem is a collection and selectedBrand exists),
-    // simply close the modal by clearing selectedItem. Otherwise, use browser history.
     if (selectedItem && 'parts' in selectedItem && selectedBrand) {
       setSelectedItem(null);
     } else {
@@ -470,14 +445,8 @@ const App: React.FC = () => {
     }
   };
 
-  const handleApiKeySaved = () => {
-    setHasApiKey(true);
-    setIsApiKeyModalOpen(false);
-  };
-
   const handleBrandCollectionSelect = useCallback(async (collection: CharacterCollection) => {
     if (collection.mediaIds && collection.mediaIds.length > 0) {
-      // It's a curated list, fetch directly and show in modal
       setIsModalLoading(true);
       setSelectedItem({ id: collection.id, name: collection.name, posterUrl: collection.posterUrl, backdropUrl: collection.backdropUrl, overview: 'Loading collection...', parts: [] });
       
@@ -500,7 +469,6 @@ const App: React.FC = () => {
         setIsModalLoading(false);
       }
     } else {
-      // It's a standard TMDb collection, use the existing hash-based navigation
       navigateToCollection(collection);
     }
   }, []);
@@ -621,14 +589,7 @@ const App: React.FC = () => {
 
   return (
     <div className="bg-gray-900 text-white min-h-screen font-sans">
-      <ApiKeyModal
-        isOpen={isApiKeyModalOpen}
-        onSave={handleApiKeySaved}
-        isDismissable={hasApiKey}
-        onClose={() => hasApiKey && setIsApiKeyModalOpen(false)}
-      />
-
-      {hasApiKey && isVpnBlocked === true && (
+      {isVpnBlocked === true && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="max-w-md text-center bg-gray-800 p-8 rounded-2xl border border-red-500/50">
             <h2 className="text-2xl font-bold text-red-400 mb-4">VPN/Proxy Detected</h2>
@@ -638,19 +599,14 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
-      {hasApiKey && isVpnBlocked === null && (
+      
+      {isVpnBlocked === null && (
          <div className="fixed inset-0 bg-gray-900 z-[100] flex items-center justify-center">
             <LoadingSpinner />
          </div>
       )}
-      {!hasApiKey && !isApiKeyModalOpen && (
-        <div className="fixed inset-0 bg-gray-900 z-[100] flex items-center justify-center">
-          <LoadingSpinner />
-        </div>
-      )}
 
-
-      {hasApiKey && (
+      {isVpnBlocked === false && (
         <>
         {selectedItem ? (
             <main className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -692,8 +648,7 @@ const App: React.FC = () => {
                         </a>
                         <AccountButton 
                             onSignInClick={() => setIsAuthModalOpen(true)} 
-                            userLocation={userLocation} 
-                            onApiKeySettingsClick={() => setIsApiKeyModalOpen(true)}
+                            userLocation={userLocation}
                         />
                     </div>
                 </header>

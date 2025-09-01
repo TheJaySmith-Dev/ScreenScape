@@ -1,5 +1,6 @@
 import type { ExternalRatings, MediaDetails } from '../types.ts';
 
+// Using the user's provided OMDb API key as requested.
 const OMDB_API_KEY = '2b067fb4';
 const OMDB_API_BASE_URL = 'https://www.omdbapi.com';
 
@@ -19,7 +20,7 @@ interface OmdbResponse {
 
 export const fetchOmdbDetails = async (imdbId: string): Promise<Partial<MediaDetails>> => {
     if (!OMDB_API_KEY) {
-        console.warn("OMDb API key is not available.");
+        console.warn("OMDb API key is not configured.");
         return { otherRatings: {} };
     }
     try {

@@ -1,6 +1,47 @@
 import type { Brand } from '../types.ts';
 
-const MARVEL_COMPANY_ID = 420;
+// This is a curated list of MCU films in release order to ensure accuracy
+// for the brand hub, instead of relying on a broad company ID search.
+const mcuMediaIds: Brand['mediaIds'] = [
+    // Phase One
+    { id: 1726, type: 'movie' },   // Iron Man (2008)
+    { id: 1724, type: 'movie' },   // The Incredible Hulk (2008)
+    { id: 10138, type: 'movie' },  // Iron Man 2 (2010)
+    { id: 10195, type: 'movie' },  // Thor (2010)
+    { id: 1771, type: 'movie' },   // Captain America: The First Avenger (2011)
+    { id: 24428, type: 'movie' },  // The Avengers (2012)
+    // Phase Two
+    { id: 68721, type: 'movie' },  // Iron Man 3 (2013)
+    { id: 76338, type: 'movie' },  // Thor: The Dark World (2013)
+    { id: 100402, type: 'movie' }, // Captain America: The Winter Soldier (2014)
+    { id: 118340, type: 'movie' }, // Guardians of the Galaxy (2014)
+    { id: 99861, type: 'movie' },  // Avengers: Age of Ultron (2015)
+    { id: 102899, type: 'movie' }, // Ant-Man (2015)
+    // Phase Three
+    { id: 271110, type: 'movie' }, // Captain America: Civil War (2016)
+    { id: 284054, type: 'movie' }, // Doctor Strange (2016)
+    { id: 283995, type: 'movie' }, // Guardians of the Galaxy Vol. 2 (2017)
+    { id: 315635, type: 'movie' }, // Spider-Man: Homecoming (2017)
+    { id: 284053, type: 'movie' }, // Thor: Ragnarok (2017)
+    { id: 284052, type: 'movie' }, // Black Panther (2018)
+    { id: 299536, type: 'movie' }, // Avengers: Infinity War (2018)
+    { id: 363088, type: 'movie' }, // Ant-Man and the Wasp (2018)
+    { id: 299537, type: 'movie' }, // Captain Marvel (2019)
+    { id: 299534, type: 'movie' }, // Avengers: Endgame (2019)
+    { id: 429617, type: 'movie' }, // Spider-Man: Far From Home (2019)
+    // Phase Four
+    { id: 497698, type: 'movie' }, // Black Widow (2021)
+    { id: 566525, type: 'movie' }, // Shang-Chi and the Legend of the Ten Rings (2021)
+    { id: 524434, type: 'movie' }, // Eternals (2021)
+    { id: 634649, type: 'movie' }, // Spider-Man: No Way Home (2021)
+    { id: 453395, type: 'movie' }, // Doctor Strange in the Multiverse of Madness (2022)
+    { id: 616037, type: 'movie' }, // Thor: Love and Thunder (2022)
+    { id: 505642, type: 'movie' }, // Black Panther: Wakanda Forever (2022)
+    // Phase Five
+    { id: 640146, type: 'movie' }, // Ant-Man and the Wasp: Quantumania (2023)
+    { id: 447365, type: 'movie' }, // Guardians of the Galaxy Vol. 3 (2023)
+    { id: 609681, type: 'movie' }  // The Marvels (2023)
+];
 
 const marvelCharacterCollections: Brand['characterCollections'] = [
     { 
@@ -141,9 +182,10 @@ export const brands: Brand[] = [
     id: 'marvel',
     name: 'Marvel',
     posterUrl: 'https://terrigen-cdn-dev.marvel.com/content/prod/1x/marvel_studios_in_theaters_art_1_0.jpg',
-    companyId: MARVEL_COMPANY_ID,
+    mediaIds: mcuMediaIds,
     characterCollections: marvelCharacterCollections,
     backdropUrl: 'https://disney.images.edge.bamgrid.com/ripcut-delivery/v2/variant/disney/CCC3F8712F781DC1ECDDC406924EF0569A30DB0F0BF628CA9EAF60B97C9ABC4B/compose?aspectRatio=1.78',
+    defaultSort: 'timeline',
   },
   {
     id: 'wizardingworld',
