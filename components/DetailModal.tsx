@@ -239,7 +239,10 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
   );
 
   const isMedia = isMediaDetails(item);
-  const posterUrl = isMedia ? (item.textlessPosterUrl || item.posterUrl) : item.posterUrl;
+  // The background image should prioritize the textless poster for media, or the backdrop for collections.
+  const backgroundImageUrl = isMedia ? (item.textlessPosterUrl || item.posterUrl) : item.backdropUrl;
+  // The main, focused poster should always be the standard poster.
+  const mainPosterUrl = item.posterUrl;
 
   return (
     <>
@@ -251,13 +254,13 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         {/* Hero Section */}
         <div className="relative rounded-2xl overflow-hidden mb-8 bg-gray-800 min-h-[400px] md:min-h-[450px] flex items-center">
             <div className="absolute inset-0">
-                <img src={posterUrl} alt="" className="w-full h-full object-cover opacity-20 blur-xl scale-110" />
+                <img src={backgroundImageUrl} alt="" className="w-full h-full object-cover opacity-20 blur-xl scale-110" />
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent" />
                 <div className="absolute inset-0 bg-black/30" />
             </div>
 
             <div className="relative p-6 md:p-10 flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8 w-full">
-                <img src={posterUrl} alt={isMedia ? item.title : item.name} className="w-40 md:w-52 rounded-lg shadow-2xl aspect-[2/3] object-cover flex-shrink-0" />
+                <img src={mainPosterUrl} alt={isMedia ? item.title : item.name} className="w-40 md:w-52 rounded-lg shadow-2xl aspect-[2/3] object-cover flex-shrink-0" />
                 <div className="flex-grow text-center md:text-left">
                     <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white drop-shadow-2xl mb-4">
                         {isMediaDetails(item) ? item.title : item.name}

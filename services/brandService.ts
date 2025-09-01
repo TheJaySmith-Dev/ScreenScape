@@ -184,14 +184,14 @@ export const brands: Brand[] = [
     posterUrl: 'https://terrigen-cdn-dev.marvel.com/content/prod/1x/marvel_studios_in_theaters_art_1_0.jpg',
     mediaIds: mcuMediaIds,
     characterCollections: marvelCharacterCollections,
-    backdropUrl: 'https://disney.images.edge.bamgrid.com/ripcut-delivery/v2/variant/disney/CCC3F8712F781DC1ECDDC406924EF0569A30DB0F0BF628CA9EAF60B97C9ABC4B/compose?aspectRatio=1.78',
+    backdropUrl: 'https://i.postimg.cc/7hXz8npx/Marvel-Studios-Logo.avif',
     defaultSort: 'timeline',
   },
   {
     id: 'wizardingworld',
     name: 'Wizarding World',
     posterUrl: 'https://images.ctfassets.net/usf1vwtuqyxm/235FNw3G2zGdw3AjVCR5Z3/78229b35959310850d99032759e5e783/WW_Hero_Desktop_2000x1270_CTA.jpg?w=1200&fit=fill&f=top',
-    backdropUrl: 'https://images.alphacoders.com/133/1332794.png',
+    backdropUrl: 'https://i.postimg.cc/zX6BLQws/Wizarding-World.avif',
     characterCollections: [],
     mediaIds: [
       { id: 671, type: 'movie' },    // Harry Potter and the Sorcerer's Stone (2001)
@@ -212,7 +212,7 @@ export const brands: Brand[] = [
     id: 'missionimpossible',
     name: 'Mission: Impossible',
     posterUrl: 'https://www.themoviedb.org/t/p/original/ge2C2gT39bTSoa62A8Rbb2yqa7I.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/jY9efbC2KCa2s0i1Dxd55y13IuI.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/j6Y1qjfoJcJ0S3ah9kifbI2bzq0.jpg',
     characterCollections: [],
     mediaIds: [
       { id: 954, type: 'movie' },    // Mission: Impossible (1996)
@@ -229,7 +229,7 @@ export const brands: Brand[] = [
     id: 'fastandfurious',
     name: 'Fast & Furious',
     posterUrl: 'https://www.themoviedb.org/t/p/original/bOqKESKyEX0T527e0m3i1X9N2f7.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/h3X2p8H34T33Ilo2mo1sD5Vj02L.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/abproxa0V1h7BZ2tcZpACkGc8LG.jpg',
     characterCollections: [],
     mediaIds: [
       { id: 9799, type: 'movie' },   // The Fast and the Furious (2001)
@@ -250,7 +250,7 @@ export const brands: Brand[] = [
     id: 'jamesbond',
     name: 'James Bond',
     posterUrl: 'https://www.themoviedb.org/t/p/original/dM2w364MScsjFf8pfMbaSSTO1Ze.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/vV5L2vE3xx2v9i4I3e4i0D2sY40.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/A6N0JJonAz5Gk0trIqvhGOHLSzi.jpg',
     characterCollections: [],
     mediaIds: [
       { id: 646, type: 'movie' },    // Dr. No (1962)
@@ -278,6 +278,34 @@ export const brands: Brand[] = [
       { id: 37724, type: 'movie' },  // Skyfall (2012)
       { id: 206647, type: 'movie' }, // Spectre (2015)
       { id: 370172, type: 'movie' }, // No Time to Die (2021)
+    ],
+    defaultSort: 'timeline',
+  },
+  {
+    id: 'backtothefuture',
+    name: 'Back to the Future',
+    posterUrl: 'https://image.tmdb.org/t/p/original/48T2EQe93dguK2pPCMELoP9upVP.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/x4N74L25pZa7fGIMHe5M8oR0iM3.jpg',
+    characterCollections: [],
+    mediaIds: [
+      { id: 105, type: 'movie' },   // Back to the Future (1985)
+      { id: 165, type: 'movie' },   // Back to the Future Part II (1989)
+      { id: 196, type: 'movie' },   // Back to the Future Part III (1990)
+    ],
+    defaultSort: 'timeline',
+  },
+  {
+    id: 'ghostbusters',
+    name: 'Ghostbusters',
+    posterUrl: 'https://image.tmdb.org/t/p/original/tV6ESBQp9bzUZU3swuYYsA94SCR.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/u2uS0u32RbtSgN5I1i7s0vX9a4G.jpg',
+    characterCollections: [],
+    mediaIds: [
+      { id: 620, type: 'movie' },    // Ghostbusters (1984)
+      { id: 9608, type: 'movie' },   // Ghostbusters II (1989)
+      { id: 43074, type: 'movie' },  // Ghostbusters: Answer the Call (2016)
+      { id: 425909, type: 'movie' }, // Ghostbusters: Afterlife (2021)
+      { id: 827902, type: 'movie' }, // Ghostbusters: Frozen Empire (2024)
     ],
     defaultSort: 'timeline',
   }
