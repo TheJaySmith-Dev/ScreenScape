@@ -588,7 +588,7 @@ const App: React.FC = () => {
 
 
   return (
-    <div className="bg-gray-900 text-white min-h-screen font-sans">
+    <div className={`${selectedBrand ? '' : 'bg-gray-900'} text-white min-h-screen font-sans`}>
       {isVpnBlocked === true && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
           <div className="max-w-md text-center bg-gray-800 p-8 rounded-2xl border border-red-500/50">
