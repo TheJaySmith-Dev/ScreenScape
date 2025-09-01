@@ -1,5 +1,6 @@
 
 
+
 import React, { useEffect, useState } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders } from '../types.ts';
 import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon } from './icons.tsx';
@@ -9,7 +10,6 @@ import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
 import { usePreferences } from '../hooks/usePreferences.ts';
 import { Providers } from './Providers.tsx';
 import { CinemaAvailability } from './CinemaAvailability.tsx';
-import { ExternalRatings } from './ExternalRatings.tsx';
 
 interface DetailModalProps {
   item: MediaDetails | CollectionDetails;
@@ -301,14 +301,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                                     <p className="text-xs text-gray-400 -mt-1">TMDb</p>
                                 </div>
                             </div>
-                            {!isLoading && <ExternalRatings ratings={item.otherRatings} />}
                         </div>
-                        
-                        {!isLoading && item.awards && item.awards !== 'N/A' && (
-                        <div className="mb-4 p-3 bg-yellow-900/30 border-l-4 border-yellow-500 rounded-r-lg">
-                            <p className="text-sm text-yellow-300 font-semibold">🏆 {item.awards}</p>
-                        </div>
-                        )}
                     </>
                     )}
                 </div>

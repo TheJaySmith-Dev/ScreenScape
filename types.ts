@@ -1,4 +1,6 @@
 
+
+
 export type MediaTypeFilter = 'all' | 'movie' | 'show' | 'short';
 export type SortBy = 'trending' | 'newest' | 'timeline';
 
@@ -22,12 +24,6 @@ export interface CastMember {
   profileUrl: string;
 }
 
-export interface ExternalRatings {
-  imdb?: string;
-  rottenTomatoes?: string;
-  metacritic?: string;
-}
-
 export interface MediaDetails {
   id: number;
   title: string;
@@ -48,13 +44,11 @@ export interface MediaDetails {
   related?: MediaDetails[];
   watchProviders?: WatchProviders | null;
   isInTheaters?: boolean;
-  otherRatings?: ExternalRatings;
-  rated?: string; // MPAA rating
-  awards?: string;
   runtime?: number; // In minutes, for movies
   numberOfSeasons?: number; // For TV shows
   lastAirDate?: string; // For TV shows
   status?: string; // For TV shows, e.g. "Ended", "Returning Series"
+  rated?: string; // MPAA rating from TMDb
 }
 
 export interface Collection {
@@ -111,8 +105,8 @@ export interface Brand {
   companyId?: number;
   characterCollections: CharacterCollection[];
   mediaIds?: { id: number; type: 'movie' | 'tv' }[];
+  collectionIds?: number[];
   defaultSort?: SortBy;
-  representativeImdbId?: string;
 }
 
 export interface Actor {
@@ -154,6 +148,12 @@ export interface LikedItem {
 export interface DislikedItem {
   id: number;
   type: 'movie' | 'tv';
+}
+
+// FIX: Add missing ExternalRatings type definition to fix import error in ExternalRatings.tsx.
+export interface ExternalRatings {
+  rottenTomatoes?: string;
+  metacritic?: string;
 }
 
 // TMDB Watch Provider Types

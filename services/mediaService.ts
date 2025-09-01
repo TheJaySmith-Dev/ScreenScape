@@ -1,5 +1,4 @@
 import type { MediaDetails, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails } from '../types.ts';
-import { fetchOmdbDetails } from './omdbService.ts';
 import { supportedProviders } from './streamingService.ts';
 import { getApiKey } from './apiService.ts';
 
@@ -8,8 +7,7 @@ const API_BASE_URL = 'https://api.themoviedb.org/3';
 const fetchFromApi = async <T,>(endpoint: string): Promise<T> => {
     const apiKey = getApiKey();
     if (!apiKey) {
-        // This error should not be hit now that the key is hardcoded.
-        throw new Error("Invalid API key configured.");
+        throw new Error("TMDb API key is not set. Please add it via the UI.");
     }
     const separator = endpoint.includes('?') ? '&' : '?';
     const url = `${API_BASE_URL}${endpoint}${separator}api_key=${apiKey}&language=en-US`;
@@ -178,19 +176,21 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
 
           const isInTheaters = type === 'movie' ? checkIfInTheaters(details.release_dates, countryCode) : false;
           
-          let omdbDetails: Partial<MediaDetails> = {};
-          const imdbId = details.external_ids?.imdb_id || details.imdb_id;
-          if (imdbId) {
-              omdbDetails = await fetchOmdbDetails(imdbId);
-          }
-          
           const additionalDetails: Partial<MediaDetails> = {};
           if (type === 'movie') {
               additionalDetails.runtime = details.runtime;
+              const usRelease = details.release_dates?.results?.find((r: any) => r.iso_3166_1 === 'US');
+              if (usRelease?.release_dates?.[0]?.certification) {
+                  additionalDetails.rated = usRelease.release_dates[0].certification;
+              }
           } else { // type === 'tv'
               additionalDetails.numberOfSeasons = details.number_of_seasons;
               additionalDetails.lastAirDate = details.last_air_date;
               additionalDetails.status = details.status;
+              const usRating = details.content_ratings?.results?.find((r: any) => r.iso_3166_1 === 'US');
+              if (usRating?.rating) {
+                  additionalDetails.rated = usRating.rating;
+              }
           }
   
           const finalDetails = {
@@ -200,22 +200,16 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
               related: formatRelated(details.recommendations, type),
               watchProviders,
               isInTheaters,
-              imdbId: imdbId || baseDetails.imdbId,
-              ...omdbDetails,
+              imdbId: details.external_ids?.imdb_id || details.imdb_id || baseDetails.imdbId,
               ...additionalDetails,
           };
-
-          // As requested, explicitly prioritize the OMDb poster if it exists.
-          if (omdbDetails.posterUrl) {
-              finalDetails.posterUrl = omdbDetails.posterUrl;
-          }
 
           return finalDetails;
   
       } catch (error) {
           console.error(`Failed to fetch modal details for ${type} ID ${id}:`, error);
           return {
-              trailerUrl: null, cast: [], related: [], watchProviders: null, isInTheaters: false, imdbId: null, otherRatings: {},
+              trailerUrl: null, cast: [], related: [], watchProviders: null, isInTheaters: false, imdbId: null,
           };
       }
 };
@@ -364,6 +358,22 @@ export const fetchMediaByIds = async (mediaToFetch: { id: number; type: 'movie' 
     );
     const results = await Promise.all(promises);
     return results.filter((item): item is MediaDetails => item !== null);
+};
+
+export const fetchMediaByCollectionIds = async (collectionIds: number[]): Promise<MediaDetails[]> => {
+    if (!collectionIds || collectionIds.length === 0) {
+        return [];
+    }
+    try {
+        const collectionPromises = collectionIds.map(id => fetchCollectionDetails(id));
+        const collections = await Promise.all(collectionPromises);
+        const allMedia = collections.flatMap(collection => collection.parts);
+        const uniqueMedia = Array.from(new Map(allMedia.map(item => [item.id, item])).values());
+        return uniqueMedia;
+    } catch (error) {
+        console.error(`Failed to fetch media for collection IDs ${collectionIds.join(', ')}:`, error);
+        throw error;
+    }
 };
 
 export const fetchActorDetails = async (actorId: number): Promise<ActorDetails> => {

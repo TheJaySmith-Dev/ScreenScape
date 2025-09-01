@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -21,8 +23,8 @@ import {
   fetchActorDetails,
   getComingSoonMedia,
   fetchMediaByIds,
+  fetchMediaByCollectionIds,
 } from './services/mediaService.ts';
-import { fetchPosterForImdbId } from './services/omdbService.ts';
 import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network, ActorDetails, CharacterCollection, MediaTypeFilter, SortBy } from './types.ts';
 import { popularStudios } from './services/studioService.ts';
 import { brands as allBrands } from './services/brandService.ts';
@@ -42,6 +44,8 @@ import { ActorPage } from './components/ActorPage.tsx';
 import { WatchlistPage } from './components/WatchlistPage.tsx';
 import { ComingSoonPage } from './components/ComingSoonPage.tsx';
 import { GitHubIcon } from './components/icons.tsx';
+import { ApiKeyModal } from './components/ApiKeyModal.tsx';
+import * as apiService from './services/apiService.ts';
 
 
 type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming' | 'networks';
@@ -60,6 +64,8 @@ const App: React.FC = () => {
   const [isVpnBlocked, setIsVpnBlocked] = useState<boolean | null>(null); // null: checking, false: ok, true: blocked
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+  const [apiKey, setApiKey] = useState<string | null>(null);
 
   // State for Streaming hubs
   const [availableProviders, setAvailableProviders] = useState<StreamingProviderInfo[]>([]);
@@ -74,7 +80,7 @@ const App: React.FC = () => {
   const [studioMediaTypeFilter, setStudioMediaTypeFilter] = useState<MediaTypeFilter>('all');
   const [studioSortBy, setStudioSortBy] = useState<SortBy>('trending');
 
-  const [brands, setBrands] = useState<Brand[]>(allBrands);
+  const [brands] = useState<Brand[]>(allBrands);
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [brandMedia, setBrandMedia] = useState<MediaDetails[]>([]);
   const [brandMediaTypeFilter, setBrandMediaTypeFilter] = useState<MediaTypeFilter>('all');
@@ -93,6 +99,23 @@ const App: React.FC = () => {
   const [isComingSoonLoading, setIsComingSoonLoading] = useState(true);
 
   useEffect(() => {
+    const key = apiService.getApiKey();
+    if (key) {
+      setApiKey(key);
+    } else {
+      setIsApiKeyModalOpen(true);
+    }
+  }, []);
+
+  const handleSaveApiKey = (newKey: string) => {
+    apiService.saveApiKey(newKey);
+    setApiKey(newKey);
+    setIsApiKeyModalOpen(false);
+  };
+
+  useEffect(() => {
+    if (!apiKey) return;
+
     const initApp = async () => {
       setIsVpnBlocked(null);
       setUserLocation(null);
@@ -128,35 +151,12 @@ const App: React.FC = () => {
       }
     };
     initApp();
-  }, []);
-
-  // An effect to fetch representative posters for brands from OMDb on startup.
-  useEffect(() => {
-    const fetchBrandPosters = async () => {
-      const posterPromises = allBrands.map(async (brand) => {
-        if (brand.representativeImdbId) {
-          try {
-            const posterUrl = await fetchPosterForImdbId(brand.representativeImdbId);
-            return { ...brand, posterUrl: posterUrl || brand.posterUrl };
-          } catch (error) {
-            console.error(`Failed to fetch poster for brand ${brand.name}`, error);
-            return brand;
-          }
-        }
-        return brand;
-      });
-
-      const updatedBrands = await Promise.all(posterPromises);
-      setBrands(updatedBrands);
-    };
-
-    if (isVpnBlocked === false) {
-      fetchBrandPosters();
-    }
-  }, [isVpnBlocked]);
+  }, [apiKey]);
 
   // Main routing effect
   useEffect(() => {
+    if (!apiKey) return;
+
     const handleRouteChange = async () => {
       // Clear all page-specific content to avoid showing stale data from previous view
       setSelectedItem(null);
@@ -283,7 +283,7 @@ const App: React.FC = () => {
     handleRouteChange(); // initial load
 
     return () => window.removeEventListener('hashchange', handleRouteChange, false);
-  }, [isVpnBlocked, userLocation, availableProviders, brands]); // Re-run if VPN status or brands change.
+  }, [isVpnBlocked, userLocation, availableProviders, brands, apiKey]); // Re-run if VPN status or brands change.
 
 
   const handleSearch = useCallback(async (query: string) => {
@@ -391,7 +391,9 @@ const App: React.FC = () => {
     setBrandSortBy(brand.defaultSort || 'trending');
     try {
         let media: MediaDetails[] = [];
-        if (brand.mediaIds && brand.mediaIds.length > 0) {
+        if (brand.collectionIds && brand.collectionIds.length > 0) {
+            media = await fetchMediaByCollectionIds(brand.collectionIds);
+        } else if (brand.mediaIds && brand.mediaIds.length > 0) {
             media = await fetchMediaByIds(brand.mediaIds);
         } else if (brand.companyId) {
             media = await getMediaByStudio(brand.companyId);
@@ -615,80 +617,92 @@ const App: React.FC = () => {
 
   return (
     <div className={`${selectedBrand ? '' : 'bg-gray-900'} text-white min-h-screen font-sans`}>
-      {isVpnBlocked === true && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="max-w-md text-center bg-gray-800 p-8 rounded-2xl border border-red-500/50">
-            <h2 className="text-2xl font-bold text-red-400 mb-4">VPN/Proxy Detected</h2>
-            <p className="text-gray-300">
-              This service is not available when using a VPN or proxy. Please disable it and refresh the page to continue.
-            </p>
-          </div>
-        </div>
-      )}
-      
-      {isVpnBlocked === null && (
+      {isApiKeyModalOpen && <ApiKeyModal onSave={handleSaveApiKey} />}
+
+      {!apiKey && !isApiKeyModalOpen && (
          <div className="fixed inset-0 bg-gray-900 z-[100] flex items-center justify-center">
             <LoadingSpinner />
          </div>
       )}
 
-      {isVpnBlocked === false && (
+      {apiKey && (
         <>
-        {selectedItem ? (
-            <main className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <DetailModal 
-                  item={selectedItem} 
-                  onClose={handleBack} 
-                  isLoading={isModalLoading}
-                  onSelectMedia={(media) => window.location.hash = `#/media/${media.type}/${media.id}`}
-                  onSelectActor={(actorId) => window.location.hash = `#/actor/${actorId}`}
-                  userLocation={userLocation}
-                />
-            </main>
-        ) : selectedActor ? (
-            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <ActorPage
-                    actor={selectedActor}
-                    onBack={handleBack}
-                    onSelectMedia={navigateToMedia}
-                />
-            </main>
-        ) : (
-            <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <header className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-                    <div className="flex items-center gap-3">
-                        <svg className="w-10 h-10 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M20 4h-4l-4-4-4 4H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H4V6h4.52l4-4 4 4H20v14zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-                        </svg>
-                        <a href="#/home" className="text-2xl sm:text-3xl font-bold tracking-tight">WatchNow</a>
+        {isVpnBlocked === true && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <div className="max-w-md text-center bg-gray-800 p-8 rounded-2xl border border-red-500/50">
+                <h2 className="text-2xl font-bold text-red-400 mb-4">VPN/Proxy Detected</h2>
+                <p className="text-gray-300">
+                This service is not available when using a VPN or proxy. Please disable it and refresh the page to continue.
+                </p>
+            </div>
+            </div>
+        )}
+        
+        {isVpnBlocked === null && (
+            <div className="fixed inset-0 bg-gray-900 z-[100] flex items-center justify-center">
+                <LoadingSpinner />
+            </div>
+        )}
+
+        {isVpnBlocked === false && (
+            <>
+            {selectedItem ? (
+                <main className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <DetailModal 
+                    item={selectedItem} 
+                    onClose={handleBack} 
+                    isLoading={isModalLoading}
+                    onSelectMedia={(media) => window.location.hash = `#/media/${media.type}/${media.id}`}
+                    onSelectActor={(actorId) => window.location.hash = `#/actor/${actorId}`}
+                    userLocation={userLocation}
+                    />
+                </main>
+            ) : selectedActor ? (
+                <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <ActorPage
+                        actor={selectedActor}
+                        onBack={handleBack}
+                        onSelectMedia={navigateToMedia}
+                    />
+                </main>
+            ) : (
+                <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <header className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+                        <div className="flex items-center gap-3">
+                            <svg className="w-10 h-10 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20 4h-4l-4-4-4 4H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H4V6h4.52l4-4 4 4H20v14zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            </svg>
+                            <a href="#/home" className="text-2xl sm:text-3xl font-bold tracking-tight">WatchNow</a>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <a 
+                                href="https://github.com/TheJaySmith-Dev/WatchNow" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="p-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white transition-colors duration-300"
+                                aria-label="View source code on GitHub"
+                            >
+                                <GitHubIcon className="w-6 h-6" />
+                            </a>
+                            <AccountButton 
+                                onSignInClick={() => setIsAuthModalOpen(true)} 
+                                userLocation={userLocation}
+                            />
+                        </div>
+                    </header>
+                    <div className="mb-8 flex justify-center">
+                        <SearchBar onSearch={handleSearch} isLoading={isLoading} />
                     </div>
-                    <div className="flex items-center gap-3">
-                        <a 
-                            href="https://github.com/TheJaySmith-Dev/WatchNow" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="p-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full text-white transition-colors duration-300"
-                            aria-label="View source code on GitHub"
-                        >
-                            <GitHubIcon className="w-6 h-6" />
-                        </a>
-                        <AccountButton 
-                            onSignInClick={() => setIsAuthModalOpen(true)} 
-                            userLocation={userLocation}
-                        />
+                    <div className="mb-8 flex justify-center">
+                        <Navigation activeTab={activeTab} />
                     </div>
-                </header>
-                <div className="mb-8 flex justify-center">
-                    <SearchBar onSearch={handleSearch} isLoading={isLoading} />
-                </div>
-                <div className="mb-8 flex justify-center">
-                    <Navigation activeTab={activeTab} />
-                </div>
-                
-                <div className="flex justify-center">
-                    {renderHomePageContent()}
-                </div>
-            </main>
+                    
+                    <div className="flex justify-center">
+                        {renderHomePageContent()}
+                    </div>
+                </main>
+            )}
+            </>
         )}
         </>
       )}

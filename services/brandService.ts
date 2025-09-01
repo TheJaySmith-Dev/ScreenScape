@@ -1,4 +1,6 @@
 
+
+
 import type { Brand } from '../types.ts';
 
 // This is a curated list of MCU films in release order to ensure accuracy
@@ -196,11 +198,10 @@ export const brands: Brand[] = [
     id: 'marvel',
     name: 'Marvel',
     posterUrl: 'https://terrigen-cdn-dev.marvel.com/content/prod/1x/marvel_studios_in_theaters_art_1_0.jpg',
-    mediaIds: mcuMediaIds,
+    mediaIds: mcuMediaIds, // Keep curated list for MCU accuracy
     characterCollections: marvelCharacterCollections,
     backdropUrl: 'https://i.postimg.cc/7hXz8npx/Marvel-Studios-Logo.avif',
     defaultSort: 'timeline',
-    representativeImdbId: 'tt0848228', // The Avengers
   },
   {
     id: 'wizardingworld',
@@ -208,21 +209,8 @@ export const brands: Brand[] = [
     posterUrl: 'https://images.ctfassets.net/usf1vwtuqyxm/235FNw3G2zGdw3AjVCR5Z3/78229b35959310850d99032759e5e783/WW_Hero_Desktop_2000x1270_CTA.jpg?w=1200&fit=fill&f=top',
     backdropUrl: 'https://i.postimg.cc/zX6BLQws/Wizarding-World.avif',
     characterCollections: [],
-    mediaIds: [
-      { id: 671, type: 'movie' },    // Harry Potter and the Sorcerer's Stone (2001)
-      { id: 672, type: 'movie' },    // Harry Potter and the Chamber of Secrets (2002)
-      { id: 673, type: 'movie' },    // Harry Potter and the Prisoner of Azkaban (2004)
-      { id: 674, type: 'movie' },    // Harry Potter and the Goblet of Fire (2005)
-      { id: 675, type: 'movie' },    // Harry Potter and the Order of the Phoenix (2007)
-      { id: 767, type: 'movie' },    // Harry Potter and the Half-Blood Prince (2009)
-      { id: 12444, type: 'movie' },  // Harry Potter and the Deathly Hallows: Part 1 (2010)
-      { id: 12445, type: 'movie' },  // Harry Potter and the Deathly Hallows: Part 2 (2011)
-      { id: 259316, type: 'movie' }, // Fantastic Beasts and Where to Find Them (2016)
-      { id: 338952, type: 'movie' }, // Fantastic Beasts: The Crimes of Grindelwald (2018)
-      { id: 338953, type: 'movie' }, // Fantastic Beasts: The Secrets of Dumbledore (2022)
-    ],
+    collectionIds: [1241, 404609], // Harry Potter Collection & Fantastic Beasts Collection
     defaultSort: 'timeline',
-    representativeImdbId: 'tt0241527', // Harry Potter and the Sorcerer's Stone
   },
   {
     id: 'missionimpossible',
@@ -230,17 +218,8 @@ export const brands: Brand[] = [
     posterUrl: 'https://www.themoviedb.org/t/p/original/ge2C2gT39bTSoa62A8Rbb2yqa7I.jpg',
     backdropUrl: 'https://image.tmdb.org/t/p/original/j6Y1qjfoJcJ0S3ah9kifbI2bzq0.jpg',
     characterCollections: [],
-    mediaIds: [
-      { id: 954, type: 'movie' },    // Mission: Impossible (1996)
-      { id: 955, type: 'movie' },    // Mission: Impossible 2 (2000)
-      { id: 956, type: 'movie' },    // Mission: Impossible III (2006)
-      { id: 56292, type: 'movie' },  // Mission: Impossible - Ghost Protocol (2011)
-      { id: 177677, type: 'movie' }, // Mission: Impossible - Rogue Nation (2015)
-      { id: 353081, type: 'movie' }, // Mission: Impossible - Fallout (2018)
-      { id: 575264, type: 'movie' }, // Mission: Impossible - Dead Reckoning Part One (2023)
-    ],
+    collectionIds: [87359], // Mission: Impossible Collection
     defaultSort: 'timeline',
-    representativeImdbId: 'tt0117060', // Mission: Impossible
   },
   {
     id: 'fastandfurious',
@@ -248,21 +227,8 @@ export const brands: Brand[] = [
     posterUrl: 'https://www.themoviedb.org/t/p/original/bOqKESKyEX0T527e0m3i1X9N2f7.jpg',
     backdropUrl: 'https://image.tmdb.org/t/p/original/abproxa0V1h7BZ2tcZpACkGc8LG.jpg',
     characterCollections: [],
-    mediaIds: [
-      { id: 9799, type: 'movie' },   // The Fast and the Furious (2001)
-      { id: 584, type: 'movie' },    // 2 Fast 2 Furious (2003)
-      { id: 9615, type: 'movie' },   // The Fast and the Furious: Tokyo Drift (2006)
-      { id: 13804, type: 'movie' },  // Fast & Furious (2009)
-      { id: 51497, type: 'movie' },  // Fast Five (2011)
-      { id: 82992, type: 'movie' },  // Fast & Furious 6 (2013)
-      { id: 168259, type: 'movie' }, // Furious 7 (2015)
-      { id: 337339, type: 'movie' }, // The Fate of the Furious (2017)
-      { id: 384018, type: 'movie' }, // Fast & Furious Presents: Hobbs & Shaw (2019)
-      { id: 385128, type: 'movie' }, // F9 (2021)
-      { id: 385687, type: 'movie' }, // Fast X (2023)
-    ],
+    collectionIds: [9485], // The Fast and the Furious Collection
     defaultSort: 'timeline',
-    representativeImdbId: 'tt0232500', // The Fast and the Furious
   },
   {
     id: 'jamesbond',
@@ -270,35 +236,8 @@ export const brands: Brand[] = [
     posterUrl: 'https://www.themoviedb.org/t/p/original/dM2w364MScsjFf8pfMbaSSTO1Ze.jpg',
     backdropUrl: 'https://image.tmdb.org/t/p/original/A6N0JJonAz5Gk0trIqvhGOHLSzi.jpg',
     characterCollections: [],
-    mediaIds: [
-      { id: 646, type: 'movie' },    // Dr. No (1962)
-      { id: 657, type: 'movie' },    // From Russia with Love (1963)
-      { id: 658, type: 'movie' },    // Goldfinger (1964)
-      { id: 660, type: 'movie' },    // Thunderball (1965)
-      { id: 667, type: 'movie' },    // You Only Live Twice (1967)
-      { id: 668, type: 'movie' },    // On Her Majesty's Secret Service (1969)
-      { id: 681, type: 'movie' },    // Diamonds Are Forever (1971)
-      { id: 682, type: 'movie' },    // Live and Let Die (1973)
-      { id: 691, type: 'movie' },    // The Man with the Golden Gun (1974)
-      { id: 698, type: 'movie' },    // The Spy Who Loved Me (1977)
-      { id: 699, type: 'movie' },    // Moonraker (1979)
-      { id: 700, type: 'movie' },    // For Your Eyes Only (1981)
-      { id: 701, type: 'movie' },    // Octopussy (1983)
-      { id: 707, type: 'movie' },    // A View to a Kill (1985)
-      { id: 708, type: 'movie' },    // The Living Daylights (1987)
-      { id: 709, type: 'movie' },    // Licence to Kill (1989)
-      { id: 710, type: 'movie' },    // GoldenEye (1995)
-      { id: 711, type: 'movie' },    // Tomorrow Never Dies (1997)
-      { id: 712, type: 'movie' },    // The World Is Not Enough (1999)
-      { id: 713, type: 'movie' },    // Die Another Day (2002)
-      { id: 36557, type: 'movie' },  // Casino Royale (2006)
-      { id: 10764, type: 'movie' },  // Quantum of Solace (2008)
-      { id: 37724, type: 'movie' },  // Skyfall (2012)
-      { id: 206647, type: 'movie' }, // Spectre (2015)
-      { id: 370172, type: 'movie' }, // No Time to Die (2021)
-    ],
+    collectionIds: [645], // James Bond Collection
     defaultSort: 'timeline',
-    representativeImdbId: 'tt0055928', // Dr. No
   },
   {
     id: 'backtothefuture',
@@ -306,13 +245,8 @@ export const brands: Brand[] = [
     posterUrl: 'https://image.tmdb.org/t/p/original/48T2EQe93dguK2pPCMELoP9upVP.jpg',
     backdropUrl: 'https://image.tmdb.org/t/p/original/x4N74L25pZa7fGIMHe5M8oR0iM3.jpg',
     characterCollections: [],
-    mediaIds: [
-      { id: 105, type: 'movie' },   // Back to the Future (1985)
-      { id: 165, type: 'movie' },   // Back to the Future Part II (1989)
-      { id: 196, type: 'movie' },   // Back to the Future Part III (1990)
-    ],
+    collectionIds: [264], // Back to the Future Collection
     defaultSort: 'timeline',
-    representativeImdbId: 'tt0088763', // Back to the Future
   },
   {
     id: 'ghostbusters',
@@ -320,14 +254,7 @@ export const brands: Brand[] = [
     posterUrl: 'https://image.tmdb.org/t/p/original/tV6ESBQp9bzUZU3swuYYsA94SCR.jpg',
     backdropUrl: 'https://image.tmdb.org/t/p/original/u2uS0u32RbtSgN5I1i7s0vX9a4G.jpg',
     characterCollections: [],
-    mediaIds: [
-      { id: 620, type: 'movie' },    // Ghostbusters (1984)
-      { id: 9608, type: 'movie' },   // Ghostbusters II (1989)
-      { id: 43074, type: 'movie' },  // Ghostbusters (2016)
-      { id: 425909, type: 'movie' }, // Ghostbusters: Afterlife (2021)
-      { id: 827902, type: 'movie' }, // Ghostbusters: Frozen Empire (2024)
-    ],
+    collectionIds: [2831], // Ghostbusters Collection
     defaultSort: 'timeline',
-    representativeImdbId: 'tt0087332', // Ghostbusters (1984)
   }
 ];

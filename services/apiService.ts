@@ -94,12 +94,29 @@ export const savePreferences = async (email: string, likes: LikedItem[], dislike
 };
 
 
-// --- Discovery API Key API ---
+// --- TMDb API Key API ---
+
+const TMDB_API_KEY_STORAGE_KEY = 'watchnow_tmdb_api_key';
 
 /**
- * Retrieves the API key for the media discovery service.
+ * Saves the user-provided TMDb API key to local storage.
  */
-export const getApiKey = (): string => {
-    // Using a stable, public, read-only key to prevent API errors.
-    return '1f54bd990f1cdfb230adb312546d765d';
+export const saveApiKey = (apiKey: string): void => {
+    try {
+        localStorage.setItem(TMDB_API_KEY_STORAGE_KEY, apiKey);
+    } catch (error) {
+        console.error("Failed to save API key to local storage", error);
+    }
+};
+
+/**
+ * Retrieves the TMDb API key from local storage.
+ */
+export const getApiKey = (): string | null => {
+    try {
+        return localStorage.getItem(TMDB_API_KEY_STORAGE_KEY);
+    } catch (error) {
+        console.error("Failed to retrieve API key from local storage", error);
+        return null;
+    }
 };
