@@ -72,7 +72,7 @@ const marvelCharacterCollections: Brand['characterCollections'] = [
         id: 86311, 
         name: 'The Avengers Collection', 
         posterUrl: 'https://image.tmdb.org/t/p/w220_and_h330_face/yaC8DTvarpMU5QsOiLVgATIMovp.jpg', 
-        backdropUrl: 'https://image.tmdb.org/t/p/w500_and_h282_face/smLccpWC4ElF5xyjD9Xt0Zu2gna.jpg',
+        backdropUrl: 'https://image.tmdb.org/t/p/w500_and_h282_face/smLccpWC4ElF5xyjD99bZu2gna.jpg',
         mediaIds: [
             { id: 24428, type: 'movie' },  // The Avengers
             { id: 99861, type: 'movie' },  // Avengers: Age of Ultron
@@ -146,62 +146,6 @@ export const brands: Brand[] = [
     backdropUrl: 'https://disney.images.edge.bamgrid.com/ripcut-delivery/v2/variant/disney/CCC3F8712F781DC1ECDDC406924EF0569A30DB0F0BF628CA9EAF60B97C9ABC4B/compose?aspectRatio=1.78',
   },
   {
-    id: 'starwars',
-    name: 'Star Wars',
-    posterUrl: 'https://images.squarespace-cdn.com/content/v1/51b3dc8ee4b051b96ceb10de/1691779977299-F723YF4335C2L2221020/the-official-star-wars-timeline-is-getting-a-huge-update-social.jpg',
-    backdropUrl: 'https://images.hdqwalls.com/wallpapers/star-wars-the-mandalorian-season-2-5k-ax.jpg',
-    companyId: 1, // Lucasfilm
-    characterCollections: [
-      {
-        id: 10,
-        name: 'The Skywalker Saga',
-        posterUrl: 'https://image.tmdb.org/t/p/w500/oF8d2AaV02QzNE2g6x6k2p5sN5q.jpg',
-        backdropUrl: 'https://image.tmdb.org/t/p/original/d8duYyyC9J5T825F7d5D2aXbCZ3.jpg',
-        mediaIds: [
-          { id: 1893, type: 'movie' }, // Episode I
-          { id: 1894, type: 'movie' }, // Episode II
-          { id: 1895, type: 'movie' }, // Episode III
-          { id: 11, type: 'movie' },   // Episode IV
-          { id: 1891, type: 'movie' }, // Episode V
-          { id: 1892, type: 'movie' }, // Episode VI
-          { id: 140607, type: 'movie' },// Episode VII
-          { id: 181808, type: 'movie' },// Episode VIII
-          { id: 181812, type: 'movie' },// Episode IX
-        ]
-      },
-    ],
-  },
-  {
-    id: 'dc',
-    name: 'DC',
-    posterUrl: 'https://cdn.mos.cms.futurecdn.net/pZ5h2o2k5iKmoPgP4t8v9h.jpg',
-    backdropUrl: 'https://wallpapercave.com/wp/wp10509312.jpg',
-    companyId: 9993, // DC Films
-    characterCollections: [
-      {
-        id: 129,
-        name: 'The Dark Knight Trilogy',
-        posterUrl: 'https://image.tmdb.org/t/p/w500/3mRQ2zZt2k0Y2rS3DPd2e5i6c6C.jpg',
-        backdropUrl: 'https://image.tmdb.org/t/p/original/8hOTu2rPa225bwN4sEHZ3aXy2ko.jpg',
-        mediaIds: [
-          { id: 272, type: 'movie' },   // Batman Begins
-          { id: 155, type: 'movie' },   // The Dark Knight
-          { id: 49026, type: 'movie' },  // The Dark Knight Rises
-        ]
-      },
-      {
-        id: 263,
-        name: 'Wonder Woman Collection',
-        posterUrl: 'https://image.tmdb.org/t/p/w500/8Baa9hK2TtoKpFB9nOyH5Si1R5O.jpg',
-        backdropUrl: 'https://image.tmdb.org/t/p/original/mSLiKnJn121s2y0aXpGg6pP82pF.jpg',
-        mediaIds: [
-          { id: 297762, type: 'movie' },  // Wonder Woman
-          { id: 464052, type: 'movie' },  // Wonder Woman 1984
-        ]
-      }
-    ],
-  },
-  {
     id: 'wizardingworld',
     name: 'Wizarding World',
     posterUrl: 'https://images.ctfassets.net/usf1vwtuqyxm/235FNw3G2zGdw3AjVCR5Z3/78229b35959310850d99032759e5e783/WW_Hero_Desktop_2000x1270_CTA.jpg?w=1200&fit=fill&f=top',
@@ -219,6 +163,79 @@ export const brands: Brand[] = [
       { id: 259316, type: 'movie' }, // Fantastic Beasts and Where to Find Them (2016)
       { id: 338952, type: 'movie' }, // Fantastic Beasts: The Crimes of Grindelwald (2018)
       { id: 338953, type: 'movie' }, // Fantastic Beasts: The Secrets of Dumbledore (2022)
+    ],
+    defaultSort: 'timeline',
+  },
+  {
+    id: 'missionimpossible',
+    name: 'Mission: Impossible',
+    posterUrl: 'https://www.themoviedb.org/t/p/original/ge2C2gT39bTSoa62A8Rbb2yqa7I.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/jY9efbC2KCa2s0i1Dxd55y13IuI.jpg',
+    characterCollections: [],
+    mediaIds: [
+      { id: 954, type: 'movie' },    // Mission: Impossible (1996)
+      { id: 955, type: 'movie' },    // Mission: Impossible 2 (2000)
+      { id: 956, type: 'movie' },    // Mission: Impossible III (2006)
+      { id: 56292, type: 'movie' },  // Mission: Impossible - Ghost Protocol (2011)
+      { id: 177677, type: 'movie' }, // Mission: Impossible - Rogue Nation (2015)
+      { id: 353081, type: 'movie' }, // Mission: Impossible - Fallout (2018)
+      { id: 575264, type: 'movie' }, // Mission: Impossible - Dead Reckoning Part One (2023)
+    ],
+    defaultSort: 'timeline',
+  },
+  {
+    id: 'fastandfurious',
+    name: 'Fast & Furious',
+    posterUrl: 'https://www.themoviedb.org/t/p/original/bOqKESKyEX0T527e0m3i1X9N2f7.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/h3X2p8H34T33Ilo2mo1sD5Vj02L.jpg',
+    characterCollections: [],
+    mediaIds: [
+      { id: 9799, type: 'movie' },   // The Fast and the Furious (2001)
+      { id: 584, type: 'movie' },    // 2 Fast 2 Furious (2003)
+      { id: 9615, type: 'movie' },   // The Fast and the Furious: Tokyo Drift (2006)
+      { id: 13804, type: 'movie' },  // Fast & Furious (2009)
+      { id: 51497, type: 'movie' },  // Fast Five (2011)
+      { id: 82992, type: 'movie' },  // Fast & Furious 6 (2013)
+      { id: 168259, type: 'movie' }, // Furious 7 (2015)
+      { id: 337339, type: 'movie' }, // The Fate of the Furious (2017)
+      { id: 384018, type: 'movie' }, // Fast & Furious Presents: Hobbs & Shaw (2019)
+      { id: 385128, type: 'movie' }, // F9 (2021)
+      { id: 385687, type: 'movie' }, // Fast X (2023)
+    ],
+    defaultSort: 'timeline',
+  },
+  {
+    id: 'jamesbond',
+    name: 'James Bond',
+    posterUrl: 'https://www.themoviedb.org/t/p/original/dM2w364MScsjFf8pfMbaSSTO1Ze.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/vV5L2vE3xx2v9i4I3e4i0D2sY40.jpg',
+    characterCollections: [],
+    mediaIds: [
+      { id: 646, type: 'movie' },    // Dr. No (1962)
+      { id: 657, type: 'movie' },    // From Russia with Love (1963)
+      { id: 658, type: 'movie' },    // Goldfinger (1964)
+      { id: 660, type: 'movie' },    // Thunderball (1965)
+      { id: 667, type: 'movie' },    // You Only Live Twice (1967)
+      { id: 668, type: 'movie' },    // On Her Majesty's Secret Service (1969)
+      { id: 681, type: 'movie' },    // Diamonds Are Forever (1971)
+      { id: 682, type: 'movie' },    // Live and Let Die (1973)
+      { id: 691, type: 'movie' },    // The Man with the Golden Gun (1974)
+      { id: 698, type: 'movie' },    // The Spy Who Loved Me (1977)
+      { id: 699, type: 'movie' },    // Moonraker (1979)
+      { id: 700, type: 'movie' },    // For Your Eyes Only (1981)
+      { id: 701, type: 'movie' },    // Octopussy (1983)
+      { id: 707, type: 'movie' },    // A View to a Kill (1985)
+      { id: 708, type: 'movie' },    // The Living Daylights (1987)
+      { id: 709, type: 'movie' },    // Licence to Kill (1989)
+      { id: 710, type: 'movie' },    // GoldenEye (1995)
+      { id: 711, type: 'movie' },    // Tomorrow Never Dies (1997)
+      { id: 712, type: 'movie' },    // The World Is Not Enough (1999)
+      { id: 713, type: 'movie' },    // Die Another Day (2002)
+      { id: 36557, type: 'movie' },  // Casino Royale (2006)
+      { id: 10764, type: 'movie' },  // Quantum of Solace (2008)
+      { id: 37724, type: 'movie' },  // Skyfall (2012)
+      { id: 206647, type: 'movie' }, // Spectre (2015)
+      { id: 370172, type: 'movie' }, // No Time to Die (2021)
     ],
     defaultSort: 'timeline',
   }
