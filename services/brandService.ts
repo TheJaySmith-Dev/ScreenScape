@@ -8,7 +8,7 @@ const mcuMediaIds: Brand['mediaIds'] = [
     { id: 1726, type: 'movie' },   // Iron Man (2008)
     { id: 1724, type: 'movie' },   // The Incredible Hulk (2008)
     { id: 10138, type: 'movie' },  // Iron Man 2 (2010)
-    { id: 10195, type: 'movie' },  // Thor (2010)
+    { id: 10195, type: 'movie' },  // Thor (2011)
     { id: 1771, type: 'movie' },   // Captain America: The First Avenger (2011)
     { id: 24428, type: 'movie' },  // The Avengers (2012)
     // Phase Two
@@ -31,17 +31,29 @@ const mcuMediaIds: Brand['mediaIds'] = [
     { id: 299534, type: 'movie' }, // Avengers: Endgame (2019)
     { id: 429617, type: 'movie' }, // Spider-Man: Far From Home (2019)
     // Phase Four
+    { id: 85271, type: 'tv' },     // WandaVision (2021)
+    { id: 88396, type: 'tv' },     // The Falcon and the Winter Soldier (2021)
+    { id: 84958, type: 'tv' },     // Loki (2021)
     { id: 497698, type: 'movie' }, // Black Widow (2021)
+    { id: 91363, type: 'tv' },     // What If...? (2021)
     { id: 566525, type: 'movie' }, // Shang-Chi and the Legend of the Ten Rings (2021)
     { id: 524434, type: 'movie' }, // Eternals (2021)
+    { id: 88329, type: 'tv' },     // Hawkeye (2021)
     { id: 634649, type: 'movie' }, // Spider-Man: No Way Home (2021)
+    { id: 92749, type: 'tv' },     // Moon Knight (2022)
     { id: 453395, type: 'movie' }, // Doctor Strange in the Multiverse of Madness (2022)
+    { id: 92782, type: 'tv' },     // Ms. Marvel (2022)
     { id: 616037, type: 'movie' }, // Thor: Love and Thunder (2022)
+    { id: 92783, type: 'tv' },     // She-Hulk: Attorney at Law (2022)
+    { id: 96521, type: 'movie' },  // Werewolf by Night (2022)
     { id: 505642, type: 'movie' }, // Black Panther: Wakanda Forever (2022)
+    { id: 89420, type: 'movie' },  // The Guardians of the Galaxy Holiday Special (2022)
     // Phase Five
     { id: 640146, type: 'movie' }, // Ant-Man and the Wasp: Quantumania (2023)
     { id: 447365, type: 'movie' }, // Guardians of the Galaxy Vol. 3 (2023)
-    { id: 609681, type: 'movie' }  // The Marvels (2023)
+    { id: 114472, type: 'tv' },    // Secret Invasion (2023)
+    { id: 609681, type: 'movie' }, // The Marvels (2023)
+    { id: 102143, type: 'tv' }     // Echo (2024)
 ];
 
 const marvelCharacterCollections: Brand['characterCollections'] = [
