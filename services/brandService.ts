@@ -44,6 +44,7 @@ const mcuMediaIds: Brand['mediaIds'] = [
     { id: 453395, type: 'movie' }, // Doctor Strange in the Multiverse of Madness (2022)
     { id: 92782, type: 'tv' },     // Ms. Marvel (2022)
     { id: 616037, type: 'movie' }, // Thor: Love and Thunder (2022)
+    { id: 113461, type: 'tv' },    // I Am Groot (2022)
     { id: 92783, type: 'tv' },     // She-Hulk: Attorney at Law (2022)
     { id: 96521, type: 'movie' },  // Werewolf by Night (2022)
     { id: 505642, type: 'movie' }, // Black Panther: Wakanda Forever (2022)
@@ -322,11 +323,11 @@ export const brands: Brand[] = [
     mediaIds: [
       { id: 620, type: 'movie' },    // Ghostbusters (1984)
       { id: 9608, type: 'movie' },   // Ghostbusters II (1989)
-      { id: 43074, type: 'movie' },  // Ghostbusters: Answer the Call (2016)
+      { id: 43074, type: 'movie' },  // Ghostbusters (2016)
       { id: 425909, type: 'movie' }, // Ghostbusters: Afterlife (2021)
       { id: 827902, type: 'movie' }, // Ghostbusters: Frozen Empire (2024)
     ],
     defaultSort: 'timeline',
-    representativeImdbId: 'tt0087332', // Ghostbusters
+    representativeImdbId: 'tt0087332', // Ghostbusters (1984)
   }
 ];
