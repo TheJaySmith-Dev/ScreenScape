@@ -22,6 +22,7 @@ import {
   getComingSoonMedia,
   fetchMediaByIds,
 } from './services/mediaService.ts';
+import { fetchPosterForImdbId } from './services/omdbService.ts';
 import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network, ActorDetails, CharacterCollection, MediaTypeFilter, SortBy } from './types.ts';
 import { popularStudios } from './services/studioService.ts';
 import { brands as allBrands } from './services/brandService.ts';
@@ -73,7 +74,7 @@ const App: React.FC = () => {
   const [studioMediaTypeFilter, setStudioMediaTypeFilter] = useState<MediaTypeFilter>('all');
   const [studioSortBy, setStudioSortBy] = useState<SortBy>('trending');
 
-  const [brands] = useState<Brand[]>(allBrands);
+  const [brands, setBrands] = useState<Brand[]>(allBrands);
   const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
   const [brandMedia, setBrandMedia] = useState<MediaDetails[]>([]);
   const [brandMediaTypeFilter, setBrandMediaTypeFilter] = useState<MediaTypeFilter>('all');
@@ -128,6 +129,31 @@ const App: React.FC = () => {
     };
     initApp();
   }, []);
+
+  // An effect to fetch representative posters for brands from OMDb on startup.
+  useEffect(() => {
+    const fetchBrandPosters = async () => {
+      const posterPromises = allBrands.map(async (brand) => {
+        if (brand.representativeImdbId) {
+          try {
+            const posterUrl = await fetchPosterForImdbId(brand.representativeImdbId);
+            return { ...brand, posterUrl: posterUrl || brand.posterUrl };
+          } catch (error) {
+            console.error(`Failed to fetch poster for brand ${brand.name}`, error);
+            return brand;
+          }
+        }
+        return brand;
+      });
+
+      const updatedBrands = await Promise.all(posterPromises);
+      setBrands(updatedBrands);
+    };
+
+    if (isVpnBlocked === false) {
+      fetchBrandPosters();
+    }
+  }, [isVpnBlocked]);
 
   // Main routing effect
   useEffect(() => {
@@ -257,7 +283,7 @@ const App: React.FC = () => {
     handleRouteChange(); // initial load
 
     return () => window.removeEventListener('hashchange', handleRouteChange, false);
-  }, [isVpnBlocked, userLocation, availableProviders]); // Re-run if VPN status changes.
+  }, [isVpnBlocked, userLocation, availableProviders, brands]); // Re-run if VPN status or brands change.
 
 
   const handleSearch = useCallback(async (query: string) => {

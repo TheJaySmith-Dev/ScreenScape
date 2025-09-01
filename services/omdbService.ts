@@ -1,3 +1,4 @@
+
 import type { ExternalRatings, MediaDetails } from '../types.ts';
 
 // Using the user's provided OMDb API key as requested.
@@ -65,5 +66,33 @@ export const fetchOmdbDetails = async (imdbId: string): Promise<Partial<MediaDet
     } catch (error) {
         console.error(`Failed to fetch details from OMDb for ${imdbId}:`, error);
         return { otherRatings: {} };
+    }
+};
+
+export const fetchPosterForImdbId = async (imdbId: string): Promise<string | null> => {
+    if (!OMDB_API_KEY) {
+        console.warn("OMDb API key is not configured.");
+        return null;
+    }
+    try {
+        const url = `${OMDB_API_BASE_URL}/?i=${imdbId}&apikey=${OMDB_API_KEY}`;
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('OMDb API request failed');
+        }
+        const data: OmdbResponse = await response.json();
+
+        if (data.Response === 'False' || !data.Poster || data.Poster === 'N/A') {
+            return null;
+        }
+
+        let posterUrl = data.Poster;
+        if (posterUrl && posterUrl.includes('_SX300')) {
+            posterUrl = posterUrl.replace('_SX300', '_SX800');
+        }
+        return posterUrl;
+    } catch (error) {
+        console.error(`Failed to fetch poster from OMDb for ${imdbId}:`, error);
+        return null;
     }
 };

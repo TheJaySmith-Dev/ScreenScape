@@ -1,3 +1,4 @@
+
 import type { Brand } from '../types.ts';
 
 // This is a curated list of MCU films in release order to ensure accuracy
@@ -186,6 +187,7 @@ export const brands: Brand[] = [
     characterCollections: marvelCharacterCollections,
     backdropUrl: 'https://i.postimg.cc/7hXz8npx/Marvel-Studios-Logo.avif',
     defaultSort: 'timeline',
+    representativeImdbId: 'tt0848228', // The Avengers
   },
   {
     id: 'wizardingworld',
@@ -207,6 +209,7 @@ export const brands: Brand[] = [
       { id: 338953, type: 'movie' }, // Fantastic Beasts: The Secrets of Dumbledore (2022)
     ],
     defaultSort: 'timeline',
+    representativeImdbId: 'tt0241527', // Harry Potter and the Sorcerer's Stone
   },
   {
     id: 'missionimpossible',
@@ -224,6 +227,7 @@ export const brands: Brand[] = [
       { id: 575264, type: 'movie' }, // Mission: Impossible - Dead Reckoning Part One (2023)
     ],
     defaultSort: 'timeline',
+    representativeImdbId: 'tt0117060', // Mission: Impossible
   },
   {
     id: 'fastandfurious',
@@ -245,6 +249,7 @@ export const brands: Brand[] = [
       { id: 385687, type: 'movie' }, // Fast X (2023)
     ],
     defaultSort: 'timeline',
+    representativeImdbId: 'tt0232500', // The Fast and the Furious
   },
   {
     id: 'jamesbond',
@@ -280,6 +285,7 @@ export const brands: Brand[] = [
       { id: 370172, type: 'movie' }, // No Time to Die (2021)
     ],
     defaultSort: 'timeline',
+    representativeImdbId: 'tt0055928', // Dr. No
   },
   {
     id: 'backtothefuture',
@@ -293,6 +299,7 @@ export const brands: Brand[] = [
       { id: 196, type: 'movie' },   // Back to the Future Part III (1990)
     ],
     defaultSort: 'timeline',
+    representativeImdbId: 'tt0088763', // Back to the Future
   },
   {
     id: 'ghostbusters',
@@ -308,5 +315,6 @@ export const brands: Brand[] = [
       { id: 827902, type: 'movie' }, // Ghostbusters: Frozen Empire (2024)
     ],
     defaultSort: 'timeline',
+    representativeImdbId: 'tt0087332', // Ghostbusters
   }
 ];

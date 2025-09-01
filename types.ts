@@ -1,6 +1,4 @@
 
-
-
 export type MediaTypeFilter = 'all' | 'movie' | 'show' | 'short';
 export type SortBy = 'trending' | 'newest' | 'timeline';
 
@@ -114,6 +112,7 @@ export interface Brand {
   characterCollections: CharacterCollection[];
   mediaIds?: { id: number; type: 'movie' | 'tv' }[];
   defaultSort?: SortBy;
+  representativeImdbId?: string;
 }
 
 export interface Actor {
