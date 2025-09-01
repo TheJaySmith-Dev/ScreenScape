@@ -140,10 +140,66 @@ export const brands: Brand[] = [
   {
     id: 'marvel',
     name: 'Marvel',
-    posterUrl: 'https://wallpapers.com/images/featured/marvel-logo-3p16v5avq80km4ns.jpg',
+    posterUrl: 'https://terrigen-cdn-dev.marvel.com/content/prod/1x/marvel_studios_in_theaters_art_1_0.jpg',
     companyId: MARVEL_COMPANY_ID,
     characterCollections: marvelCharacterCollections,
     backdropUrl: 'https://disney.images.edge.bamgrid.com/ripcut-delivery/v2/variant/disney/CCC3F8712F781DC1ECDDC406924EF0569A30DB0F0BF628CA9EAF60B97C9ABC4B/compose?aspectRatio=1.78',
+  },
+  {
+    id: 'starwars',
+    name: 'Star Wars',
+    posterUrl: 'https://images.squarespace-cdn.com/content/v1/51b3dc8ee4b051b96ceb10de/1691779977299-F723YF4335C2L2221020/the-official-star-wars-timeline-is-getting-a-huge-update-social.jpg',
+    backdropUrl: 'https://images.hdqwalls.com/wallpapers/star-wars-the-mandalorian-season-2-5k-ax.jpg',
+    companyId: 1, // Lucasfilm
+    characterCollections: [
+      {
+        id: 10,
+        name: 'The Skywalker Saga',
+        posterUrl: 'https://image.tmdb.org/t/p/w500/oF8d2AaV02QzNE2g6x6k2p5sN5q.jpg',
+        backdropUrl: 'https://image.tmdb.org/t/p/original/d8duYyyC9J5T825F7d5D2aXbCZ3.jpg',
+        mediaIds: [
+          { id: 1893, type: 'movie' }, // Episode I
+          { id: 1894, type: 'movie' }, // Episode II
+          { id: 1895, type: 'movie' }, // Episode III
+          { id: 11, type: 'movie' },   // Episode IV
+          { id: 1891, type: 'movie' }, // Episode V
+          { id: 1892, type: 'movie' }, // Episode VI
+          { id: 140607, type: 'movie' },// Episode VII
+          { id: 181808, type: 'movie' },// Episode VIII
+          { id: 181812, type: 'movie' },// Episode IX
+        ]
+      },
+    ],
+  },
+  {
+    id: 'dc',
+    name: 'DC',
+    posterUrl: 'https://cdn.mos.cms.futurecdn.net/pZ5h2o2k5iKmoPgP4t8v9h.jpg',
+    backdropUrl: 'https://wallpapercave.com/wp/wp10509312.jpg',
+    companyId: 9993, // DC Films
+    characterCollections: [
+      {
+        id: 129,
+        name: 'The Dark Knight Trilogy',
+        posterUrl: 'https://image.tmdb.org/t/p/w500/3mRQ2zZt2k0Y2rS3DPd2e5i6c6C.jpg',
+        backdropUrl: 'https://image.tmdb.org/t/p/original/8hOTu2rPa225bwN4sEHZ3aXy2ko.jpg',
+        mediaIds: [
+          { id: 272, type: 'movie' },   // Batman Begins
+          { id: 155, type: 'movie' },   // The Dark Knight
+          { id: 49026, type: 'movie' },  // The Dark Knight Rises
+        ]
+      },
+      {
+        id: 263,
+        name: 'Wonder Woman Collection',
+        posterUrl: 'https://image.tmdb.org/t/p/w500/8Baa9hK2TtoKpFB9nOyH5Si1R5O.jpg',
+        backdropUrl: 'https://image.tmdb.org/t/p/original/mSLiKnJn121s2y0aXpGg6pP82pF.jpg',
+        mediaIds: [
+          { id: 297762, type: 'movie' },  // Wonder Woman
+          { id: 464052, type: 'movie' },  // Wonder Woman 1984
+        ]
+      }
+    ],
   },
   {
     id: 'wizardingworld',
