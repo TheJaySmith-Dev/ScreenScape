@@ -1,6 +1,4 @@
 
-
-
 import type { Brand } from '../types.ts';
 
 // This is a curated list of MCU films in release order to ensure accuracy
@@ -215,8 +213,8 @@ export const brands: Brand[] = [
   {
     id: 'missionimpossible',
     name: 'Mission: Impossible',
-    posterUrl: 'https://www.themoviedb.org/t/p/original/ge2C2gT39bTSoa62A8Rbb2yqa7I.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/j6Y1qjfoJcJ0S3ah9kifbI2bzq0.jpg',
+    posterUrl: 'https://image.tmdb.org/t/p/w1280/j6Y1qjfoJcJ0S3ah9kifbI2bzq0.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/j6Y1qjfoJcJ0S3ah9kifbI2bzq0.jpg',
     characterCollections: [],
     collectionIds: [87359], // Mission: Impossible Collection
     defaultSort: 'timeline',
@@ -224,8 +222,8 @@ export const brands: Brand[] = [
   {
     id: 'fastandfurious',
     name: 'Fast & Furious',
-    posterUrl: 'https://www.themoviedb.org/t/p/original/bOqKESKyEX0T527e0m3i1X9N2f7.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/abproxa0V1h7BZ2tcZpACkGc8LG.jpg',
+    posterUrl: 'https://image.tmdb.org/t/p/w1280/abproxa0V1h7BZ2tcZpACkGc8LG.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/abproxa0V1h7BZ2tcZpACkGc8LG.jpg',
     characterCollections: [],
     collectionIds: [9485], // The Fast and the Furious Collection
     defaultSort: 'timeline',
@@ -233,8 +231,8 @@ export const brands: Brand[] = [
   {
     id: 'jamesbond',
     name: 'James Bond',
-    posterUrl: 'https://www.themoviedb.org/t/p/original/dM2w364MScsjFf8pfMbaSSTO1Ze.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/A6N0JJonAz5Gk0trIqvhGOHLSzi.jpg',
+    posterUrl: 'https://image.tmdb.org/t/p/w1280/A6N0JJonAz5Gk0trIqvhGOHLSzi.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/A6N0JJonAz5Gk0trIqvhGOHLSzi.jpg',
     characterCollections: [],
     collectionIds: [645], // James Bond Collection
     defaultSort: 'timeline',
@@ -242,8 +240,8 @@ export const brands: Brand[] = [
   {
     id: 'backtothefuture',
     name: 'Back to the Future',
-    posterUrl: 'https://image.tmdb.org/t/p/original/48T2EQe93dguK2pPCMELoP9upVP.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/x4N74L25pZa7fGIMHe5M8oR0iM3.jpg',
+    posterUrl: 'https://image.tmdb.org/t/p/w1280/x4N74L25pZa7fGIMHe5M8oR0iM3.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/x4N74L25pZa7fGIMHe5M8oR0iM3.jpg',
     characterCollections: [],
     collectionIds: [264], // Back to the Future Collection
     defaultSort: 'timeline',
@@ -251,8 +249,8 @@ export const brands: Brand[] = [
   {
     id: 'ghostbusters',
     name: 'Ghostbusters',
-    posterUrl: 'https://image.tmdb.org/t/p/original/tV6ESBQp9bzUZU3swuYYsA94SCR.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/u2uS0u32RbtSgN5I1i7s0vX9a4G.jpg',
+    posterUrl: 'https://image.tmdb.org/t/p/w1280/u2uS0u32RbtSgN5I1i7s0vX9a4G.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/u2uS0u32RbtSgN5I1i7s0vX9a4G.jpg',
     characterCollections: [],
     collectionIds: [2831], // Ghostbusters Collection
     defaultSort: 'timeline',
