@@ -16,6 +16,7 @@ interface OmdbResponse {
   Ratings?: OmdbRating[];
   Rated?: string;
   Awards?: string;
+  Poster?: string;
 }
 
 export const fetchOmdbDetails = async (imdbId: string): Promise<Partial<MediaDetails>> => {
@@ -47,11 +48,18 @@ export const fetchOmdbDetails = async (imdbId: string): Promise<Partial<MediaDet
                 }
             });
         }
+        
+        // Get poster and try to get a higher resolution version.
+        let posterUrl = data.Poster && data.Poster !== 'N/A' ? data.Poster : undefined;
+        if (posterUrl && posterUrl.includes('_SX300')) {
+            posterUrl = posterUrl.replace('_SX300', '_SX800');
+        }
 
         return {
             otherRatings,
             rated: data.Rated && data.Rated !== 'N/A' ? data.Rated : undefined,
             awards: data.Awards && data.Awards !== 'N/A' ? data.Awards : undefined,
+            posterUrl: posterUrl,
         };
 
     } catch (error) {

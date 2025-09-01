@@ -193,7 +193,7 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
               additionalDetails.status = details.status;
           }
   
-          return {
+          const finalDetails = {
               ...baseDetails,
               textlessPosterUrl: textlessPoster,
               cast: formatCast(details.credits),
@@ -204,6 +204,13 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
               ...omdbDetails,
               ...additionalDetails,
           };
+
+          // As requested, explicitly prioritize the OMDb poster if it exists.
+          if (omdbDetails.posterUrl) {
+              finalDetails.posterUrl = omdbDetails.posterUrl;
+          }
+
+          return finalDetails;
   
       } catch (error) {
           console.error(`Failed to fetch modal details for ${type} ID ${id}:`, error);
