@@ -225,7 +225,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId, o
     >
       <div
         ref={playerContainerRef}
-        className="relative w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden group/player"
+        className="relative w-full max-w-4xl aspect-video bg-black/40 backdrop-blur-lg border border-white/10 rounded-2xl shadow-2xl overflow-hidden group/player"
         onClick={(e) => e.stopPropagation()}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => isPlaying && setShowControls(false)}
@@ -240,10 +240,10 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId, o
 
         {/* Controls Overlay */}
         <div
-          className={`absolute inset-0 flex flex-col justify-between p-4 transition-opacity duration-300 ${
+          className={`absolute inset-0 flex flex-col justify-between p-4 transition-opacity duration-300 backdrop-blur-sm ${
             showControls ? 'opacity-100' : 'opacity-0'
           }`}
-          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent 40%, transparent 60%, rgba(0,0,0,0.5))' }}
+          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent 50%, transparent 60%, rgba(0,0,0,0.4))' }}
         >
           {/* Top Controls */}
            <div className="flex justify-end">
