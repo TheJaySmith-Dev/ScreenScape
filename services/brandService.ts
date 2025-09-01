@@ -125,7 +125,7 @@ const marvelCharacterCollections: Brand['characterCollections'] = [
         id: 529894, 
         name: 'Black Panther Collection', 
         posterUrl: 'https://image.tmdb.org/t/p/w500/yvj3vC6dGvo7E7y2a8g7s4Yx25G.jpg', 
-        backdropUrl: 'https://image.tmdb.org/t/p/original/4KrgkpHvf7vjHnEGWnPCmHjrmwP.jpg',
+        backdropUrl: 'https://image.tmdb.org/t/p/original/4KrgkpHvf7vjHBMwugYbvtlqIRrmwP.jpg',
         mediaIds: [
             { id: 271110, type: 'movie' }, // Captain America: Civil War
             { id: 284052, type: 'movie' }, // Black Panther
@@ -238,5 +238,40 @@ export const brands: Brand[] = [
         { id: 206647, type: 'movie' }, // Spectre
         { id: 370172, type: 'movie' }, // No Time to Die
     ]
+  },
+  {
+    id: 'wizardingworld',
+    name: 'Wizarding World',
+    posterUrl: 'https://musicart.xboxlive.com/7/b5d65e00-0000-0000-0000-000000000002/504/image.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/5jkE2SzR5uR2egEb1rZGgduFjBN.jpg',
+    characterCollections: [
+      {
+        id: 121, 
+        name: 'Harry Potter', 
+        posterUrl: 'https://image.tmdb.org/t/p/w500/p3KaBIJAbQo32yOcsfC2s2T2Srr.jpg', 
+        backdropUrl: 'https://image.tmdb.org/t/p/original/qWfpSWopkKMCBI0pDi6RDNBqmBa.jpg',
+        mediaIds: [
+            { id: 671, type: 'movie' },   // and the Philosopher's Stone
+            { id: 672, type: 'movie' },   // and the Chamber of Secrets
+            { id: 673, type: 'movie' },   // and the Prisoner of Azkaban
+            { id: 674, type: 'movie' },   // and the Goblet of Fire
+            { id: 675, type: 'movie' },   // and the Order of the Phoenix
+            { id: 767, type: 'movie' },   // and the Half-Blood Prince
+            { id: 12444, type: 'movie' }, // and the Deathly Hallows: Part 1
+            { id: 12445, type: 'movie' }, // and the Deathly Hallows: Part 2
+        ]
+      },
+      {
+        id: 404608,
+        name: 'Fantastic Beasts',
+        posterUrl: 'https://image.tmdb.org/t/p/w500/fTCqgEDe5Flv9a3NnC22L91Cza7.jpg',
+        backdropUrl: 'https://image.tmdb.org/t/p/original/3ybt95EcivmtIynUq6kisWsGnEo.jpg',
+        mediaIds: [
+            { id: 259316, type: 'movie' }, // and Where to Find Them
+            { id: 338952, type: 'movie' }, // The Crimes of Grindelwald
+            { id: 338954, type: 'movie' }, // The Secrets of Dumbledore
+        ]
+      }
+    ],
   }
 ];
