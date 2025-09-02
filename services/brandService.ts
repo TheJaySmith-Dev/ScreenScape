@@ -165,7 +165,7 @@ const marvelCharacterCollections: Brand['characterCollections'] = [
     { 
         id: 529893, 
         name: 'Spider-Man (MCU) Collection', 
-        posterUrl: 'https://image.tmdb.org/t/p/w500/8Vl2gPk5sA02n53Tf2g2kC93s3f.jpg', 
+        posterUrl: 'https://theposterdb.com/api/assets/393675', 
         backdropUrl: 'https://image.tmdb.org/t/p/original/iQFcwSGbZXMkeyKrC9MyzJbFYSx.jpg',
         mediaIds: [
             { id: 271110, type: 'movie' }, // Captain America: Civil War
@@ -179,7 +179,7 @@ const marvelCharacterCollections: Brand['characterCollections'] = [
     { 
         id: 529894, 
         name: 'Black Panther Collection', 
-        posterUrl: 'https://image.tmdb.org/t/p/w500/yvj3vC6dGvo7E7y2a8g7s4Yx25G.jpg', 
+        posterUrl: 'https://theposterdb.com/api/assets/393657', 
         backdropUrl: 'https://image.tmdb.org/t/p/original/4KrgkpHvf7vjHBMwugYbvtlqIRrmwP.jpg',
         mediaIds: [
             { id: 271110, type: 'movie' }, // Captain America: Civil War
