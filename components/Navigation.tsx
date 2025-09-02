@@ -1,6 +1,7 @@
+
 import React from 'react';
 
-type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming' | 'networks' | 'game';
+type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'people' | 'studios' | 'brands' | 'streaming' | 'networks' | 'game';
 
 interface NavigationProps {
   activeTab: ActiveTab;
@@ -35,6 +36,7 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab }) => {
         <NavLink label="Movies" href="#/movies" isActive={activeTab === 'movies'} />
         <NavLink label="TV" href="#/tv" isActive={activeTab === 'tv'} />
         <NavLink label="Coming Soon" href="#/collections" isActive={activeTab === 'collections'} />
+        <NavLink label="Talent" href="#/people" isActive={activeTab === 'people'} />
         <NavLink label="CineQuiz" href="#/game" isActive={activeTab === 'game'} />
         <NavLink label="Studios" href="#/studios" isActive={activeTab === 'studios'} />
         <NavLink label="Brands" href="#/brands" isActive={activeTab === 'brands'} />

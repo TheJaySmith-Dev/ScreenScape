@@ -1,3 +1,4 @@
+
 import type { MediaDetails, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor } from '../types.ts';
 import { supportedProviders } from './streamingService.ts';
 import { getApiKey } from './apiService.ts';
@@ -373,6 +374,39 @@ export const fetchMediaByCollectionIds = async (collectionIds: number[]): Promis
         return uniqueMedia;
     } catch (error) {
         console.error(`Failed to fetch media for collection IDs ${collectionIds.join(', ')}:`, error);
+        throw error;
+    }
+};
+
+export const getMediaByPerson = async (personId: number, role: 'director' | 'actor'): Promise<MediaDetails[]> => {
+    const endpoint = `/person/${personId}/combined_credits`;
+    try {
+        const data = await fetchFromApi<{ cast: any[], crew: any[] }>(endpoint);
+        let mediaList: any[] = [];
+        
+        if (role === 'actor') {
+            mediaList = data.cast;
+        } else if (role === 'director') {
+            mediaList = data.crew.filter(item => item.job === 'Director');
+        }
+
+        const formattedMedia = mediaList
+            .map(item => formatMediaListItem(item))
+            .filter((item): item is MediaDetails => item !== null && !!item.posterUrl && !item.posterUrl.includes('picsum.photos'));
+        
+        // Remove duplicates by creating a map
+        const uniqueMedia = new Map<number, MediaDetails>();
+        formattedMedia.forEach(item => {
+            if (!uniqueMedia.has(item.id)) {
+                uniqueMedia.set(item.id, item);
+            }
+        });
+
+        return Array.from(uniqueMedia.values())
+            .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+
+    } catch (error) {
+        console.error(`Failed to fetch media for person ${personId}:`, error);
         throw error;
     }
 };

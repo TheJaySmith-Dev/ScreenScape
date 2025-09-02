@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -25,8 +22,9 @@ import {
   getComingSoonMedia,
   fetchMediaByIds,
   fetchMediaByCollectionIds,
+  getMediaByPerson,
 } from './services/mediaService.ts';
-import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network, ActorDetails, CharacterCollection, MediaTypeFilter, SortBy } from './types.ts';
+import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network, ActorDetails, CharacterCollection, MediaTypeFilter, SortBy, Person } from './types.ts';
 import { popularStudios } from './services/studioService.ts';
 import { brands as allBrands } from './services/brandService.ts';
 import { DetailModal } from './components/DetailModal.tsx';
@@ -48,9 +46,11 @@ import { GitHubIcon } from './components/icons.tsx';
 import { ApiKeyModal } from './components/ApiKeyModal.tsx';
 import * as apiService from './services/apiService.ts';
 import { GamePage } from './components/GamePage.tsx';
+import { people as allPeople } from './services/peopleService.ts';
+import { PersonGrid } from './components/PersonGrid.tsx';
 
 
-type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming' | 'networks' | 'game';
+type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'people' | 'studios' | 'brands' | 'streaming' | 'networks' | 'game';
 
 
 const App: React.FC = () => {
@@ -95,6 +95,11 @@ const App: React.FC = () => {
 
   // State for Actor pages
   const [selectedActor, setSelectedActor] = useState<ActorDetails | null>(null);
+
+  // State for "People" hubs (Actors/Directors)
+  const [people] = useState<Person[]>(allPeople);
+  const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+  const [personMedia, setPersonMedia] = useState<MediaDetails[]>([]);
 
   // State for Coming Soon page
   const [comingSoonMedia, setComingSoonMedia] = useState<MediaDetails[]>([]);
@@ -167,6 +172,7 @@ const App: React.FC = () => {
       setSelectedBrand(null);
       setSelectedProvider(null);
       setSelectedNetwork(null);
+      setSelectedPerson(null);
       setRecommendations([]);
       setError(null);
       
@@ -174,7 +180,7 @@ const App: React.FC = () => {
       const parts = hash.split('/').filter(Boolean);
       const [page, ...params] = parts;
 
-      const mainTabs: ActiveTab[] = ['home', 'foryou', 'watchlist', 'movies', 'tv', 'collections', 'studios', 'brands', 'streaming', 'networks', 'game'];
+      const mainTabs: ActiveTab[] = ['home', 'foryou', 'watchlist', 'movies', 'tv', 'collections', 'people', 'studios', 'brands', 'streaming', 'networks', 'game'];
       const currentTab = mainTabs.includes(page as ActiveTab) ? (page as ActiveTab) : 'home';
       setActiveTab(currentTab);
 
@@ -229,6 +235,12 @@ const App: React.FC = () => {
             const [idStr] = params;
             const network = networks.find(n => n.id === parseInt(idStr));
             if (network) await handleSelectNetwork(network);
+            break;
+          }
+          case 'people': {
+            const [idStr] = params;
+            const person = people.find(p => p.id === idStr);
+            if (person) await handleSelectPerson(person);
             break;
           }
           case 'home':
@@ -471,6 +483,18 @@ const App: React.FC = () => {
         setError(`Could not load actor details.`);
     }
   }, []);
+
+  const handleSelectPerson = useCallback(async (person: Person) => {
+    setSelectedPerson(person);
+    setPersonMedia([]);
+    try {
+        const media = await getMediaByPerson(person.tmdbId, person.role);
+        setPersonMedia(media);
+    } catch (err) {
+        console.error(`Failed to load media for ${person.name}:`, err);
+        setError(`Could not load media for ${person.name}.`);
+    }
+  }, []);
   
   const handleBack = () => {
     if (selectedItem && 'parts' in selectedItem && selectedBrand) {
@@ -509,8 +533,8 @@ const App: React.FC = () => {
   }, []);
 
   const renderHomePageContent = () => {
-    if (isLoading && !selectedStudio && !selectedBrand && !selectedProvider && !selectedNetwork) return <LoadingSpinner />;
-    if (error && recommendations.length === 0 && !selectedStudio && !selectedBrand && !selectedProvider && !selectedNetwork) {
+    if (isLoading && !selectedStudio && !selectedBrand && !selectedProvider && !selectedNetwork && !selectedPerson) return <LoadingSpinner />;
+    if (error && recommendations.length === 0 && !selectedStudio && !selectedBrand && !selectedProvider && !selectedNetwork && !selectedPerson) {
         return <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>;
     }
     
@@ -574,6 +598,18 @@ const App: React.FC = () => {
       );
     }
 
+    if (selectedPerson) {
+      return (
+        <div className="w-full max-w-7xl">
+            <div className="flex items-center gap-4 mb-6">
+                <button onClick={() => window.location.hash = '#/people'} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Talent</button>
+                <h2 className="text-3xl font-bold">{selectedPerson.name}</h2>
+            </div>
+            {isLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={personMedia} onSelect={navigateToMedia} />}
+        </div>
+      );
+    }
+
     switch(activeTab) {
       case 'home':
       case 'movies':
@@ -616,6 +652,8 @@ const App: React.FC = () => {
         return <NetworkGrid networks={networks} onSelect={(network) => window.location.hash = `#/networks/${network.id}`} />;
       case 'watchlist':
         return <WatchlistPage onSelectMedia={navigateToMedia} />;
+      case 'people':
+        return <PersonGrid people={people} onSelect={(person) => window.location.hash = `#/people/${person.id}`} />;
       case 'game':
         return <GamePage />;
       default:
