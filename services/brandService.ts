@@ -263,5 +263,14 @@ export const brands: Brand[] = [
     characterCollections: [],
     collectionIds: [528], // The Terminator Collection
     defaultSort: 'timeline',
+  },
+  {
+    id: 'jurassic',
+    name: 'Jurassic Park',
+    posterUrl: 'https://image.tmdb.org/t/p/original/njFixYzIxX8jsn6KMSEtAzi4avi.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/njFixYzIxX8jsn6KMSEtAzi4avi.jpg',
+    characterCollections: [],
+    collectionIds: [328, 529891], // Jurassic Park Collection & Jurassic World Collection
+    defaultSort: 'timeline',
   }
 ];
