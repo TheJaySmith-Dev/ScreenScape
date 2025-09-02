@@ -138,7 +138,7 @@ const marvelCharacterCollections: Brand['characterCollections'] = [
     { 
         id: 529892, 
         name: 'Ant-Man Collection', 
-        posterUrl: 'https://image.tmdb.org/t/p/w500/9T5WHb6IxsTRs28hG1mEW3bLd1b.jpg', 
+        posterUrl: 'https://theposterdb.com/api/assets/4362', 
         backdropUrl: 'https://image.tmdb.org/t/p/original/6XN1v8mI8d2Vzdk4A6sS7n25bBF.jpg',
         mediaIds: [
             { id: 102899, type: 'movie' }, // Ant-Man
@@ -151,7 +151,7 @@ const marvelCharacterCollections: Brand['characterCollections'] = [
     { 
         id: 86032, 
         name: 'Doctor Strange Collection', 
-        posterUrl: 'https://image.tmdb.org/t/p/w500/v15s9Y0bsYo0i76aB5A2aN2l78i.jpg', 
+        posterUrl: 'https://theposterdb.com/api/assets/393659', 
         backdropUrl: 'https://image.tmdb.org/t/p/original/7s932SSa5aY513a9p6a2jyrfLz8.jpg',
         mediaIds: [
             { id: 284054, type: 'movie' }, // Doctor Strange
