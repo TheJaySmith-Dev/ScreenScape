@@ -1,6 +1,6 @@
 import React from 'react';
 
-type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming' | 'networks';
+type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming' | 'networks' | 'game';
 
 interface NavigationProps {
   activeTab: ActiveTab;
@@ -27,7 +27,7 @@ const NavLink: React.FC<{
 
 export const Navigation: React.FC<NavigationProps> = ({ activeTab }) => {
   return (
-    <nav className="w-full max-w-2xl p-2 bg-black/30 backdrop-blur-sm border border-white/10 rounded-2xl">
+    <nav className="w-full max-w-3xl p-2 bg-black/30 backdrop-blur-sm border border-white/10 rounded-2xl">
       <div className="flex items-center justify-center flex-wrap gap-2">
         <NavLink label="Home" href="#/home" isActive={activeTab === 'home'} />
         <NavLink label="For You" href="#/foryou" isActive={activeTab === 'foryou'} />
@@ -35,6 +35,7 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab }) => {
         <NavLink label="Movies" href="#/movies" isActive={activeTab === 'movies'} />
         <NavLink label="TV" href="#/tv" isActive={activeTab === 'tv'} />
         <NavLink label="Coming Soon" href="#/collections" isActive={activeTab === 'collections'} />
+        <NavLink label="Game" href="#/game" isActive={activeTab === 'game'} />
         <NavLink label="Studios" href="#/studios" isActive={activeTab === 'studios'} />
         <NavLink label="Brands" href="#/brands" isActive={activeTab === 'brands'} />
         <NavLink label="Streaming" href="#/streaming" isActive={activeTab === 'streaming'} />

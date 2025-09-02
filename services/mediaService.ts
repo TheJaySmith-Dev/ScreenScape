@@ -1,6 +1,7 @@
-import type { MediaDetails, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails } from '../types.ts';
+import type { MediaDetails, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie } from '../types.ts';
 import { supportedProviders } from './streamingService.ts';
 import { getApiKey } from './apiService.ts';
+import { fetchBoxOffice } from './omdbService.ts';
 
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 
@@ -402,5 +403,40 @@ export const fetchActorDetails = async (actorId: number): Promise<ActorDetails> 
     } catch (error) {
         console.error(`Failed to fetch details for actor ID ${actorId}:`, error);
         throw new Error('Could not fetch actor details.');
+    }
+};
+
+export const fetchMoviesForGame = async (page: number = 1): Promise<GameMovie[]> => {
+    // Fetch top grossing movies which are more likely to have box office data
+    const endpoint = `/discover/movie?sort_by=revenue.desc&page=${page}&include_adult=false&vote_count.gte=500&primary_release_date.lte=${new Date().toISOString().split('T')[0]}&append_to_response=external_ids`;
+    
+    try {
+        const data = await fetchFromApi<{ results: any[] }>(endpoint);
+        
+        const moviePromises = data.results
+            .filter(movie => movie.external_ids?.imdb_id)
+            .map(async (movie) => {
+                const imdbId = movie.external_ids.imdb_id;
+                const boxOffice = await fetchBoxOffice(imdbId);
+                
+                if (boxOffice && boxOffice > 100000) { // Filter out very low/error values
+                    return {
+                        id: movie.id,
+                        imdbId: imdbId,
+                        title: movie.title,
+                        posterUrl: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : `https://picsum.photos/500/750?grayscale`,
+                        releaseYear: (movie.release_date || 'N/A').substring(0, 4),
+                        boxOffice: boxOffice,
+                    };
+                }
+                return null;
+            });
+            
+        const gameMovies = await Promise.all(moviePromises);
+        return gameMovies.filter((movie): movie is GameMovie => movie !== null);
+
+    } catch (error) {
+        console.error(`Failed to fetch movies for game on page ${page}:`, error);
+        throw error;
     }
 };

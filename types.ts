@@ -181,3 +181,13 @@ export interface StreamingProviderInfo {
   borderColor?: string;
   edgeToEdge?: boolean;
 }
+
+// Type for the Higher or Lower game
+export interface GameMovie {
+  id: number;
+  imdbId: string;
+  title: string;
+  posterUrl: string;
+  releaseYear: string;
+  boxOffice: number;
+}

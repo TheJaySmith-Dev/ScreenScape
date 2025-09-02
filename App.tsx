@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -46,9 +47,10 @@ import { ComingSoonPage } from './components/ComingSoonPage.tsx';
 import { GitHubIcon } from './components/icons.tsx';
 import { ApiKeyModal } from './components/ApiKeyModal.tsx';
 import * as apiService from './services/apiService.ts';
+import { GamePage } from './components/GamePage.tsx';
 
 
-type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming' | 'networks';
+type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'studios' | 'brands' | 'streaming' | 'networks' | 'game';
 
 
 const App: React.FC = () => {
@@ -172,7 +174,7 @@ const App: React.FC = () => {
       const parts = hash.split('/').filter(Boolean);
       const [page, ...params] = parts;
 
-      const mainTabs: ActiveTab[] = ['home', 'foryou', 'watchlist', 'movies', 'tv', 'collections', 'studios', 'brands', 'streaming', 'networks'];
+      const mainTabs: ActiveTab[] = ['home', 'foryou', 'watchlist', 'movies', 'tv', 'collections', 'studios', 'brands', 'streaming', 'networks', 'game'];
       const currentTab = mainTabs.includes(page as ActiveTab) ? (page as ActiveTab) : 'home';
       setActiveTab(currentTab);
 
@@ -182,7 +184,9 @@ const App: React.FC = () => {
         return;
       }
       
-      setIsLoading(true);
+      if (currentTab !== 'game') {
+        setIsLoading(true);
+      }
 
       try {
         switch (page) {
@@ -270,6 +274,9 @@ const App: React.FC = () => {
               }
               break;
           }
+          case 'game':
+            // The GamePage component handles its own loading state.
+            break;
         }
       } catch (err) {
           console.error("Routing error:", err);
@@ -609,14 +616,17 @@ const App: React.FC = () => {
         return <NetworkGrid networks={networks} onSelect={(network) => window.location.hash = `#/networks/${network.id}`} />;
       case 'watchlist':
         return <WatchlistPage onSelectMedia={navigateToMedia} />;
+      case 'game':
+        return <GamePage />;
       default:
         return <p>Welcome!</p>;
     }
   };
 
+  const isGameActive = activeTab === 'game' && !selectedItem && !selectedActor;
 
   return (
-    <div className={`${selectedBrand ? '' : 'bg-gray-900'} text-white min-h-screen font-sans`}>
+    <div className={`${selectedBrand ? '' : isGameActive ? 'game-background' : 'bg-gray-900'} text-white min-h-screen font-sans`}>
       {isApiKeyModalOpen && <ApiKeyModal onSave={handleSaveApiKey} />}
 
       {!apiKey && !isApiKeyModalOpen && (
