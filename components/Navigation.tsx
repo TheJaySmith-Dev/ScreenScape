@@ -35,7 +35,7 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab }) => {
         <NavLink label="Movies" href="#/movies" isActive={activeTab === 'movies'} />
         <NavLink label="TV" href="#/tv" isActive={activeTab === 'tv'} />
         <NavLink label="Coming Soon" href="#/collections" isActive={activeTab === 'collections'} />
-        <NavLink label="Game" href="#/game" isActive={activeTab === 'game'} />
+        <NavLink label="CineQuiz" href="#/game" isActive={activeTab === 'game'} />
         <NavLink label="Studios" href="#/studios" isActive={activeTab === 'studios'} />
         <NavLink label="Brands" href="#/brands" isActive={activeTab === 'brands'} />
         <NavLink label="Streaming" href="#/streaming" isActive={activeTab === 'streaming'} />

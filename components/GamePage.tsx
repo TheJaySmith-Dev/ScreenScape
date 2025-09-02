@@ -35,7 +35,7 @@ export const GamePage: React.FC = () => {
     return (
         <div className="w-full max-w-7xl flex flex-col items-center justify-center min-h-[70vh] fade-in">
             <div className="text-center mb-12">
-                <h1 className="text-4xl sm:text-5xl font-bold mb-4" style={{textShadow: '0 0 15px rgba(255,255,255,0.3)'}}>Game Centre</h1>
+                <h1 className="text-4xl sm:text-5xl font-bold mb-4" style={{textShadow: '0 0 15px rgba(255,255,255,0.3)'}}>CineQuiz</h1>
                 <p className="text-lg text-gray-300">Test your movie, TV, and celebrity knowledge.</p>
             </div>
             <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-6">

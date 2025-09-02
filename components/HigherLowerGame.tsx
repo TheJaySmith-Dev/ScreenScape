@@ -163,7 +163,7 @@ export const HigherLowerGame: React.FC<HigherLowerGameProps> = ({ mode, onExit }
                         <p className="text-lg mb-8">High Score: <span className="font-bold text-yellow-300">{highScore}</span></p>
 
                         <div className="flex gap-4 justify-center">
-                            <button onClick={onExit} className="px-6 py-3 text-lg font-bold text-white bg-white/5 border-2 border-white/10 rounded-full hover:bg-white/10 transition-colors">Back to Games</button>
+                            <button onClick={onExit} className="px-6 py-3 text-lg font-bold text-white bg-white/5 border-2 border-white/10 rounded-full hover:bg-white/10 transition-colors">Back to CineQuiz</button>
                             <button
                                 onClick={startGame}
                                 className="px-8 py-3 text-lg font-bold text-white bg-white/10 border-2 border-white/20 rounded-full hover:bg-white/20 transition-all duration-300"
