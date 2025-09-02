@@ -1,4 +1,4 @@
-import type { MediaDetails, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie } from '../types.ts';
+import type { MediaDetails, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor } from '../types.ts';
 import { supportedProviders } from './streamingService.ts';
 import { getApiKey } from './apiService.ts';
 import { fetchBoxOffice } from './omdbService.ts';
@@ -407,36 +407,105 @@ export const fetchActorDetails = async (actorId: number): Promise<ActorDetails> 
 };
 
 export const fetchMoviesForGame = async (page: number = 1): Promise<GameMovie[]> => {
-    // Fetch top grossing movies which are more likely to have box office data
-    const endpoint = `/discover/movie?sort_by=revenue.desc&page=${page}&include_adult=false&vote_count.gte=500&primary_release_date.lte=${new Date().toISOString().split('T')[0]}&append_to_response=external_ids`;
+    const endpoint = `/discover/movie?sort_by=revenue.desc&page=${page}&include_adult=false&vote_count.gte=500&primary_release_date.lte=${new Date().toISOString().split('T')[0]}`;
     
     try {
-        const data = await fetchFromApi<{ results: any[] }>(endpoint);
+        const listData = await fetchFromApi<{ results: any[] }>(endpoint);
         
-        const moviePromises = data.results
-            .filter(movie => movie.external_ids?.imdb_id)
+        const detailPromises = listData.results.slice(0, 10).map(m => 
+            fetchFromApi<any>(`/movie/${m.id}`).catch(() => null)
+        );
+        const moviesWithDetails = (await Promise.all(detailPromises)).filter(Boolean);
+
+        const gameMoviePromises = moviesWithDetails
+            .filter(movie => movie.imdb_id)
             .map(async (movie) => {
-                const imdbId = movie.external_ids.imdb_id;
-                const boxOffice = await fetchBoxOffice(imdbId);
-                
-                if (boxOffice && boxOffice > 100000) { // Filter out very low/error values
+                const boxOffice = await fetchBoxOffice(movie.imdb_id);
+                if (boxOffice && boxOffice > 100000) {
                     return {
                         id: movie.id,
-                        imdbId: imdbId,
+                        imdbId: movie.imdb_id,
                         title: movie.title,
                         posterUrl: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : `https://picsum.photos/500/750?grayscale`,
                         releaseYear: (movie.release_date || 'N/A').substring(0, 4),
                         boxOffice: boxOffice,
+                        popularity: movie.popularity,
                     };
                 }
                 return null;
             });
-            
-        const gameMovies = await Promise.all(moviePromises);
+
+        const gameMovies = await Promise.all(gameMoviePromises);
         return gameMovies.filter((movie): movie is GameMovie => movie !== null);
 
     } catch (error) {
         console.error(`Failed to fetch movies for game on page ${page}:`, error);
+        throw error;
+    }
+};
+
+export const fetchMediaForPopularityGame = async (page: number = 1): Promise<GameMedia[]> => {
+    const movieEndpoint = `/discover/movie?sort_by=popularity.desc&page=${page}&vote_count.gte=200&include_adult=false`;
+    const tvEndpoint = `/discover/tv?sort_by=popularity.desc&page=${page}&vote_count.gte=200`;
+    
+    try {
+        const [movieData, tvData] = await Promise.all([
+            fetchFromApi<{ results: any[] }>(movieEndpoint),
+            fetchFromApi<{ results: any[] }>(tvEndpoint)
+        ]);
+        
+        const movies: GameMedia[] = movieData.results
+            .filter(item => item.poster_path)
+            .map(item => ({
+                id: item.id,
+                title: item.title,
+                posterUrl: `https://image.tmdb.org/t/p/w500${item.poster_path}`,
+                releaseYear: (item.release_date || 'N/A').substring(0, 4),
+                type: 'movie',
+                popularity: item.popularity,
+            }));
+
+        const tvShows: GameMedia[] = tvData.results
+            .filter(item => item.poster_path)
+            .map(item => ({
+                id: item.id,
+                title: item.name,
+                posterUrl: `https://image.tmdb.org/t/p/w500${item.poster_path}`,
+                releaseYear: (item.first_air_date || 'N/A').substring(0, 4),
+                type: 'tv',
+                popularity: item.popularity,
+            }));
+        
+        return [...movies, ...tvShows];
+    } catch (error) {
+        console.error(`Failed to fetch media for popularity game on page ${page}:`, error);
+        throw error;
+    }
+};
+
+export const fetchActorsForAgeGame = async (page: number = 1): Promise<GameActor[]> => {
+    const popularActorsEndpoint = `/person/popular?page=${page}`;
+    try {
+        const data = await fetchFromApi<{ results: any[] }>(popularActorsEndpoint);
+        
+        const actorDetailsPromises = data.results.slice(0, 10).map(person => 
+            fetchFromApi<any>(`/person/${person.id}`).catch(() => null)
+        );
+
+        const actorDetails = (await Promise.all(actorDetailsPromises)).filter(Boolean);
+
+        const gameActors: GameActor[] = actorDetails
+            .filter(actor => actor.birthday && actor.profile_path && !actor.deathday)
+            .map(actor => ({
+                id: actor.id,
+                name: actor.name,
+                profileUrl: `https://image.tmdb.org/t/p/w500${actor.profile_path}`,
+                birthday: actor.birthday,
+            }));
+
+        return gameActors;
+    } catch (error) {
+        console.error(`Failed to fetch actors for age game on page ${page}:`, error);
         throw error;
     }
 };

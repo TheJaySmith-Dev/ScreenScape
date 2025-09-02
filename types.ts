@@ -182,7 +182,7 @@ export interface StreamingProviderInfo {
   edgeToEdge?: boolean;
 }
 
-// Type for the Higher or Lower game
+// Types for the Higher or Lower game
 export interface GameMovie {
   id: number;
   imdbId: string;
@@ -190,4 +190,21 @@ export interface GameMovie {
   posterUrl: string;
   releaseYear: string;
   boxOffice: number;
+  popularity: number;
+}
+
+export interface GameMedia {
+  id: number;
+  title: string;
+  posterUrl: string;
+  releaseYear: string;
+  type: 'movie' | 'tv';
+  popularity: number;
+}
+
+export interface GameActor {
+  id: number;
+  name: string;
+  profileUrl: string;
+  birthday: string; // 'YYYY-MM-DD'
 }
