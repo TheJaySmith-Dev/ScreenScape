@@ -254,5 +254,14 @@ export const brands: Brand[] = [
     characterCollections: [],
     collectionIds: [2831], // Ghostbusters Collection
     defaultSort: 'timeline',
+  },
+  {
+    id: 'terminator',
+    name: 'Terminator',
+    posterUrl: 'https://image.tmdb.org/t/p/original/lDhKuzL8l29nsc6IKWH1odl66SK.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/lDhKuzL8l29nsc6IKWH1odl66SK.jpg',
+    characterCollections: [],
+    collectionIds: [528], // The Terminator Collection
+    defaultSort: 'timeline',
   }
 ];
