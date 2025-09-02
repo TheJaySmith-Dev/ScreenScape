@@ -240,8 +240,8 @@ export const brands: Brand[] = [
   {
     id: 'backtothefuture',
     name: 'Back to the Future',
-    posterUrl: 'https://image.tmdb.org/t/p/original/pTpxQB1N0waaSc3OSn0e9oc8rAL.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/pTpxQB1N0waaSc3OSn0e9oc8rAL.jpg',
+    posterUrl: 'https://image.tmdb.org/t/p/original/cR2w1mVyiJ566scKTSL0PV6lSUd.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/cR2w1mVyiJ566scKTSL0PV6lSUd.jpg',
     characterCollections: [],
     collectionIds: [264], // Back to the Future Collection
     defaultSort: 'timeline',
@@ -249,8 +249,8 @@ export const brands: Brand[] = [
   {
     id: 'ghostbusters',
     name: 'Ghostbusters',
-    posterUrl: 'https://image.tmdb.org/t/p/w1280/u2uS0u32RbtSgN5I1i7s0vX9a4G.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/w1280/u2uS0u32RbtSgN5I1i7s0vX9a4G.jpg',
+    posterUrl: 'https://cms-assets.tutsplus.com/cdn-cgi/image/width=850/uploads/users/403/posts/108486/final_image/ghostbusters_logo_final_00.jpg',
+    backdropUrl: 'https://cms-assets.tutsplus.com/cdn-cgi/image/width=850/uploads/users/403/posts/108486/final_image/ghostbusters_logo_final_00.jpg',
     characterCollections: [],
     collectionIds: [2831], // Ghostbusters Collection
     defaultSort: 'timeline',
