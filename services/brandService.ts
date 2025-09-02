@@ -195,17 +195,17 @@ export const brands: Brand[] = [
   {
     id: 'marvel',
     name: 'Marvel',
-    posterUrl: 'https://terrigen-cdn-dev.marvel.com/content/prod/1x/marvel_studios_in_theaters_art_1_0.jpg',
+    posterUrl: 'https://e1.pxfuel.com/desktop-wallpaper/513/887/desktop-wallpaper-marvel-logo-marvel-studios-logo.jpg',
     mediaIds: mcuMediaIds, // Keep curated list for MCU accuracy
     characterCollections: marvelCharacterCollections,
-    backdropUrl: 'https://i.postimg.cc/7hXz8npx/Marvel-Studios-Logo.avif',
+    backdropUrl: 'https://e1.pxfuel.com/desktop-wallpaper/513/887/desktop-wallpaper-marvel-logo-marvel-studios-logo.jpg',
     defaultSort: 'timeline',
   },
   {
     id: 'wizardingworld',
     name: 'Wizarding World',
-    posterUrl: 'https://images.ctfassets.net/usf1vwtuqyxm/235FNw3G2zGdw3AjVCR5Z3/78229b35959310850d99032759e5e783/WW_Hero_Desktop_2000x1270_CTA.jpg?w=1200&fit=fill&f=top',
-    backdropUrl: 'https://i.postimg.cc/zX6BLQws/Wizarding-World.avif',
+    posterUrl: 'https://i.vimeocdn.com/video/741739046-36b4195f4e1f8d856a989d58ebb9973af16e630d57bf400434b2a37a8319d5d8-d?f=webp',
+    backdropUrl: 'https://i.vimeocdn.com/video/741739046-36b4195f4e1f8d856a989d58ebb9973af16e630d57bf400434b2a37a8319d5d8-d?f=webp',
     characterCollections: [],
     collectionIds: [1241, 404609], // Harry Potter Collection & Fantastic Beasts Collection
     defaultSort: 'timeline',
@@ -240,8 +240,8 @@ export const brands: Brand[] = [
   {
     id: 'backtothefuture',
     name: 'Back to the Future',
-    posterUrl: 'https://image.tmdb.org/t/p/w1280/x4N74L25pZa7fGIMHe5M8oR0iM3.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/w1280/x4N74L25pZa7fGIMHe5M8oR0iM3.jpg',
+    posterUrl: 'https://image.tmdb.org/t/p/original/pTpxQB1N0waaSc3OSn0e9oc8rAL.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/pTpxQB1N0waaSc3OSn0e9oc8rAL.jpg',
     characterCollections: [],
     collectionIds: [264], // Back to the Future Collection
     defaultSort: 'timeline',
