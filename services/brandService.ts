@@ -191,6 +191,23 @@ const marvelCharacterCollections: Brand['characterCollections'] = [
     },
 ];
 
+// FIX: Add a curated list of all Wizarding World movies to ensure both Harry Potter and Fantastic Beasts are included reliably.
+const wizardingWorldMediaIds: Brand['mediaIds'] = [
+    // Harry Potter Series
+    { id: 671, type: 'movie' },   // Harry Potter and the Sorcerer's Stone (2001)
+    { id: 672, type: 'movie' },   // Harry Potter and the Chamber of Secrets (2002)
+    { id: 673, type: 'movie' },   // Harry Potter and the Prisoner of Azkaban (2004)
+    { id: 674, type: 'movie' },   // Harry Potter and the Goblet of Fire (2005)
+    { id: 675, type: 'movie' },   // Harry Potter and the Order of the Phoenix (2007)
+    { id: 767, type: 'movie' },    // Harry Potter and the Half-Blood Prince (2009)
+    { id: 12444, type: 'movie' }, // Harry Potter and the Deathly Hallows: Part 1 (2010)
+    { id: 12445, type: 'movie' }, // Harry Potter and the Deathly Hallows: Part 2 (2011)
+    // Fantastic Beasts Series
+    { id: 259316, type: 'movie' }, // Fantastic Beasts and Where to Find Them (2016)
+    { id: 338952, type: 'movie' }, // Fantastic Beasts: The Crimes of Grindelwald (2018)
+    { id: 338953, type: 'movie' }, // Fantastic Beasts: The Secrets of Dumbledore (2022)
+];
+
 export const brands: Brand[] = [
   {
     id: 'backtothefuture',
@@ -288,7 +305,8 @@ export const brands: Brand[] = [
     posterUrl: 'https://i.vimeocdn.com/video/741739046-36b4195f4e1f8d856a989d58ebb9973af16e630d57bf400434b2a37a8319d5d8-d?f=webp',
     backdropUrl: 'https://i.vimeocdn.com/video/741739046-36b4195f4e1f8d856a989d58ebb9973af16e630d57bf400434b2a37a8319d5d8-d?f=webp',
     characterCollections: [],
-    collectionIds: [1241, 404609], // Harry Potter Collection & Fantastic Beasts Collection
+    // FIX: Replaced collectionIds with a more reliable, curated list of mediaIds to ensure all films are included.
+    mediaIds: wizardingWorldMediaIds,
     defaultSort: 'timeline',
   }
 ];
