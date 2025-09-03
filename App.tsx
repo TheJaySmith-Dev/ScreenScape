@@ -741,7 +741,7 @@ const App: React.FC = () => {
                     <div className="mb-8 flex justify-center">
                         <SearchBar onSearch={handleSearch} isLoading={isLoading} />
                     </div>
-                    <div className="mb-8 flex justify-center">
+                    <div className="sticky top-4 z-50 mb-8 flex justify-center">
                         <Navigation activeTab={activeTab} />
                     </div>
                     
