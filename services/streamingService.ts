@@ -35,9 +35,9 @@ export const supportedProviders: StreamingProviderInfo[] = [
     id: 1899,
     key: 'max',
     name: 'HBO Max',
-    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/32/HBO_Max_logo.svg',
+    logoUrl: 'https://images.ctfassets.net/y2ske730sjqp/5pwsC34s4w22j09144Dz3Y/92a75bb554a70e061b394747e914d026/hbomax-logo-f.png',
     bgColor: '#000000',
-    hoverGifUrl: 'https://media.giphy.com/media/jmqjS2Ank1iG4gC530/giphy.gif',
+    hoverGifUrl: 'https://media.giphy.com/media/l4Ep3mmdwgnsqJtV6/giphy.gif',
     borderColor: '#FFFFFF',
   },
   {
