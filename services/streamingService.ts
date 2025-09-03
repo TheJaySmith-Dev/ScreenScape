@@ -34,10 +34,10 @@ export const supportedProviders: StreamingProviderInfo[] = [
   {
     id: 1899,
     key: 'max',
-    name: 'Max',
-    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/Max_logo.svg',
-    bgColor: '#3E008D',
-    hoverGifUrl: 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExNnRmeDgyc24zaWEzZnc2ZmI0ZmRyd2dnN3p0MGJiMzZuN2plOWxudSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/wzK2hDKussGKwa7CiB/giphy.gif',
+    name: 'HBO Max',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/32/HBO_Max_logo.svg',
+    bgColor: '#000000',
+    hoverGifUrl: 'https://media.giphy.com/media/jmqjS2Ank1iG4gC530/giphy.gif',
     borderColor: '#FFFFFF',
   },
   {
