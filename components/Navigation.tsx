@@ -15,20 +15,24 @@ const NavLink: React.FC<{
     return (
         <a
             href={href}
-            className={`px-3 py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${
+            className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300 relative overflow-hidden group
+                ${
                 isActive 
-                ? 'bg-white text-gray-900' 
-                : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                ? 'bg-white/10 text-white shadow-[0_0_15px_rgba(180,220,255,0.3)]' 
+                : 'text-gray-300 hover:bg-white/5 hover:text-white'
             }`}
         >
-            {label}
+            <span className="relative z-10">{label}</span>
+            {!isActive && (
+                <span className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 rounded-xl transition-all duration-300"></span>
+            )}
         </a>
     )
 }
 
 export const Navigation: React.FC<NavigationProps> = ({ activeTab }) => {
   return (
-    <nav className="w-full max-w-3xl p-2 bg-black/30 backdrop-blur-sm border border-white/10 rounded-2xl">
+    <nav className="w-full max-w-4xl p-2 glass-panel rounded-2xl">
       <div className="flex items-center justify-center flex-wrap gap-2">
         <NavLink label="Home" href="#/home" isActive={activeTab === 'home'} />
         <NavLink label="For You" href="#/foryou" isActive={activeTab === 'foryou'} />

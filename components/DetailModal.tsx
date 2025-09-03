@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useEffect, useState } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders } from '../types.ts';
 import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon } from './icons.tsx';
@@ -52,8 +53,11 @@ const ModalSection: React.FC<{ title: string; children: React.ReactNode }> = ({ 
   
 const CastCard: React.FC<{ member: CastMember; onSelect: (id: number) => void; }> = ({ member, onSelect }) => (
     <div className="flex-shrink-0 w-28 text-center cursor-pointer group" onClick={() => onSelect(member.id)}>
-      <img src={member.profileUrl} alt={member.name} className="w-24 h-24 object-cover rounded-full mx-auto mb-2 border-2 border-white/20 group-hover:border-white/40 transition-colors" loading="lazy" />
-      <p className="font-semibold text-sm text-white truncate group-hover:text-blue-300 transition-colors">{member.name}</p>
+      <div className="relative w-24 h-24 mx-auto mb-2">
+        <img src={member.profileUrl} alt={member.name} className="w-full h-full object-cover rounded-full border-2 border-white/10 transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+        <div className="absolute inset-0 rounded-full border-2 border-transparent group-hover:border-cyan-300/50 transition-colors duration-300 group-hover:shadow-[0_0_15px_rgba(0,220,255,0.4)]"></div>
+      </div>
+      <p className="font-semibold text-sm text-white truncate group-hover:text-cyan-300 transition-colors">{member.name}</p>
       <p className="text-xs text-gray-400 truncate">{member.character}</p>
     </div>
 );
@@ -125,7 +129,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             {!isLoading && media.trailerUrl && (
                 <button
                     onClick={handleWatchTrailer}
-                    className="flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white font-semibold transition-colors duration-300"
+                    className="flex items-center justify-center gap-2 px-6 py-3 glass-panel rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/10 hover:scale-105"
                 >
                     <PlayIcon className="w-6 h-6" />
                     <span>Watch Trailer</span>
@@ -135,10 +139,10 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                 <button
                     onClick={handleLike}
                     aria-label={currentIsLiked ? "Unlike" : "Like"}
-                    className={`p-3 rounded-full border transition-colors duration-300 ${
+                    className={`p-3 glass-panel rounded-full transition-all duration-300 hover:scale-110 ${
                         currentIsLiked 
-                        ? 'bg-green-500/20 border-green-500 text-green-400'
-                        : 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/20 hover:text-white'
+                        ? 'bg-green-500/20 !border-green-500 text-green-300'
+                        : 'text-gray-300 hover:bg-white/10 hover:text-white'
                     }`}
                 >
                     <ThumbsUpIcon className="w-6 h-6"/>
@@ -146,10 +150,10 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                 <button
                     onClick={handleDislike}
                     aria-label={currentIsDisliked ? "Remove dislike" : "Dislike"}
-                    className={`p-3 rounded-full border transition-colors duration-300 ${
+                    className={`p-3 glass-panel rounded-full transition-all duration-300 hover:scale-110 ${
                         currentIsDisliked
-                        ? 'bg-red-500/20 border-red-500 text-red-400'
-                        : 'bg-white/10 border-white/20 text-gray-300 hover:bg-white/20 hover:text-white'
+                        ? 'bg-red-500/20 !border-red-500 text-red-400'
+                        : 'text-gray-300 hover:bg-white/10 hover:text-white'
                     }`}
                 >
                     <ThumbsDownIcon className="w-6 h-6"/>
@@ -181,7 +185,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                             href={`https://reelgood.com/search?q=${encodeURIComponent(media.title)}`} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="inline-block mt-2 px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-center w-full sm:w-auto"
+                            className="inline-block mt-2 px-4 py-2 text-sm glass-panel rounded-lg transition-colors text-center w-full sm:w-auto hover:bg-white/10"
                         >
                             Search all options on ReelGood
                         </a>
@@ -239,61 +243,60 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
   );
 
   const isMedia = isMediaDetails(item);
-  // The background image should prioritize the textless poster for media, or the backdrop for collections.
   const backgroundImageUrl = isMedia ? (item.textlessPosterUrl || item.posterUrl) : item.backdropUrl;
-  // The main, focused poster should always be the standard poster.
   const mainPosterUrl = item.posterUrl;
 
   return (
     <>
       <div className="w-full max-w-6xl mx-auto fade-in" style={{ opacity: 0 }}>
         <div className="my-6">
-            <button onClick={onClose} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back</button>
+            <button onClick={onClose} className="px-4 py-2 text-sm glass-panel rounded-full hover:bg-white/10 transition-colors">&larr; Back</button>
         </div>
 
         {/* Hero Section */}
-        <div className="relative rounded-2xl overflow-hidden mb-8 bg-gray-800 min-h-[400px] md:min-h-[450px] flex items-center">
+        <div className="relative glass-panel rounded-[28px] overflow-hidden mb-8 min-h-[400px] md:min-h-[450px] flex items-center">
             <div className="absolute inset-0">
-                <img src={backgroundImageUrl} alt="" className="w-full h-full object-cover opacity-20 blur-xl scale-110" />
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent" />
-                <div className="absolute inset-0 bg-black/30" />
+                <img src={backgroundImageUrl} alt="" className="w-full h-full object-cover opacity-15 blur-3xl scale-125" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
             </div>
 
             <div className="relative p-6 md:p-10 flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8 w-full">
-                <img src={mainPosterUrl} alt={isMedia ? item.title : item.name} className="w-40 md:w-52 rounded-lg shadow-2xl aspect-[2/3] object-cover flex-shrink-0" />
+                <img src={mainPosterUrl} alt={isMedia ? item.title : item.name} className="w-40 md:w-52 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] aspect-[2/3] object-cover flex-shrink-0" />
                 <div className="flex-grow text-center md:text-left">
-                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white drop-shadow-2xl mb-4">
+                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white drop-shadow-[0_4px_15px_rgba(0,0,0,0.7)] mb-4">
                         {isMediaDetails(item) ? item.title : item.name}
                     </h2>
 
                     {isMediaDetails(item) && (
                     <>
-                        <div className="flex items-center justify-center md:justify-start flex-wrap gap-x-4 gap-y-1 mb-4 text-gray-300">
-                            <div className="text-lg font-semibold">
+                        <div className="flex items-center justify-center md:justify-start flex-wrap gap-x-4 gap-y-2 mb-4 text-gray-200 font-medium">
+                            <div>
                                 {item.type === 'movie' ? item.releaseYear : getTvDateRange(item.releaseDate, item.lastAirDate, item.status) || item.releaseYear}
                             </div>
                             {item.type === 'movie' && item.runtime && item.runtime > 0 && (
-                                <div className="font-semibold text-lg">
-                                    {formatRuntime(item.runtime)}
-                                </div>
+                                <>
+                                <span className="text-gray-500">&bull;</span>
+                                <div>{formatRuntime(item.runtime)}</div>
+                                </>
                             )}
                             {item.type === 'tv' && item.numberOfSeasons && (
-                                <div className="font-semibold text-lg">
-                                    {`${item.numberOfSeasons} Season${item.numberOfSeasons > 1 ? 's' : ''}`}
-                                </div>
+                                <>
+                                <span className="text-gray-500">&bull;</span>
+                                <div>{`${item.numberOfSeasons} Season${item.numberOfSeasons > 1 ? 's' : ''}`}</div>
+                                </>
                             )}
                             {item.rated && (
-                                <div className="uppercase text-sm px-2 py-0.5 border border-gray-500 rounded">
+                                <>
+                                <span className="text-gray-500">&bull;</span>
+                                <div className="uppercase text-sm px-2 py-0.5 border border-gray-500 rounded-md">
                                     {item.rated}
                                 </div>
+                                </>
                             )}
-                            <div className="uppercase text-sm px-2 py-0.5 border border-gray-500 rounded">
-                                {item.type}
-                            </div>
                         </div>
 
                         <div className="flex flex-wrap items-start justify-center md:justify-start gap-3 mb-4">
-                            <div className="flex items-center gap-2 bg-black/20 p-2 rounded-lg">
+                            <div className="flex items-center gap-2 glass-panel p-2 rounded-xl">
                                 <StarIcon className="w-8 h-8 text-yellow-400" />
                                 <div>
                                     <span className="font-bold text-lg">{item.rating}</span>
@@ -310,7 +313,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         
         {/* Main Content Below Hero */}
         <div className="px-4 md:px-10 pb-12">
-            <p className="text-gray-300 text-sm sm:text-base mb-6">{item.overview}</p>
+            <p className="text-gray-300 text-base leading-relaxed mb-6">{item.overview}</p>
             {isMediaDetails(item) ? renderMediaContent(item) : renderCollectionContent(item)}
         </div>
       </div>
