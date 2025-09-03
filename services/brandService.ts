@@ -285,8 +285,8 @@ export const brands: Brand[] = [
   {
     id: 'starwars',
     name: 'Star Wars',
-    posterUrl: 'https://lumiere-a.akamaihd.net/v1/images/star-wars-logo-black-1080_24157ac1.png',
-    backdropUrl: 'https://images.hdqwalls.com/wallpapers/star-wars-galaxy-of-adventures-4k-2b.jpg',
+    posterUrl: 'https://image.tmdb.org/t/p/original/trf3Hi3tPOJARsCBoVMDBlpjPC4.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/trf3Hi3tPOJARsCBoVMDBlpjPC4.jpg',
     characterCollections: [],
     collectionIds: [10], // Star Wars Collection
     defaultSort: 'timeline',
