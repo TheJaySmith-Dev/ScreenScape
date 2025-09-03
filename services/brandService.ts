@@ -193,30 +193,12 @@ const marvelCharacterCollections: Brand['characterCollections'] = [
 
 export const brands: Brand[] = [
   {
-    id: 'marvel',
-    name: 'Marvel',
-    posterUrl: 'https://e1.pxfuel.com/desktop-wallpaper/513/887/desktop-wallpaper-marvel-logo-marvel-studios-logo.jpg',
-    mediaIds: mcuMediaIds, // Keep curated list for MCU accuracy
-    characterCollections: marvelCharacterCollections,
-    backdropUrl: 'https://e1.pxfuel.com/desktop-wallpaper/513/887/desktop-wallpaper-marvel-logo-marvel-studios-logo.jpg',
-    defaultSort: 'timeline',
-  },
-  {
-    id: 'wizardingworld',
-    name: 'Wizarding World',
-    posterUrl: 'https://i.vimeocdn.com/video/741739046-36b4195f4e1f8d856a989d58ebb9973af16e630d57bf400434b2a37a8319d5d8-d?f=webp',
-    backdropUrl: 'https://i.vimeocdn.com/video/741739046-36b4195f4e1f8d856a989d58ebb9973af16e630d57bf400434b2a37a8319d5d8-d?f=webp',
+    id: 'backtothefuture',
+    name: 'Back to the Future',
+    posterUrl: 'https://image.tmdb.org/t/p/original/cR2w1mVyiJ566scKTSL0PV6lSUd.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/cR2w1mVyiJ566scKTSL0PV6lSUd.jpg',
     characterCollections: [],
-    collectionIds: [1241, 404609], // Harry Potter Collection & Fantastic Beasts Collection
-    defaultSort: 'timeline',
-  },
-  {
-    id: 'missionimpossible',
-    name: 'Mission: Impossible',
-    posterUrl: 'https://image.tmdb.org/t/p/w1280/j6Y1qjfoJcJ0S3ah9kifbI2bzq0.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/w1280/j6Y1qjfoJcJ0S3ah9kifbI2bzq0.jpg',
-    characterCollections: [],
-    collectionIds: [87359], // Mission: Impossible Collection
+    collectionIds: [264], // Back to the Future Collection
     defaultSort: 'timeline',
   },
   {
@@ -229,6 +211,15 @@ export const brands: Brand[] = [
     defaultSort: 'timeline',
   },
   {
+    id: 'ghostbusters',
+    name: 'Ghostbusters',
+    posterUrl: 'https://cms-assets.tutsplus.com/cdn-cgi/image/width=850/uploads/users/403/posts/108486/final_image/ghostbusters_logo_final_00.jpg',
+    backdropUrl: 'https://cms-assets.tutsplus.com/cdn-cgi/image/width=850/uploads/users/403/posts/108486/final_image/ghostbusters_logo_final_00.jpg',
+    characterCollections: [],
+    collectionIds: [2831], // Ghostbusters Collection
+    defaultSort: 'timeline',
+  },
+  {
     id: 'jamesbond',
     name: 'James Bond',
     posterUrl: 'https://image.tmdb.org/t/p/w1280/A6N0JJonAz5Gk0trIqvhGOHLSzi.jpg',
@@ -238,21 +229,48 @@ export const brands: Brand[] = [
     defaultSort: 'timeline',
   },
   {
-    id: 'backtothefuture',
-    name: 'Back to the Future',
-    posterUrl: 'https://image.tmdb.org/t/p/original/cR2w1mVyiJ566scKTSL0PV6lSUd.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/cR2w1mVyiJ566scKTSL0PV6lSUd.jpg',
+    id: 'johnwick',
+    name: 'John Wick',
+    posterUrl: 'https://image.tmdb.org/t/p/original/68PWQWTJJrDx48kIDDGaQryfTUS.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/68PWQWTJJrDx48kIDDGaQryfTUS.jpg',
     characterCollections: [],
-    collectionIds: [264], // Back to the Future Collection
+    collectionIds: [531241], // John Wick Collection
     defaultSort: 'timeline',
   },
   {
-    id: 'ghostbusters',
-    name: 'Ghostbusters',
-    posterUrl: 'https://cms-assets.tutsplus.com/cdn-cgi/image/width=850/uploads/users/403/posts/108486/final_image/ghostbusters_logo_final_00.jpg',
-    backdropUrl: 'https://cms-assets.tutsplus.com/cdn-cgi/image/width=850/uploads/users/403/posts/108486/final_image/ghostbusters_logo_final_00.jpg',
+    id: 'jurassic',
+    name: 'Jurassic Park',
+    posterUrl: 'https://image.tmdb.org/t/p/original/njFixYzIxX8jsn6KMSEtAzi4avi.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/njFixYzIxX8jsn6KMSEtAzi4avi.jpg',
     characterCollections: [],
-    collectionIds: [2831], // Ghostbusters Collection
+    collectionIds: [328, 529891], // Jurassic Park Collection & Jurassic World Collection
+    defaultSort: 'timeline',
+  },
+  {
+    id: 'marvel',
+    name: 'Marvel',
+    posterUrl: 'https://e1.pxfuel.com/desktop-wallpaper/513/887/desktop-wallpaper-marvel-logo-marvel-studios-logo.jpg',
+    mediaIds: mcuMediaIds, // Keep curated list for MCU accuracy
+    characterCollections: marvelCharacterCollections,
+    backdropUrl: 'https://e1.pxfuel.com/desktop-wallpaper/513/887/desktop-wallpaper-marvel-logo-marvel-studios-logo.jpg',
+    defaultSort: 'timeline',
+  },
+  {
+    id: 'missionimpossible',
+    name: 'Mission: Impossible',
+    posterUrl: 'https://image.tmdb.org/t/p/w1280/j6Y1qjfoJcJ0S3ah9kifbI2bzq0.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/w1280/j6Y1qjfoJcJ0S3ah9kifbI2bzq0.jpg',
+    characterCollections: [],
+    collectionIds: [87359], // Mission: Impossible Collection
+    defaultSort: 'timeline',
+  },
+  {
+    id: 'starwars',
+    name: 'Star Wars',
+    posterUrl: 'https://lumiere-a.akamaihd.net/v1/images/star-wars-logo-black-1080_24157ac1.png',
+    backdropUrl: 'https://images.hdqwalls.com/wallpapers/star-wars-galaxy-of-adventures-4k-2b.jpg',
+    characterCollections: [],
+    collectionIds: [10], // Star Wars Collection
     defaultSort: 'timeline',
   },
   {
@@ -265,12 +283,12 @@ export const brands: Brand[] = [
     defaultSort: 'timeline',
   },
   {
-    id: 'jurassic',
-    name: 'Jurassic Park',
-    posterUrl: 'https://image.tmdb.org/t/p/original/njFixYzIxX8jsn6KMSEtAzi4avi.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/njFixYzIxX8jsn6KMSEtAzi4avi.jpg',
+    id: 'wizardingworld',
+    name: 'Wizarding World',
+    posterUrl: 'https://i.vimeocdn.com/video/741739046-36b4195f4e1f8d856a989d58ebb9973af16e630d57bf400434b2a37a8319d5d8-d?f=webp',
+    backdropUrl: 'https://i.vimeocdn.com/video/741739046-36b4195f4e1f8d856a989d58ebb9973af16e630d57bf400434b2a37a8319d5d8-d?f=webp',
     characterCollections: [],
-    collectionIds: [328, 529891], // Jurassic Park Collection & Jurassic World Collection
+    collectionIds: [1241, 404609], // Harry Potter Collection & Fantastic Beasts Collection
     defaultSort: 'timeline',
   }
 ];
