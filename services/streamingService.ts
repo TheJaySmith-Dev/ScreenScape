@@ -37,7 +37,7 @@ export const supportedProviders: StreamingProviderInfo[] = [
     name: 'HBO Max',
     logoUrl: 'https://www.hbomaxpartners.com/_next/static/media/HBO-Max-Iridescent.2d4d755b.png',
     bgColor: '#000000',
-    hoverGifUrl: 'https://media.giphy.com/media/l4Ep3mmdwgnsqJtV6/giphy.gif',
+    hoverGifUrl: 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExdjBhNmxhbTc3Y295d2R2dzU0cXdmODhkYjVsMjZydTVjdWx4dGlnbyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/wzK2hDKussGKwa7CiB/giphy.gif',
     borderColor: '#FFFFFF',
   },
   {
