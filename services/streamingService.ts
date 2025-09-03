@@ -27,9 +27,10 @@ export const supportedProviders: StreamingProviderInfo[] = [
     id: 9,
     key: 'prime',
     name: 'Prime Video',
-    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Prime_Video_logo.svg',
-    bgColor: '#00A8E1',
-    hoverGifUrl: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExN3ZzOHp4eGg2NThnYXgyOW96d2RnbW13MnFuN2kzcTFwZWdxbmxsbiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/9J1rsK6c84wsQ2r5sA/giphy.gif'
+    logoUrl: 'https://asset.brandfetch.io/idvZo_bHzX/id3bA7Abq6.svg',
+    bgColor: '#0F79AF',
+    hoverGifUrl: 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExN2o0NnR6MXRhMmV6eTFiN2dpejF6aTE1bXFvZnJmMWJ4dDY4dHljZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/gvfw1b9opaAFgOTBDI/giphy.gif',
+    borderColor: '#0F171E',
   },
   {
     id: 1899,
