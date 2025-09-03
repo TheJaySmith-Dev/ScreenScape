@@ -1,0 +1,26 @@
+{
+  "short_name": "WatchNow",
+  "name": "WatchNow",
+  "description": "A sleek movie and TV show recommendation platform, featuring metadata from TMDb. Discover your next favorite watch with a stunning liquid glass interface.",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#111827",
+  "background_color": "#111827"
+}
