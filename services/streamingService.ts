@@ -39,4 +39,13 @@ export const supportedProviders: StreamingProviderInfo[] = [
     bgColor: '#3E008D',
     hoverGifUrl: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ3N0a2l4bHljYjU2dWNuaGhyNjJ0b2NtcXVpODN1OTZzcjVjZ2xidCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o72F5tx9CEdwAwg12/giphy.gif'
   },
+  {
+    id: 531,
+    key: 'paramount',
+    name: 'Paramount+',
+    logoUrl: 'https://cdn.brandfetch.io/idU9biO3N_/w/276/h/172/theme/light/logo.png?c=1bxid64Mup7aczewSAYMX&t=1722978265002',
+    bgColor: '#0059F1',
+    hoverGifUrl: 'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExZXN4NWZkZzB5MzRwOXI5YmY1dGhpa3JrbHFkMHQ5ZzRnbDlpNzVmbyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/alfSqlC9s7wdqDAOZY/giphy.gif',
+    borderColor: '#FFFFFF',
+  },
 ];
