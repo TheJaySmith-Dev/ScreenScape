@@ -35,11 +35,10 @@ export const supportedProviders: StreamingProviderInfo[] = [
     id: 1899,
     key: 'max',
     name: 'Max',
-    logoUrl: 'https://deadline.com/wp-content/uploads/2025/05/HBO-Max.jpg?w=1024',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/Max_logo.svg',
     bgColor: '#3E008D',
     hoverGifUrl: 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExNnRmeDgyc24zaWEzZnc2ZmI0ZmRyd2dnN3p0MGJiMzZuN2plOWxudSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/wzK2hDKussGKwa7CiB/giphy.gif',
-    borderColor: '#030328',
-    edgeToEdge: true,
+    borderColor: '#FFFFFF',
   },
   {
     id: 531,
