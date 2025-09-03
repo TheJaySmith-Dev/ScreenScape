@@ -27,7 +27,7 @@ export const supportedProviders: StreamingProviderInfo[] = [
     id: 9,
     key: 'prime',
     name: 'Prime Video',
-    logoUrl: 'https://asset.brandfetch.io/idvZo_bHzX/id3bA7Abq6.svg',
+    logoUrl: 'https://asset.brandfetch.io/idvZo_bHzX/idwKxAF1Yy.svg',
     bgColor: '#0F79AF',
     hoverGifUrl: 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExN2o0NnR6MXRhMmV6eTFiN2dpejF6aTE1bXFvZnJmMWJ4dDY4dHljZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/gvfw1b9opaAFgOTBDI/giphy.gif',
     borderColor: '#0F171E',
