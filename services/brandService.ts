@@ -1,4 +1,5 @@
 
+
 import type { Brand } from '../types.ts';
 
 // This is a curated list of MCU films in release order to ensure accuracy
@@ -248,8 +249,8 @@ export const brands: Brand[] = [
   {
     id: 'johnwick',
     name: 'John Wick',
-    posterUrl: 'https://image.tmdb.org/t/p/original/68PWQWTJJrDx48kIDDGaQryfTUS.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/68PWQWTJJrDx48kIDDGaQryfTUS.jpg',
+    posterUrl: 'https://image.tmdb.org/t/p/original/5tyUWbbTrxonXBgzivWo9hZUZY.jpg',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/5tyUWbbTrxonXBgzivWo9hZUZY.jpg',
     characterCollections: [],
     collectionIds: [531241], // John Wick Collection
     defaultSort: 'timeline',
