@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 import type { Brand } from '../types.ts';
 
 // This is a curated list of MCU films in release order to ensure accuracy
@@ -337,8 +330,11 @@ export const brands: Brand[] = [
   {
     id: 'jamesbond',
     name: 'James Bond',
-    posterUrl: 'https://image.tmdb.org/t/p/w1280/A6N0JJonAz5Gk0trIqvhGOHLSzi.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/w1280/A6N0JJonAz5Gk0trIqvhGOHLSzi.jpg',
+    posterUrl: '', // Not used when logoUrl is present, but required by type.
+    logoUrl: 'https://images.seeklogo.com/logo-png/0/1/james-bond-007-logo-png_seeklogo-58.png',
+    bgColor: '#FFFFFF',
+    borderColor: '#FFD700',
+    hoverGifUrl: 'https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExcHl2eDV5YTc4M25ldm56bGZiMm5oMmRnbGUydGQ3Nm54ZjF2aWxvNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/uuRFi1O4aEH0qVR0wJ/giphy.gif',
     characterCollections: [],
     collectionIds: [645], // James Bond Collection
     defaultSort: 'timeline',
