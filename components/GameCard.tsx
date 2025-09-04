@@ -33,7 +33,7 @@ export const GameCard: React.FC<GameCardProps> = ({ movie, showBoxOffice, result
                 <h3 className="text-xl font-bold truncate">{movie.title}</h3>
                 <p className="text-sm text-gray-300">{movie.releaseYear}</p>
                 {showBoxOffice && (
-                    <p className="text-2xl font-semibold mt-2 text-green-300 fade-in" style={{ animationDelay: '200ms'}}>
+                    <p className="text-2xl font-semibold mt-2 text-green-300 fade-in" style={{opacity: 0, animationDelay: '200ms'}}>
                         {formatBoxOffice(movie.boxOffice)}
                     </p>
                 )}

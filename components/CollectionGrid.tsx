@@ -13,12 +13,12 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({ collections, onS
   }
 
   return (
-    <div className="w-full max-w-7xl grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+    <div className="w-full max-w-7xl grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
       {collections.map((collection, index) => (
         <div 
           key={collection.id} 
           className="fade-in" 
-          style={{ animationDelay: `${index * 100}ms` }}
+          style={{ animationDelay: `${index * 100}ms`, opacity: 0 }}
         >
           <CollectionCard collection={collection} onSelect={() => onSelect(collection)} />
         </div>

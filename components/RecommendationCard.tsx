@@ -14,7 +14,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({ media, o
     return (
       <div
         onClick={onSelect}
-        className="group cursor-pointer rounded-2xl overflow-hidden glass-panel hover:border-white/50 transition-all duration-300 transform hover:scale-105 aspect-[2/3] flex flex-col justify-center items-center text-center p-4"
+        className="group cursor-pointer rounded-3xl overflow-hidden glass-panel hover:border-blue-400/50 transition-all duration-300 transform hover:scale-105 aspect-[2/3] flex flex-col justify-center items-center text-center p-4"
       >
         <h3 className="text-gray-800 text-lg font-bold leading-tight">
           {media.title}
@@ -28,7 +28,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({ media, o
   return (
     <div
       onClick={onSelect}
-      className="group cursor-pointer rounded-2xl overflow-hidden glass-panel transition-all duration-300 transform hover:scale-105 hover:shadow-2xl aspect-[2/3] relative flex flex-col justify-end text-white"
+      className="group cursor-pointer rounded-3xl overflow-hidden glass-panel transition-all duration-300 transform hover:scale-105 hover:shadow-[0_0_25px_rgba(100,100,150,0.25)] aspect-[2/3] relative flex flex-col justify-end text-white"
       tabIndex={0}
       role="button"
       aria-label={`View details for ${media.title}`}
@@ -40,12 +40,13 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({ media, o
         className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
         loading="lazy"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent group-hover:from-black/90 transition-all duration-300" />
-      <div className="relative p-3 z-10">
-        <h3 className="font-semibold text-sm leading-tight drop-shadow-lg truncate">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+      <div className="shimmer-effect absolute inset-0" />
+      <div className="relative p-4 z-10">
+        <h3 className="font-semibold text-base leading-tight drop-shadow-lg truncate">
           {media.title}
         </h3>
-        <p className="text-xs text-gray-300">{media.releaseYear}</p>
+        <p className="text-sm text-gray-300">{media.releaseYear}</p>
       </div>
     </div>
   );

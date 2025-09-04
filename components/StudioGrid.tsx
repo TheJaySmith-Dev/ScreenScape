@@ -13,12 +13,12 @@ export const StudioGrid: React.FC<StudioGridProps> = ({ studios, onSelect }) => 
   }
 
   return (
-    <div className="w-full max-w-7xl grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 fade-in">
+    <div className="w-full max-w-7xl grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 fade-in">
       {studios.map((studio, index) => (
         <div 
           key={studio.id} 
           className="fade-in" 
-          style={{ animationDelay: `${index * 100}ms` }}
+          style={{ animationDelay: `${index * 100}ms`, opacity: 0 }}
         >
           <StudioCard studio={studio} onSelect={() => onSelect(studio)} />
         </div>

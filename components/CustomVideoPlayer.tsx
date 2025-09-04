@@ -210,11 +210,11 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId, o
   }, [isPlaying]);
 
   const progressStyle = {
-    background: `linear-gradient(to right, #ffffff ${progress}%, rgba(255, 255, 255, 0.3) ${progress}%)`,
+    background: `linear-gradient(to right, #ffffff ${progress}%, rgba(255, 255, 255, 0.2) ${progress}%)`,
   };
 
   const volumeStyle = {
-    background: `linear-gradient(to top, #ffffff ${volume * 100}%, rgba(255, 255, 255, 0.3) ${volume * 100}%)`,
+    background: `linear-gradient(to top, #ffffff ${volume * 100}%, rgba(255, 255, 255, 0.2) ${volume * 100}%)`,
   };
 
 
@@ -225,7 +225,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId, o
     >
       <div
         ref={playerContainerRef}
-        className="relative w-full max-w-4xl aspect-video bg-black/40 backdrop-blur-lg border border-white/20 rounded-3xl shadow-2xl overflow-hidden group/player"
+        className="relative w-full max-w-4xl aspect-video bg-black/40 backdrop-blur-lg border border-white/10 rounded-2xl shadow-2xl overflow-hidden group/player"
         onClick={(e) => e.stopPropagation()}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => isPlaying && setShowControls(false)}
@@ -240,7 +240,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId, o
 
         {/* Controls Overlay */}
         <div
-          className={`absolute inset-0 flex flex-col justify-between p-4 transition-opacity duration-300 text-white ${
+          className={`absolute inset-0 flex flex-col justify-between p-4 transition-opacity duration-300 backdrop-blur-sm ${
             showControls ? 'opacity-100' : 'opacity-0'
           }`}
           style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent 50%, transparent 60%, rgba(0,0,0,0.4))' }}
@@ -249,7 +249,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId, o
            <div className="flex justify-end">
              <button
               onClick={onClose}
-              className="p-2 bg-black/40 rounded-full backdrop-blur-sm hover:bg-white/20 transition-colors"
+              className="p-2 bg-black/30 rounded-full backdrop-blur-sm hover:bg-white/20 transition-colors"
               aria-label="Close player"
             >
               <CloseIcon className="w-6 h-6" />
@@ -262,7 +262,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId, o
              onClick={togglePlay}
            >
              <button
-               className={`p-4 bg-black/40 rounded-full backdrop-blur-sm hover:bg-white/20 scale-125 transition-all duration-300 ${
+               className={`p-4 bg-black/30 rounded-full backdrop-blur-sm hover:bg-white/20 scale-125 transition-all duration-300 ${
                 isPlaying ? 'opacity-0 group-hover/player:opacity-100' : 'opacity-100'
                }`}
                aria-label={isPlaying ? 'Pause' : 'Play'}
@@ -298,7 +298,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId, o
                    <button onClick={toggleMute} className="p-2" aria-label={isMuted ? 'Unmute' : 'Mute'}>
                      {volume > 0 && !isMuted ? <VolumeUpIcon className="w-6 h-6"/> : <VolumeOffIcon className="w-6 h-6"/>}
                    </button>
-                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 bg-black/50 backdrop-blur-md rounded-lg opacity-0 group-hover/volume:opacity-100 transition-opacity pointer-events-none group-hover/volume:pointer-events-auto">
+                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-2 bg-black/40 backdrop-blur-md rounded-lg opacity-0 group-hover/volume:opacity-100 transition-opacity pointer-events-none group-hover/volume:pointer-events-auto">
                      <input
                       type="range"
                       min="0"
