@@ -18,8 +18,11 @@ export const MediaRow: React.FC<MediaRowProps> = ({ title, items, onSelect, anim
       className="w-full fade-in" 
       style={{ opacity: 0, animationDelay }}
     >
-      <h2 className="text-xl md:text-2xl font-bold mb-4 ml-4 md:ml-0 text-white" style={{textShadow: '0 2px 4px rgba(0,0,0,0.2)'}}>{title}</h2>
-      <div className="media-row flex overflow-x-auto space-x-4 pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="flex items-center gap-4 mb-4">
+        <h2 className="text-2xl md:text-3xl font-bold text-white/90 shrink-0" style={{textShadow: '0 2px 5px rgba(0,0,0,0.5)'}}>{title}</h2>
+        <div className="w-full h-px bg-white/20"></div>
+      </div>
+      <div className="media-row flex overflow-x-auto space-x-4 pb-4">
         {items.map((item, index) => (
           <div 
             key={`${item.id}-${index}`} 
