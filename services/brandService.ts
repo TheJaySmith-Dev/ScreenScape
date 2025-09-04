@@ -311,6 +311,7 @@ export const brands: Brand[] = [
     logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/c/c5/The-fast-and-the-furious-4.png',
     bgColor: '#FFFFFF',
     borderColor: '#000000',
+    hoverGifUrl: '',
     characterCollections: [],
     collectionIds: [9485], // The Fast and the Furious Collection
     defaultSort: 'timeline',
@@ -346,6 +347,7 @@ export const brands: Brand[] = [
     logoUrl: 'https://www.pngplay.com/wp-content/uploads/12/John-Wick-PNG-Clipart-Background-HD.png',
     bgColor: '#C9027B',
     borderColor: '#A8246A',
+    hoverGifUrl: '',
     characterCollections: [],
     collectionIds: [531241], // John Wick Collection
     defaultSort: 'timeline',

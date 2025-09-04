@@ -15,7 +15,7 @@ export const BrandCard: React.FC<BrandCardProps> = ({ brand, onSelect }) => {
     const defaultBgColor = '#111111';
     
     const bgColor = brand.bgColor || defaultBgColor;
-    const hoverGif = brand.hoverGifUrl || defaultHoverGifUrl;
+    const hoverGif = brand.hoverGifUrl === '' ? undefined : (brand.hoverGifUrl || defaultHoverGifUrl);
 
     const cardStyle = { 
       backgroundColor: bgColor,
@@ -36,11 +36,13 @@ export const BrandCard: React.FC<BrandCardProps> = ({ brand, onSelect }) => {
         aria-label={`View the ${brand.name} brand hub`}
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect()}
       >
-        <div
-          style={{ backgroundImage: `url(${hoverGif})` }}
-          className="absolute inset-0 bg-cover bg-center opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-          aria-hidden="true"
-        />
+        {hoverGif && (
+          <div
+            style={{ backgroundImage: `url(${hoverGif})` }}
+            className="absolute inset-0 bg-cover bg-center opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+            aria-hidden="true"
+          />
+        )}
         <img
           src={brand.logoUrl}
           alt={`${brand.name} logo`}
