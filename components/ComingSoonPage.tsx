@@ -25,7 +25,7 @@ export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ media, onSelectM
           <div 
             key={item.id} 
             className="fade-in" 
-            style={{ animationDelay: `${index * 100}ms`, opacity: 0 }}
+            style={{ animationDelay: `${index * 100}ms` }}
           >
             <ComingSoonCard media={item} onSelect={onSelectMedia} />
           </div>

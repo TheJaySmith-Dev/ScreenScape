@@ -20,7 +20,7 @@ export const PersonGrid: React.FC<PersonGridProps> = ({ people, onSelect }) => {
         <div 
           key={person.id} 
           className="fade-in" 
-          style={{ animationDelay: `${index * 100}ms`, opacity: 0 }}
+          style={{ animationDelay: `${index * 100}ms` }}
         >
           <PersonCard person={person} onSelect={() => onSelect(person)} />
         </div>

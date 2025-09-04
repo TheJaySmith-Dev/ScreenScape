@@ -18,7 +18,7 @@ export const StreamingGrid: React.FC<StreamingGridProps> = ({ providers, onSelec
         <div 
           key={provider.id} 
           className="fade-in" 
-          style={{ animationDelay: `${index * 100}ms`, opacity: 0 }}
+          style={{ animationDelay: `${index * 100}ms` }}
         >
           <StreamingCard provider={provider} onSelect={() => onSelect(provider)} />
         </div>

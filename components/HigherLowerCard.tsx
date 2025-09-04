@@ -100,7 +100,7 @@ export const HigherLowerCard: React.FC<HigherLowerCardProps> = ({ item, mode, sh
                 <h3 className="text-lg font-bold truncate drop-shadow-lg">{title}</h3>
                 <p className="text-sm text-gray-300">{subText}</p>
                 {showValue && (
-                    <p className="text-xl font-semibold mt-2 text-cyan-300 drop-shadow-lg fade-in" style={{opacity: 0, animationDelay: '200ms'}}>
+                    <p className="text-xl font-semibold mt-2 text-cyan-300 drop-shadow-lg fade-in" style={{ animationDelay: '200ms'}}>
                         {getDisplayValue(item, mode)}
                     </p>
                 )}

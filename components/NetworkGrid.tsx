@@ -18,7 +18,7 @@ export const NetworkGrid: React.FC<NetworkGridProps> = ({ networks, onSelect }) 
         <div 
           key={network.id} 
           className="fade-in" 
-          style={{ animationDelay: `${index * 100}ms`, opacity: 0 }}
+          style={{ animationDelay: `${index * 100}ms` }}
         >
           <NetworkCard network={network} onSelect={() => onSelect(network)} />
         </div>

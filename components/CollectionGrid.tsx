@@ -18,7 +18,7 @@ export const CollectionGrid: React.FC<CollectionGridProps> = ({ collections, onS
         <div 
           key={collection.id} 
           className="fade-in" 
-          style={{ animationDelay: `${index * 100}ms`, opacity: 0 }}
+          style={{ animationDelay: `${index * 100}ms` }}
         >
           <CollectionCard collection={collection} onSelect={() => onSelect(collection)} />
         </div>

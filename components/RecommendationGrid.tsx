@@ -18,7 +18,7 @@ export const RecommendationGrid: React.FC<RecommendationGridProps> = ({ recommen
         <div 
           key={media.id} 
           className="fade-in" 
-          style={{ animationDelay: `${index * 100}ms`, opacity: 0 }}
+          style={{ animationDelay: `${index * 100}ms` }}
         >
           <RecommendationCard media={media} onSelect={() => onSelect(media)} />
         </div>

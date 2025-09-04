@@ -18,7 +18,7 @@ export const StudioGrid: React.FC<StudioGridProps> = ({ studios, onSelect }) => 
         <div 
           key={studio.id} 
           className="fade-in" 
-          style={{ animationDelay: `${index * 100}ms`, opacity: 0 }}
+          style={{ animationDelay: `${index * 100}ms` }}
         >
           <StudioCard studio={studio} onSelect={() => onSelect(studio)} />
         </div>

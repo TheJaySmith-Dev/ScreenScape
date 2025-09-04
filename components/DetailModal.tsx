@@ -247,7 +247,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
       <div className="fixed inset-0 z-[-1]">
          <img src={backgroundImageUrl} alt="" className="w-full h-full object-cover opacity-30 blur-3xl scale-125" />
       </div>
-      <div className="w-full max-w-6xl mx-auto fade-in text-gray-800" style={{ opacity: 0 }}>
+      <div className="w-full max-w-6xl mx-auto fade-in text-gray-800">
         <div className="my-4">
             <button onClick={onClose} className="px-4 py-2 text-sm glass-panel rounded-full hover:bg-white/20 transition-colors">&larr; Back</button>
         </div>

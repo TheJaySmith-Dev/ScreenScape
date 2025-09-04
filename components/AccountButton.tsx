@@ -61,7 +61,7 @@ export const AccountButton: React.FC<AccountButtonProps> = ({ onSignInClick, use
             </button>
 
             {isMenuOpen && (
-                <div className="absolute top-full right-0 mt-2 w-64 glass-panel rounded-2xl shadow-lg z-50 fade-in text-gray-800" style={{ animationDuration: '200ms', opacity: 0 }}>
+                <div className="absolute top-full right-0 mt-2 w-64 glass-panel rounded-2xl shadow-lg z-50 fade-in text-gray-800" style={{ animationDuration: '200ms' }}>
                     <div className="p-4 border-b border-black/10">
                         <p className="font-semibold truncate">{currentUser.displayName || 'User'}</p>
                         <p className="text-sm text-gray-500 truncate">{currentUser.email}</p>

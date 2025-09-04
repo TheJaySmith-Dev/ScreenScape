@@ -20,7 +20,7 @@ export const BrandGrid: React.FC<BrandGridProps> = ({ brands, onSelect }) => {
         <div 
           key={brand.id} 
           className="fade-in" 
-          style={{ animationDelay: `${index * 100}ms`, opacity: 0 }}
+          style={{ animationDelay: `${index * 100}ms` }}
         >
           <BrandCard brand={brand} onSelect={() => onSelect(brand)} />
         </div>
