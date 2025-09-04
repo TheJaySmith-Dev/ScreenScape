@@ -342,8 +342,10 @@ export const brands: Brand[] = [
   {
     id: 'johnwick',
     name: 'John Wick',
-    posterUrl: 'https://image.tmdb.org/t/p/original/5tyUWbbTrxonXBgzivWo9hZUZY.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/5tyUWbbTrxonXBgzivWo9hZUZY.jpg',
+    posterUrl: '', // Not used when logoUrl is present, but required by type.
+    logoUrl: 'https://www.pngplay.com/wp-content/uploads/12/John-Wick-PNG-Clipart-Background-HD.png',
+    bgColor: '#C9027B',
+    borderColor: '#A8246A',
     characterCollections: [],
     collectionIds: [531241], // John Wick Collection
     defaultSort: 'timeline',
