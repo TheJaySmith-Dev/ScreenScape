@@ -6,7 +6,7 @@ import type { User, LikedItem, DislikedItem } from '../types.ts';
 
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
-const LOCAL_STORAGE_KEY_USER = 'watchnow_user';
+const LOCAL_STORAGE_KEY_USER = 'screenscape_user';
 
 // --- Auth API ---
 
@@ -57,7 +57,7 @@ export const logout = async (): Promise<void> => {
 
 // --- Preferences API ---
 
-const getPreferencesStorageKey = (email: string) => `watchnow_prefs_${email}`;
+const getPreferencesStorageKey = (email: string) => `screenscape_prefs_${email}`;
 
 interface Preferences {
     likes: LikedItem[];
@@ -96,7 +96,7 @@ export const savePreferences = async (email: string, likes: LikedItem[], dislike
 
 // --- TMDb API Key API ---
 
-const TMDB_API_KEY_STORAGE_KEY = 'watchnow_tmdb_api_key';
+const TMDB_API_KEY_STORAGE_KEY = 'screenscape_tmdb_api_key';
 
 /**
  * Saves the user-provided TMDb API key to local storage.

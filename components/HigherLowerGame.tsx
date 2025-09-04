@@ -18,9 +18,9 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 };
 
 const HIGH_SCORE_KEYS: Record<GameMode, string> = {
-    'box-office': 'watchnow_game_hs_boxoffice',
-    'popularity': 'watchnow_game_hs_popularity',
-    'actor-age': 'watchnow_game_hs_age',
+    'box-office': 'screenscape_game_hs_boxoffice',
+    'popularity': 'screenscape_game_hs_popularity',
+    'actor-age': 'screenscape_game_hs_age',
 };
 
 interface HigherLowerGameProps {
@@ -151,22 +151,22 @@ export const HigherLowerGame: React.FC<HigherLowerGameProps> = ({ mode, onExit }
             case 'start':
             case 'gameover':
                 return (
-                    <div className="text-center bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl p-8 max-w-lg mx-auto fade-in">
+                    <div className="text-center bg-white/30 backdrop-blur-md border border-black/10 rounded-2xl p-8 max-w-lg mx-auto fade-in">
                         {gameState === 'gameover' && (
-                             <h2 className="text-4xl font-bold text-red-400 mb-2">Game Over</h2>
+                             <h2 className="text-4xl font-bold text-red-500 mb-2">Game Over</h2>
                         )}
-                        <h1 className="text-4xl sm:text-5xl font-bold mb-4" style={{textShadow: '0 0 15px rgba(255,255,255,0.3)'}}>{gameDetails.title}</h1>
+                        <h1 className="text-4xl sm:text-5xl font-bold mb-4" style={{textShadow: '0 0 15px rgba(0,0,0,0.1)'}}>{gameDetails.title}</h1>
                         
                         {gameState === 'gameover' && (
-                             <p className="text-2xl mb-4">Final Streak: <span className="font-bold text-white">{streak}</span></p>
+                             <p className="text-2xl mb-4">Final Streak: <span className="font-bold text-gray-800">{streak}</span></p>
                         )}
-                        <p className="text-lg mb-8">High Score: <span className="font-bold text-yellow-300">{highScore}</span></p>
+                        <p className="text-lg mb-8">High Score: <span className="font-bold text-yellow-500">{highScore}</span></p>
 
                         <div className="flex gap-4 justify-center">
-                            <button onClick={onExit} className="px-6 py-3 text-lg font-bold text-white bg-white/5 border-2 border-white/10 rounded-full hover:bg-white/10 transition-colors">Back to CineQuiz</button>
+                            <button onClick={onExit} className="px-6 py-3 text-lg font-bold bg-black/5 border-2 border-black/10 rounded-full hover:bg-black/10 transition-colors">Back to CineQuiz</button>
                             <button
                                 onClick={startGame}
-                                className="px-8 py-3 text-lg font-bold text-white bg-white/10 border-2 border-white/20 rounded-full hover:bg-white/20 transition-all duration-300"
+                                className="px-8 py-3 text-lg font-bold bg-black/10 border-2 border-black/20 rounded-full hover:bg-black/20 transition-all duration-300"
                             >
                                {gameState === 'start' ? 'Play' : 'Play Again'}
                             </button>
@@ -179,22 +179,22 @@ export const HigherLowerGame: React.FC<HigherLowerGameProps> = ({ mode, onExit }
                 return (
                     <div className="w-full flex flex-col items-center gap-6 fade-in">
                         <div className="flex items-center gap-6">
-                            <button onClick={onExit} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Exit</button>
-                            <div className="text-center bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl px-6 py-2">
-                                <p className="text-2xl font-bold">Streak: <span className="text-yellow-300">{streak}</span></p>
+                            <button onClick={onExit} className="px-4 py-2 text-sm bg-black/5 hover:bg-black/10 rounded-full transition-colors">&larr; Exit</button>
+                            <div className="text-center bg-white/30 backdrop-blur-md border border-black/10 rounded-2xl px-6 py-2">
+                                <p className="text-2xl font-bold">Streak: <span className="text-yellow-500">{streak}</span></p>
                             </div>
                         </div>
                         <div className="flex flex-col md:flex-row items-center justify-center gap-8 w-full">
                             <HigherLowerCard item={currentItem} mode={mode} showValue={true} />
                             
-                            <div className="text-4xl font-bold text-white/50 hidden md:block">VS</div>
+                            <div className="text-4xl font-bold text-black/50 hidden md:block">VS</div>
 
                             <div className="flex flex-col items-center gap-4">
                                 <HigherLowerCard item={nextItem} mode={mode} showValue={gameState === 'revealing'} resultState={guessResult} />
                                 {gameState === 'playing' && (
                                 <div className="flex gap-4">
-                                    <button onClick={() => handleGuess('higher')} className="px-8 py-3 text-lg font-bold text-white bg-green-500/30 border-2 border-green-500/50 rounded-full hover:bg-green-500/50 transition-colors">Higher 🔼</button>
-                                    <button onClick={() => handleGuess('lower')} className="px-8 py-3 text-lg font-bold text-white bg-red-500/30 border-2 border-red-500/50 rounded-full hover:bg-red-500/50 transition-colors">Lower 🔽</button>
+                                    <button onClick={() => handleGuess('higher')} className="px-8 py-3 text-lg font-bold text-white bg-green-500/80 border-2 border-green-600/80 rounded-full hover:bg-green-500 transition-colors">Higher 🔼</button>
+                                    <button onClick={() => handleGuess('lower')} className="px-8 py-3 text-lg font-bold text-white bg-red-500/80 border-2 border-red-600/80 rounded-full hover:bg-red-500 transition-colors">Lower 🔽</button>
                                 </div>
                                 )}
                             </div>

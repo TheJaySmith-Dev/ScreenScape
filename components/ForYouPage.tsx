@@ -46,10 +46,10 @@ export const ForYouPage: React.FC<ForYouPageProps> = ({ onSelectMedia }) => {
 
   if (likes.length === 0) {
     return (
-      <div className="text-center text-gray-400 fade-in">
-        <h2 className="text-2xl font-bold mb-4 text-white">Your Personal Recommendations</h2>
+      <div className="text-center text-gray-600 fade-in">
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">Your Personal Recommendations</h2>
         <p>Start liking movies and TV shows to get personalized suggestions here.</p>
-        <p className="text-sm mt-2">Use the <span className="text-green-400">👍</span> button on any title's detail page.</p>
+        <p className="text-sm mt-2">Use the <span className="text-green-600">👍</span> button on any title's detail page.</p>
       </div>
     );
   }
@@ -59,7 +59,7 @@ export const ForYouPage: React.FC<ForYouPageProps> = ({ onSelectMedia }) => {
   }
 
   if (error) {
-    return <div className="text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>;
+    return <div className="text-red-600 bg-red-500/20 p-4 rounded-lg">{error}</div>;
   }
 
   return (

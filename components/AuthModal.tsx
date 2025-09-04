@@ -49,15 +49,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4 fade-in" onClick={onClose}>
+        <div className="fixed inset-0 bg-white/70 backdrop-blur-md flex items-center justify-center z-50 p-4 fade-in" onClick={onClose}>
             <div className="relative w-full max-w-sm glass-panel rounded-3xl p-8" onClick={e => e.stopPropagation()}>
-                <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full glass-panel text-white/70 hover:text-white transition-colors">
+                <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full glass-panel text-gray-600 hover:text-gray-900 transition-colors">
                     <CloseIcon className="w-6 h-6"/>
                 </button>
                 
                 {/* FIX: Cast style object to React.CSSProperties to allow for custom CSS variables. */}
-                <h2 className="text-2xl font-bold text-center mb-6 text-glow" style={{ "--glow-color": "rgba(100, 200, 255, 0.4)" } as React.CSSProperties}>Sign In</h2>
-                <p className="text-center text-gray-300 text-sm mb-6">Enter your email to sign in. No password required.</p>
+                <h2 className="text-2xl font-bold text-center mb-6 text-glow" style={{ "--glow-color": "rgba(67, 56, 202, 0.4)" } as React.CSSProperties}>Sign In</h2>
+                <p className="text-center text-gray-600 text-sm mb-6">Enter your email to sign in. No password required.</p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <input
@@ -66,12 +66,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                         onChange={e => setEmail(e.target.value)}
                         placeholder="Email"
                         required
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-cyan-300/50 focus:border-cyan-300/80 focus:outline-none transition-colors"
+                        className="w-full px-4 py-3 bg-black/5 border border-black/10 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/80 focus:outline-none transition-colors"
                     />
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full px-4 py-3 bg-cyan-500/30 hover:bg-cyan-500/50 border border-cyan-400/50 rounded-xl font-semibold transition-all duration-300 disabled:bg-gray-500/20 disabled:border-gray-500/50 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-3 bg-indigo-500/30 hover:bg-indigo-500/50 border border-indigo-500/50 rounded-xl font-semibold transition-all duration-300 disabled:bg-gray-500/20 disabled:border-gray-500/50 disabled:cursor-not-allowed"
                     >
                         {isLoading ? 'Signing In...' : 'Sign In'}
                     </button>

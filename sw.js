@@ -1,4 +1,4 @@
-const CACHE_NAME = 'watchnow-cache-v1';
+const CACHE_NAME = 'screenscape-cache-v1';
 const urlsToCache = [
   '/',
   '/index.html',

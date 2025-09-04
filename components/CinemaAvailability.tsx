@@ -16,7 +16,7 @@ export const CinemaAvailability: React.FC<CinemaAvailabilityProps> = ({ userLoca
 
     return (
         <div>
-            <h4 className="text-md font-semibold text-gray-300 mb-3 flex items-center gap-2">
+            <h4 className="text-md font-semibold text-gray-700 mb-3 flex items-center gap-2">
                 <TicketIcon className="w-5 h-5" />
                 <span>In Theaters Now</span>
             </h4>
@@ -27,7 +27,7 @@ export const CinemaAvailability: React.FC<CinemaAvailabilityProps> = ({ userLoca
                         href={`https://www.google.com/search?q=${encodeURIComponent(`${chain.name} ${movieTitle} showtimes`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-center p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors duration-200"
+                        className="text-center p-3 bg-black/5 hover:bg-black/10 border border-black/10 rounded-lg transition-colors duration-200"
                     >
                         <span className="text-sm font-medium">{chain.name}</span>
                     </a>

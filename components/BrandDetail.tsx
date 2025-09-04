@@ -1,4 +1,3 @@
-
 import React from 'react';
 // FIX: Import correct and consistent types from the central types file.
 import type { Brand, MediaDetails, Collection, MediaTypeFilter, SortBy } from '../types.ts';
@@ -44,14 +43,14 @@ export const BrandDetail: React.FC<BrandDetailProps> = ({
                         alt={`${brand.name} backdrop`} 
                         className="w-full h-full object-cover opacity-20" 
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/80 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-transparent" />
                 </div>
             ) : (
-                <div className="fixed inset-0 z-0 bg-gray-900" />
+                <div className="fixed inset-0 z-0 bg-gray-100" />
             )}
             <div className="relative z-10 w-full max-w-7xl fade-in">
                 <div className="flex items-center gap-4 mb-6">
-                    <button onClick={onBack} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back to Brands</button>
+                    <button onClick={onBack} className="px-4 py-2 text-sm bg-black/5 hover:bg-black/10 rounded-full transition-colors">&larr; Back to Brands</button>
                     <h2 className="text-3xl font-bold">{brand.name}</h2>
                 </div>
 

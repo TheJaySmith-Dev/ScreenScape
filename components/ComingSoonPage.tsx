@@ -10,8 +10,8 @@ interface ComingSoonPageProps {
 export const ComingSoonPage: React.FC<ComingSoonPageProps> = ({ media, onSelectMedia }) => {
   if (media.length === 0) {
     return (
-        <div className="text-center text-gray-400 fade-in">
-            <h2 className="text-2xl font-bold mb-4 text-white">Coming Soon</h2>
+        <div className="text-center text-gray-600 fade-in">
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">Coming Soon</h2>
             <p>Could not find any upcoming movies or TV shows at this time.</p>
         </div>
     );

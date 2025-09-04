@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { SearchBar } from './components/SearchBar.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -535,7 +534,7 @@ const App: React.FC = () => {
   const renderHomePageContent = () => {
     if (isLoading && !selectedStudio && !selectedBrand && !selectedProvider && !selectedNetwork && !selectedPerson) return <LoadingSpinner />;
     if (error && recommendations.length === 0 && !selectedStudio && !selectedBrand && !selectedProvider && !selectedNetwork && !selectedPerson) {
-        return <div className="text-red-400 glass-panel p-4 rounded-2xl">{error}</div>;
+        return <div className="text-red-500 glass-panel p-4 rounded-2xl">{error}</div>;
     }
     
     if (recommendations.length > 0) {
@@ -546,7 +545,7 @@ const App: React.FC = () => {
       return (
         <div className="w-full max-w-7xl">
             <div className="flex items-center gap-4 mb-6">
-                <button onClick={() => window.location.hash = '#/studios'} className="px-4 py-2 text-sm glass-panel rounded-full hover:bg-white/10 transition-colors">&larr; Back to Studios</button>
+                <button onClick={() => window.location.hash = '#/studios'} className="px-4 py-2 text-sm glass-panel rounded-full hover:bg-black/5 transition-colors">&larr; Back to Studios</button>
                 <h2 className="text-3xl font-bold">{selectedStudio.name}</h2>
             </div>
             <StudioFilters
@@ -578,7 +577,7 @@ const App: React.FC = () => {
       return (
         <div className="w-full max-w-7xl">
           <div className="flex items-center gap-4 mb-6">
-            <button onClick={() => window.location.hash = '#/streaming'} className="px-4 py-2 text-sm glass-panel rounded-full hover:bg-white/10 transition-colors">&larr; Back to Services</button>
+            <button onClick={() => window.location.hash = '#/streaming'} className="px-4 py-2 text-sm glass-panel rounded-full hover:bg-black/5 transition-colors">&larr; Back to Services</button>
             <h2 className="text-3xl font-bold">{selectedProvider.name}</h2>
           </div>
           {isProviderMediaLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={providerMedia} onSelect={navigateToMedia} />}
@@ -590,7 +589,7 @@ const App: React.FC = () => {
       return (
         <div className="w-full max-w-7xl">
           <div className="flex items-center gap-4 mb-6">
-            <button onClick={() => window.location.hash = '#/networks'} className="px-4 py-2 text-sm glass-panel rounded-full hover:bg-white/10 transition-colors">&larr; Back to Networks</button>
+            <button onClick={() => window.location.hash = '#/networks'} className="px-4 py-2 text-sm glass-panel rounded-full hover:bg-black/5 transition-colors">&larr; Back to Networks</button>
             <h2 className="text-3xl font-bold">{selectedNetwork.name}</h2>
           </div>
           {isLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={networkMedia} onSelect={navigateToMedia} />}
@@ -602,7 +601,7 @@ const App: React.FC = () => {
       return (
         <div className="w-full max-w-7xl">
             <div className="flex items-center gap-4 mb-6">
-                <button onClick={() => window.location.hash = '#/people'} className="px-4 py-2 text-sm glass-panel rounded-full hover:bg-white/10 transition-colors">&larr; Back to Talent</button>
+                <button onClick={() => window.location.hash = '#/people'} className="px-4 py-2 text-sm glass-panel rounded-full hover:bg-black/5 transition-colors">&larr; Back to Talent</button>
                 <h2 className="text-3xl font-bold">{selectedPerson.name}</h2>
             </div>
             {isLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={personMedia} onSelect={navigateToMedia} />}
@@ -664,11 +663,11 @@ const App: React.FC = () => {
   const isGameActive = activeTab === 'game' && !selectedItem && !selectedActor;
 
   return (
-    <div className={`text-white min-h-screen font-sans`}>
+    <div className={`min-h-screen font-sans`}>
       {isApiKeyModalOpen && <ApiKeyModal onSave={handleSaveApiKey} />}
 
       {!apiKey && !isApiKeyModalOpen && (
-         <div className="fixed inset-0 bg-gray-900 z-[100] flex items-center justify-center">
+         <div className="fixed inset-0 bg-gray-100 z-[100] flex items-center justify-center">
             <LoadingSpinner />
          </div>
       )}
@@ -676,10 +675,10 @@ const App: React.FC = () => {
       {apiKey && (
         <>
         {isVpnBlocked === true && (
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
             <div className="max-w-md text-center glass-panel p-8 rounded-2xl border-red-500/50">
-                <h2 className="text-2xl font-bold text-red-400 mb-4">VPN/Proxy Detected</h2>
-                <p className="text-gray-300">
+                <h2 className="text-2xl font-bold text-red-500 mb-4">VPN/Proxy Detected</h2>
+                <p className="text-gray-700">
                 This service is not available when using a VPN or proxy. Please disable it and refresh the page to continue.
                 </p>
             </div>
@@ -687,7 +686,7 @@ const App: React.FC = () => {
         )}
         
         {isVpnBlocked === null && (
-            <div className="fixed inset-0 bg-gray-900 z-[100] flex items-center justify-center">
+            <div className="fixed inset-0 bg-gray-100 z-[100] flex items-center justify-center">
                 <LoadingSpinner />
             </div>
         )}
@@ -717,17 +716,17 @@ const App: React.FC = () => {
                 <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <header className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
                         <a href="#/home" className="flex items-center gap-3 group">
-                            <svg className="w-10 h-10 text-cyan-300 group-hover:text-cyan-200 transition-colors duration-300 drop-shadow-[0_0_8px_rgba(0,220,255,0.5)]" viewBox="0 0 24 24" fill="currentColor">
+                            <svg className="w-10 h-10 text-cyan-600 group-hover:text-cyan-700 transition-colors duration-300 drop-shadow-[0_0_8px_rgba(22,163,175,0.4)]" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M20 4h-4l-4-4-4 4H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H4V6h4.52l4-4 4 4H20v14zM12 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                             </svg>
-                            <span className="text-2xl sm:text-3xl font-bold tracking-tight text-glow transition-all duration-300 group-hover:brightness-125">WatchNow</span>
+                            <span className="text-2xl sm:text-3xl font-bold tracking-tight text-glow transition-all duration-300 group-hover:brightness-95">ScreenScape</span>
                         </a>
                         <div className="flex items-center gap-3">
                             <a 
                                 href="https://github.com/TheJaySmith-Dev/WatchNow" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="p-3 glass-panel rounded-full text-white transition-all duration-300 hover:bg-white/10 hover:scale-105"
+                                className="p-3 glass-panel rounded-full text-gray-800 transition-all duration-300 hover:bg-black/5 hover:scale-105"
                                 aria-label="View source code on GitHub"
                             >
                                 <GitHubIcon className="w-6 h-6" />

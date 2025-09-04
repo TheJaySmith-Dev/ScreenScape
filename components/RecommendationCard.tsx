@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { MediaDetails } from '../types.ts';
 
@@ -17,10 +16,10 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({ media, o
         onClick={onSelect}
         className="group cursor-pointer rounded-3xl overflow-hidden glass-panel hover:border-blue-400/50 transition-all duration-300 transform hover:scale-105 aspect-[2/3] flex flex-col justify-center items-center text-center p-4"
       >
-        <h3 className="text-white text-lg font-bold leading-tight drop-shadow-lg">
+        <h3 className="text-gray-800 text-lg font-bold leading-tight">
           {media.title}
         </h3>
-        <p className="text-gray-400 text-sm mt-2">{media.releaseYear}</p>
+        <p className="text-gray-600 text-sm mt-2">{media.releaseYear}</p>
       </div>
     );
   }
@@ -29,7 +28,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({ media, o
   return (
     <div
       onClick={onSelect}
-      className="group cursor-pointer rounded-3xl overflow-hidden glass-panel transition-all duration-300 transform hover:scale-105 hover:shadow-[0_0_25px_rgba(150,200,255,0.25)] aspect-[2/3] relative flex flex-col justify-end text-white"
+      className="group cursor-pointer rounded-3xl overflow-hidden glass-panel transition-all duration-300 transform hover:scale-105 hover:shadow-[0_0_25px_rgba(100,100,150,0.25)] aspect-[2/3] relative flex flex-col justify-end text-white"
       tabIndex={0}
       role="button"
       aria-label={`View details for ${media.title}`}

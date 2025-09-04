@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import type { ActorDetails, MediaDetails } from '../types.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
@@ -14,9 +13,9 @@ const ActorInfo: React.FC<{ icon: React.ReactNode; label: string; value: string 
   if (!value) return null;
   return (
     <div className="flex items-start gap-3">
-      <div className="text-gray-400 mt-1">{icon}</div>
+      <div className="text-gray-500 mt-1">{icon}</div>
       <div>
-        <p className="font-semibold text-white">{value}</p>
+        <p className="font-semibold text-gray-800">{value}</p>
         <p className="text-xs text-gray-500">{label}</p>
       </div>
     </div>
@@ -41,7 +40,7 @@ export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMed
   return (
     <div className="w-full max-w-7xl fade-in">
       <div className="flex items-center gap-4 mb-6">
-        <button onClick={onBack} className="px-4 py-2 text-sm bg-white/10 hover:bg-white/20 rounded-full transition-colors">&larr; Back</button>
+        <button onClick={onBack} className="px-4 py-2 text-sm bg-black/5 hover:bg-black/10 rounded-full transition-colors">&larr; Back</button>
       </div>
 
       <div className="flex flex-col md:flex-row gap-8 mb-12">
@@ -56,11 +55,11 @@ export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMed
           </div>
           
           <h2 className="text-xl font-semibold mb-2">Biography</h2>
-          <p className="text-gray-300 leading-relaxed">
+          <p className="text-gray-600 leading-relaxed">
             {showFullBio ? actor.biography : truncatedBio}
           </p>
           {canTruncate && (
-            <button onClick={() => setShowFullBio(!showFullBio)} className="text-blue-400 hover:text-blue-300 font-semibold mt-2">
+            <button onClick={() => setShowFullBio(!showFullBio)} className="text-blue-600 hover:text-blue-500 font-semibold mt-2">
               {showFullBio ? 'Read Less' : 'Read More'}
             </button>
           )}
