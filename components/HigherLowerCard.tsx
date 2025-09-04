@@ -21,7 +21,7 @@ const formatBoxOffice = (amount: number): string => {
 };
 
 const formatPopularity = (popularity: number): string => {
-    return `Popularity: ${Math.round(popularity)}`;
+    return `${Math.round(popularity).toLocaleString()} Popularity`;
 };
 
 const calculateAge = (birthday: string): number => {
@@ -79,7 +79,7 @@ export const HigherLowerCard: React.FC<HigherLowerCardProps> = ({ item, mode, sh
     
     return (
         <div 
-            className={`relative aspect-[2/3] w-full max-w-[300px] glass-panel rounded-3xl shadow-lg transition-all duration-500 ${animationClass}`}
+            className={`relative aspect-[2/3] w-full max-w-[280px] glass-panel rounded-3xl shadow-lg transition-all duration-500 ${animationClass}`}
         >
             <img 
                 src={imageUrl}
@@ -88,7 +88,7 @@ export const HigherLowerCard: React.FC<HigherLowerCardProps> = ({ item, mode, sh
             />
             
             {/* Glossy highlight */}
-            <div className="absolute inset-0 rounded-3xl" style={{background: "radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.1), transparent 40%)"}}></div>
+            <div className="absolute inset-0 rounded-3xl" style={{background: "radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.2), transparent 50%)"}}></div>
             
             {/* Crack Effect */}
             <div className={`crack-overlay ${resultState === 'incorrect' ? 'show-crack' : ''}`}>
@@ -97,10 +97,10 @@ export const HigherLowerCard: React.FC<HigherLowerCardProps> = ({ item, mode, sh
 
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent z-4 rounded-3xl" />
             <div className="absolute bottom-0 left-0 right-0 p-4 text-white z-10">
-                <h3 className="text-xl font-bold truncate drop-shadow-lg">{title}</h3>
+                <h3 className="text-lg font-bold truncate drop-shadow-lg">{title}</h3>
                 <p className="text-sm text-gray-300">{subText}</p>
                 {showValue && (
-                    <p className="text-2xl font-semibold mt-2 text-cyan-400 drop-shadow-lg fade-in" style={{opacity: 0, animationDelay: '200ms'}}>
+                    <p className="text-xl font-semibold mt-2 text-cyan-300 drop-shadow-lg fade-in" style={{opacity: 0, animationDelay: '200ms'}}>
                         {getDisplayValue(item, mode)}
                     </p>
                 )}

@@ -8,11 +8,17 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#111827">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
-      --glow-color: rgba(22, 163, 175, 0.4);
+      --glow-color: rgba(56, 189, 248, 0.5);
+    }
+
+    @keyframes gradient-animation {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
 
     body {
@@ -22,12 +28,10 @@
         sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      background-color: #f0f2f5;
-      background-image:
-        radial-gradient(at 20% 20%, hsla(190, 60%, 85%, 0.3) 0px, transparent 50%),
-        radial-gradient(at 80% 20%, hsla(210, 60%, 85%, 0.3) 0px, transparent 50%),
-        radial-gradient(at 20% 80%, hsla(170, 60%, 85%, 0.3) 0px, transparent 50%),
-        radial-gradient(at 80% 80%, hsla(200, 60%, 85%, 0.3) 0px, transparent 50%);
+      background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #1c1b3a);
+      background-size: 400% 400%;
+      animation: gradient-animation 25s ease infinite;
+      color: #ffffff;
     }
 
     #root:empty::before {
@@ -36,27 +40,28 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      color: #334155;
+      color: #f8fafc;
       font-size: 1.2rem;
       font-weight: 500;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; transform: translateY(12px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .fade-in {
-      animation: fadeIn 0.5s ease-out forwards;
+      animation: fadeIn 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
     }
     
     .text-glow {
-      text-shadow: 0 0 10px var(--glow-color, rgba(255,255,255,0.7));
+      text-shadow: 0 0 12px var(--glow-color, rgba(255,255,255,0.7));
     }
     
     .media-row {
       scrollbar-width: thin;
-      scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+      scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
     }
     .media-row::-webkit-scrollbar {
       height: 8px;
@@ -65,32 +70,21 @@
       background: transparent;
     }
     .media-row::-webkit-scrollbar-thumb {
-      background-color: rgba(0, 0, 0, 0.2);
+      background-color: rgba(255, 255, 255, 0.3);
       border-radius: 10px;
     }
     
-    .shimmer-effect {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(110deg, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0) 60%);
-      animation: shimmer 2s infinite linear;
-      background-size: 200% 100%;
-    }
-
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-
+    /* NEBULA GLASS UI */
     .glass-panel {
-      background-color: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(0, 0, 0, 0.1);
+      background-color: rgba(26, 28, 48, 0.5); /* Dark, semi-transparent base */
+      backdrop-filter: blur(24px) saturate(150%);
+      -webkit-backdrop-filter: blur(24px) saturate(150%);
+      border: 1px solid rgba(255, 255, 255, 0.1); /* Faint, crisp border */
+      box-shadow: 
+        inset 0 1px 1px rgba(255, 255, 255, 0.05), /* Inner "lit edge" effect */
+        0 8px 32px 0 rgba(0, 0, 0, 0.37); /* Outer shadow for depth */
     }
+
 
     .modal-open {
       overflow: hidden;
@@ -101,7 +95,7 @@
       width: 100%;
       height: 5px;
       border-radius: 5px;
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.3);
       outline: none;
       cursor: pointer;
     }
@@ -113,12 +107,13 @@
       border-radius: 50%;
       background: #ffffff;
       cursor: pointer;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
     }
     .volume-slider {
       -webkit-appearance: none;
       width: 8px;
       height: 70px;
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.3);
       outline: none;
       cursor: pointer;
       border-radius: 4px;
@@ -131,24 +126,25 @@
       border-radius: 50%;
       background: #ffffff;
       cursor: pointer;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
     }
     
     @keyframes correctGlow {
-      0% { box-shadow: 0 0 0 0 rgba(22, 192, 12, 0.7); }
-      100% { box-shadow: 0 0 0 10px rgba(22, 192, 12, 0); }
+      0% { box-shadow: 0 0 0 0 rgba(22, 192, 12, 0.7), 0 8px 32px 0 rgba(0, 0, 0, 0.1); }
+      100% { box-shadow: 0 0 0 10px rgba(22, 192, 12, 0), 0 8px 32px 0 rgba(0, 0, 0, 0.1); }
     }
     .correct-glow {
       animation: correctGlow 1s ease-out;
-      border-color: #16c00c !important;
+      border-color: rgba(34, 197, 94, 0.8) !important;
     }
 
     @keyframes incorrectGlow {
-      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-      100% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7), 0 8px 32px 0 rgba(0, 0, 0, 0.1); }
+      100% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0), 0 8px 32px 0 rgba(0, 0, 0, 0.1); }
     }
     .incorrect-glow {
       animation: incorrectGlow 1s ease-out;
-      border-color: #ef4444 !important;
+      border-color: rgba(239, 68, 68, 0.8) !important;
     }
 
     @keyframes shake {
@@ -178,14 +174,15 @@
 <body>
   <div id="root"></div>
   <script type="importmap">
-  {
-    "imports": {
-      "react": "https://aistudiocdn.com/react@^19.1.1",
-      "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-      "react/": "https://aistudiocdn.com/react@^19.1.1/"
-    }
+{
+  "imports": {
+    "react": "https://esm.sh/react@19.0.0-rc.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.0.0-rc.0/client",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/"
   }
-  </script>
+}
+</script>
   <script type="module" src="/index.tsx"></script>
   <script>
     if ('serviceWorker' in navigator) {

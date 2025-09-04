@@ -19,8 +19,8 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onSave }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-            <div className="w-full max-w-md text-center glass-panel p-8 rounded-3xl border-indigo-500/30">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+            <div className="w-full max-w-md text-center glass-panel p-8 rounded-3xl border-indigo-500/30 text-gray-800">
                 {/* FIX: Cast style object to React.CSSProperties to allow for custom CSS variables. */}
                 <h2 className="text-2xl font-bold text-indigo-600 mb-4 text-glow" style={{ "--glow-color": "rgba(67, 56, 202, 0.4)" } as React.CSSProperties}>TMDb API Key Required</h2>
                 <p className="text-gray-600 mb-6">
@@ -33,13 +33,13 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onSave }) => {
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
                         placeholder="Enter your TMDb API Key (v3 auth)"
-                        className="w-full px-4 py-3 text-gray-800 bg-black/5 border border-black/10 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/80 focus:outline-none transition-colors placeholder-gray-500"
+                        className="w-full px-4 py-3 text-gray-800 bg-white/50 border border-white/30 rounded-xl focus:ring-2 focus:ring-indigo-400/50 focus:border-indigo-400/80 focus:outline-none transition-colors placeholder-gray-500"
                         aria-label="TMDb API Key"
                     />
                     {error && <p className="text-red-500 text-sm">{error}</p>}
                     <button
                         type="submit"
-                        className="w-full px-4 py-3 bg-indigo-500/30 hover:bg-indigo-500/50 border border-indigo-500/50 rounded-xl font-semibold transition-all duration-300 disabled:bg-gray-500/20"
+                        className="w-full px-4 py-3 bg-indigo-500/80 text-white hover:bg-indigo-500 border border-indigo-500/50 rounded-xl font-semibold transition-all duration-300 disabled:bg-gray-500/50"
                     >
                         Save and Continue
                     </button>

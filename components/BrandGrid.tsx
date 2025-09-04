@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { BrandCard } from './BrandCard.tsx';
 import type { Brand } from '../types.ts';
@@ -14,7 +15,7 @@ export const BrandGrid: React.FC<BrandGridProps> = ({ brands, onSelect }) => {
   }
 
   return (
-    <div className="w-full max-w-7xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 fade-in">
+    <div className="w-full max-w-7xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 fade-in">
       {brands.map((brand, index) => (
         <div 
           key={brand.id} 

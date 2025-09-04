@@ -48,13 +48,13 @@ export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMed
           <img src={actor.profilePath} alt={actor.name} className="w-full rounded-2xl aspect-[2/3] object-cover" />
         </div>
         <div className="w-full">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4">{actor.name}</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-4">{actor.name}</h1>
           <div className="flex flex-wrap gap-x-8 gap-y-4 mb-6">
             <ActorInfo icon={<CakeIcon className="w-5 h-5" />} label="Birthday" value={formatDate(actor.birthday)} />
             <ActorInfo icon={<LocationMarkerIcon className="w-5 h-5" />} label="Place of Birth" value={actor.placeOfBirth} />
           </div>
           
-          <h2 className="text-xl font-semibold mb-2">Biography</h2>
+          <h2 className="text-lg font-semibold mb-2">Biography</h2>
           <p className="text-gray-600 leading-relaxed">
             {showFullBio ? actor.biography : truncatedBio}
           </p>
@@ -66,7 +66,7 @@ export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMed
         </div>
       </div>
 
-      <h2 className="text-3xl font-bold mb-6">Known For</h2>
+      <h2 className="text-2xl font-bold mb-6">Known For</h2>
       <RecommendationGrid recommendations={actor.filmography} onSelect={onSelectMedia} />
     </div>
   );
