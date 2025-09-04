@@ -192,6 +192,76 @@ const marvelCharacterCollections: Brand['characterCollections'] = [
     },
 ];
 
+const dcMediaIds: Brand['mediaIds'] = [
+    // DCEU
+    { id: 49521, type: 'movie' },   // Man of Steel (2013)
+    { id: 209112, type: 'movie' }, // Batman v Superman: Dawn of Justice (2016)
+    { id: 297761, type: 'movie' }, // Suicide Squad (2016)
+    { id: 297762, type: 'movie' }, // Wonder Woman (2017)
+    { id: 141052, type: 'movie' }, // Justice League (2017)
+    { id: 297802, type: 'movie' }, // Aquaman (2018)
+    { id: 287947, type: 'movie' },  // Shazam! (2019)
+    { id: 495764, type: 'movie' }, // Birds of Prey (2020)
+    { id: 464052, type: 'movie' }, // Wonder Woman 1984 (2020)
+    { id: 791373, type: 'movie' }, // Zack Snyder's Justice League (2021)
+    { id: 436969, type: 'movie' }, // The Suicide Squad (2021)
+    { id: 436270, type: 'movie' }, // Black Adam (2022)
+    { id: 594767, type: 'movie' }, // Shazam! Fury of the Gods (2023)
+    { id: 298618, type: 'movie' }, // The Flash (2023)
+    { id: 565770, type: 'movie' }, // Blue Beetle (2023)
+    { id: 572802, type: 'movie' }, // Aquaman and the Lost Kingdom (2023)
+    
+    // The Dark Knight Trilogy
+    { id: 272, type: 'movie' },    // Batman Begins (2005)
+    { id: 155, type: 'movie' },    // The Dark Knight (2008)
+    { id: 49026, type: 'movie' },  // The Dark Knight Rises (2012)
+
+    // Elseworlds / Standalone
+    { id: 414906, type: 'movie' }, // The Batman (2022)
+    { id: 475557, type: 'movie' }, // Joker (2019)
+    { id: 752, type: 'movie' },    // V for Vendetta (2006)
+    { id: 13183, type: 'movie' },  // Watchmen (2009)
+];
+
+const dcCharacterCollections: Brand['characterCollections'] = [
+    {
+        id: 263, // The Dark Knight Trilogy
+        name: 'The Dark Knight Trilogy',
+        posterUrl: 'https://image.tmdb.org/t/p/w500/lPEDA4lI2t272W8fEmu04uSjK01.jpg',
+        backdropUrl: 'https://image.tmdb.org/t/p/original/uVy02pL7pWOQB2Z0Yt2fAgCKK3.jpg',
+    },
+    {
+        id: 100001, // Custom Batman collection
+        name: 'Modern Batman',
+        posterUrl: 'https://image.tmdb.org/t/p/w500/7aB4i2j2N3m9lkoT5tFz2b0S94S.jpg',
+        backdropUrl: 'https://image.tmdb.org/t/p/original/dppnMubP2Gj2aK412x29pLQmAuS.jpg',
+        mediaIds: [
+            { id: 414906, type: 'movie' }, // The Batman
+            { id: 209112, type: 'movie' }, // BvS
+            { id: 141052, type: 'movie' }, // Justice League
+            { id: 791373, type: 'movie' }, // ZSJL
+        ]
+    },
+    {
+        id: 468552, // Wonder Woman Collection
+        name: 'Wonder Woman Collection',
+        posterUrl: 'https://image.tmdb.org/t/p/w500/8BsdQKy2v3iJ2EdA525T9f4L22a.jpg',
+        backdropUrl: 'https://image.tmdb.org/t/p/original/yFBd4K2trCOiVb4kL4K2aY2S6dG.jpg',
+    },
+    {
+        id: 100002, // Custom Superman collection
+        name: 'Modern Superman',
+        posterUrl: 'https://image.tmdb.org/t/p/w500/lrsOFzkR7N2JzE3j3p6bO2kG0I.jpg',
+        backdropUrl: 'https://image.tmdb.org/t/p/original/7msIZiG295l1ftN2B5vjSjvxN15.jpg',
+        mediaIds: [
+            { id: 49521, type: 'movie' }, // Man of Steel
+            { id: 209112, type: 'movie' }, // BvS
+            { id: 141052, type: 'movie' }, // Justice League
+            { id: 791373, type: 'movie' }, // ZSJL
+        ]
+    }
+];
+
 // FIX: Add a curated list of all Wizarding World movies to ensure both Harry Potter and Fantastic Beasts are included reliably.
 const wizardingWorldMediaIds: Brand['mediaIds'] = [
     // Harry Potter Series
@@ -217,6 +287,19 @@ export const brands: Brand[] = [
     backdropUrl: 'https://image.tmdb.org/t/p/original/cR2w1mVyiJ566scKTSL0PV6lSUd.jpg',
     characterCollections: [],
     collectionIds: [264], // Back to the Future Collection
+    defaultSort: 'timeline',
+  },
+  {
+    id: 'dc',
+    name: 'DC',
+    posterUrl: '', // Not used when logoUrl is present
+    logoUrl: 'https://cdn.brandfetch.io/idnLU4lJS1/w/313/h/313/theme/dark/logo.png?c=1bxid64Mup7aczewSAYMX&t=1722965181273',
+    backdropUrl: 'https://cdn.brandfetch.io/idnLU4lJS1/w/313/h/313/theme/dark/logo.png?c=1bxid64Mup7aczewSAYMX&t=1722965181273',
+    bgColor: '#0074E8',
+    borderColor: '#FFFFFF',
+    hoverGifUrl: 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExM2J0cXNiYzgweXo1OWNsNHBidWljaHNja2NmNG41cjZ3b2RkMWZqeSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/o14r7I9oazFSJ0AILr/giphy.gif',
+    mediaIds: dcMediaIds,
+    characterCollections: dcCharacterCollections,
     defaultSort: 'timeline',
   },
   {

@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import type { Brand } from '../types.ts';
 
@@ -8,26 +9,49 @@ interface BrandCardProps {
 }
 
 export const BrandCard: React.FC<BrandCardProps> = ({ brand, onSelect }) => {
-  const hasPoster = brand.posterUrl && !brand.posterUrl.includes('picsum.photos');
-  
-  // Text-based fallback
-  if (!hasPoster) {
+  // New style for brands with logos, backgrounds, and hover effects (like DC)
+  if (brand.logoUrl) {
+    const defaultHoverGifUrl = "https://media.giphy.com/media/TspR2cHt04uDMt0GrQ/giphy.gif";
+    const defaultBgColor = '#111111';
+    
+    const bgColor = brand.bgColor || defaultBgColor;
+    const hoverGif = brand.hoverGifUrl || defaultHoverGifUrl;
+
+    const cardStyle = { 
+      backgroundColor: bgColor,
+      ...(brand.borderColor && { borderColor: brand.borderColor })
+    };
+
+    const cardClassName = `relative group cursor-pointer aspect-video rounded-xl overflow-hidden backdrop-blur-sm transition-all duration-300 transform hover:scale-105 flex items-center justify-center border-2 ${
+      brand.borderColor ? 'hover:border-opacity-80' : 'border-white/10 hover:border-white/30'
+    }`;
+
     return (
       <div
         onClick={onSelect}
-        className="group cursor-pointer rounded-xl overflow-hidden bg-gray-800 border-2 border-gray-700/50 hover:border-blue-500/50 transition-all duration-300 transform hover:-translate-y-1 aspect-video flex flex-col justify-center items-center text-center p-4"
-        style={{
-          background: 'linear-gradient(to bottom, hsl(220, 13%, 25%), hsl(220, 14%, 18%))'
-        }}
+        className={cardClassName}
+        style={cardStyle}
+        role="button"
+        tabIndex={0}
+        aria-label={`View the ${brand.name} brand hub`}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect()}
       >
-        <h3 className="text-white text-xl lg:text-2xl font-bold leading-tight drop-shadow-lg">
-          {brand.name}
-        </h3>
+        <div
+          style={{ backgroundImage: `url(${hoverGif})` }}
+          className="absolute inset-0 bg-cover bg-center opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          aria-hidden="true"
+        />
+        <img
+          src={brand.logoUrl}
+          alt={`${brand.name} logo`}
+          className="relative w-full h-full object-contain p-4 sm:p-6 drop-shadow-[0_5px_5px_rgba(0,0,0,0.7)] transition-opacity duration-500 group-hover:opacity-0"
+          loading="lazy"
+        />
       </div>
     );
   }
-  
-  // Poster-based card with liquid glass effect
+
+  // Original poster-based card with liquid glass effect for other brands
   return (
     <div
       onClick={onSelect}

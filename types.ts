@@ -105,6 +105,11 @@ export interface Brand {
   mediaIds?: { id: number; type: 'movie' | 'tv' }[];
   collectionIds?: number[];
   defaultSort?: SortBy;
+  // New properties for richer brand cards
+  logoUrl?: string;
+  bgColor?: string;
+  hoverGifUrl?: string;
+  borderColor?: string;
 }
 
 export interface Person {
