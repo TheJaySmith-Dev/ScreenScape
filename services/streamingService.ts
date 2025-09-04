@@ -12,6 +12,9 @@ export const supportedProviders: StreamingProviderInfo[] = [
     hoverGifUrl: 'https://media.giphy.com/media/c69RGBBRK8SKwMO78n/giphy.gif',
     borderColor: '#E50914',
     edgeToEdge: true,
+    hubBgColor: '#FFFFFF',
+    hubLogoUrl: 'https://cdn.brandfetch.io/ideQwN5lBE/theme/light/logo.svg?c=1bxid64Mup7aczewSAYMX&t=1741362568562',
+    hubLogoHeight: 'h-6 md:h-8',
   },
   {
     id: 337,
@@ -22,6 +25,10 @@ export const supportedProviders: StreamingProviderInfo[] = [
     hoverGifUrl: 'https://lumiere-a.akamaihd.net/v1/images/disney_logo_animation_march_2024_27a0dafe.gif',
     borderColor: '#258792',
     edgeToEdge: true,
+    hubBgColor: '#258792',
+    hubLogoUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg',
+    hubLogoHeight: 'h-10 md:h-12',
+    hubLogoInvert: true,
   },
   {
     id: 9,
@@ -31,6 +38,9 @@ export const supportedProviders: StreamingProviderInfo[] = [
     bgColor: '#0F79AF',
     hoverGifUrl: 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExN2o0NnR6MXRhMmV6eTFiN2dpejF6aTE1bXFvZnJmMWJ4dDY4dHljZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/gvfw1b9opaAFgOTBDI/giphy.gif',
     borderColor: '#0F171E',
+    hubBgColor: '#0F79AF',
+    hubLogoUrl: 'https://cdn.brandfetch.io/idXRXV6qi8/w/320/h/60/theme/light/idvZo_bHzX.png?c=1bxid64Mup7aczewSAYMX&t=1712148633253',
+    hubLogoHeight: 'h-6 md:h-8',
   },
   {
     id: 1899,
@@ -40,6 +50,9 @@ export const supportedProviders: StreamingProviderInfo[] = [
     bgColor: '#000000',
     hoverGifUrl: 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExdjBhNmxhbTc3Y295d2R2dzU0cXdmODhkYjVsMjZydTVjdWx4dGlnbyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/wzK2hDKussGKwa7CiB/giphy.gif',
     borderColor: '#FFFFFF',
+    hubBgColor: '#030328',
+    hubLogoUrl: 'https://cdn.brandfetch.io/idKKo6p4ks/theme/light/logo.svg?c=1bxid64Mup7aczewSAYMX&t=1719475129913',
+    hubLogoHeight: 'h-6 md:h-8',
   },
   {
     id: 531,
@@ -49,5 +62,9 @@ export const supportedProviders: StreamingProviderInfo[] = [
     bgColor: '#0059F1',
     hoverGifUrl: 'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExZXN4NWZkZzB5MzRwOXI5YmY1dGhpa3JrbHFkMHQ5ZzRnbDlpNzVmbyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/alfSqlC9s7wdqDAOZY/giphy.gif',
     borderColor: '#FFFFFF',
+    hubBgColor: '#0059F1',
+    hubLogoUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/ea/Paramount%2B_logo.png',
+    hubLogoHeight: 'h-10 md:h-12',
+    hubLogoInvert: true,
   },
 ];

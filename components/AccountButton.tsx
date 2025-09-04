@@ -6,9 +6,10 @@ import type { UserLocation } from '../types.ts';
 interface AccountButtonProps {
     onSignInClick: () => void;
     userLocation: UserLocation | null;
+    theme?: 'dark' | 'light';
 }
 
-export const AccountButton: React.FC<AccountButtonProps> = ({ onSignInClick, userLocation }) => {
+export const AccountButton: React.FC<AccountButtonProps> = ({ onSignInClick, userLocation, theme = 'dark' }) => {
     const { currentUser, logout } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -31,11 +32,24 @@ export const AccountButton: React.FC<AccountButtonProps> = ({ onSignInClick, use
         };
     }, []);
 
+    const buttonClass = theme === 'light'
+        ? 'flex items-center gap-2 px-4 py-2 bg-gray-200/80 text-black rounded-full font-semibold transition-all duration-300 hover:bg-gray-300/80 hover:scale-105'
+        : 'flex items-center gap-2 px-4 py-2 glass-panel rounded-full font-semibold text-white transition-all duration-300 hover:bg-white/5 hover:scale-105';
+    
+    const dropdownClass = theme === 'light'
+        ? 'absolute top-full right-0 mt-2 w-64 bg-gray-200/80 border border-black/10 backdrop-blur-md rounded-2xl shadow-lg z-50 fade-in'
+        : 'absolute top-full right-0 mt-2 w-64 glass-panel rounded-2xl shadow-lg z-50 fade-in';
+    
+    const textPrimaryClass = theme === 'light' ? 'text-black' : 'text-white';
+    const textSecondaryClass = theme === 'light' ? 'text-gray-600' : 'text-gray-400';
+    const borderClass = theme === 'light' ? 'border-black/10' : 'border-white/10';
+
+
     if (!currentUser) {
         return (
             <button
                 onClick={onSignInClick}
-                className="flex items-center gap-2 px-4 py-2 glass-panel rounded-full font-semibold text-white transition-all duration-300 hover:bg-white/5 hover:scale-105"
+                className={buttonClass}
             >
                 <UserIcon className="w-5 h-5" />
                 <span>Sign In</span>
@@ -61,13 +75,13 @@ export const AccountButton: React.FC<AccountButtonProps> = ({ onSignInClick, use
             </button>
 
             {isMenuOpen && (
-                <div className="absolute top-full right-0 mt-2 w-64 glass-panel rounded-2xl shadow-lg z-50 fade-in" style={{ animationDuration: '200ms' }}>
-                    <div className="p-4 border-b border-white/10">
-                        <p className="font-semibold truncate text-white">{currentUser.displayName || 'User'}</p>
-                        <p className="text-sm text-gray-400 truncate">{currentUser.email}</p>
+                <div className={dropdownClass} style={{ animationDuration: '200ms' }}>
+                    <div className={`p-4 border-b ${borderClass}`}>
+                        <p className={`font-semibold truncate ${textPrimaryClass}`}>{currentUser.displayName || 'User'}</p>
+                        <p className={`text-sm truncate ${textSecondaryClass}`}>{currentUser.email}</p>
                     </div>
                     {userLocation?.name && (
-                        <div className="p-4 flex items-center gap-2 text-sm text-gray-300 border-b border-white/10">
+                        <div className={`p-4 flex items-center gap-2 text-sm border-b ${borderClass} ${textSecondaryClass}`}>
                             <GlobeIcon className="w-4 h-4" />
                             <span>{userLocation.name}</span>
                         </div>
@@ -75,7 +89,7 @@ export const AccountButton: React.FC<AccountButtonProps> = ({ onSignInClick, use
                     <div className="p-2">
                          <button
                             onClick={handleLogout}
-                            className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 rounded-md transition-colors"
+                            className={`w-full text-left px-4 py-2 text-sm rounded-md transition-colors ${theme === 'light' ? 'text-red-600 hover:bg-black/5' : 'text-red-400 hover:bg-white/5'}`}
                         >
                             Logout
                         </button>

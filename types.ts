@@ -191,6 +191,11 @@ export interface StreamingProviderInfo {
   hoverGifUrl?: string;
   borderColor?: string;
   edgeToEdge?: boolean;
+  // New properties for hub pages
+  hubBgColor?: string;
+  hubLogoUrl?: string;
+  hubLogoHeight?: string;
+  hubLogoInvert?: boolean;
 }
 
 // Types for the Higher or Lower game

@@ -50,7 +50,7 @@ import { PersonGrid } from './components/PersonGrid.tsx';
 
 
 type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'people' | 'studios' | 'brands' | 'streaming' | 'networks' | 'game';
-
+type AppTheme = 'dark' | 'light';
 
 const App: React.FC = () => {
   const [recommendations, setRecommendations] = useState<MediaDetails[]>([]);
@@ -67,6 +67,7 @@ const App: React.FC = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const [theme, setTheme] = useState<AppTheme>('dark');
 
   // State for Streaming hubs
   const [availableProviders, setAvailableProviders] = useState<StreamingProviderInfo[]>([]);
@@ -302,6 +303,25 @@ const App: React.FC = () => {
 
     return () => window.removeEventListener('hashchange', handleRouteChange, false);
   }, [isVpnBlocked, userLocation, availableProviders, brands, apiKey]); // Re-run if VPN status or brands change.
+
+  // Effect for dynamic hub background colors and themes
+  useEffect(() => {
+    if (selectedProvider?.hubBgColor) {
+        document.body.style.backgroundColor = selectedProvider.hubBgColor;
+        document.body.style.backgroundImage = 'none';
+        if (selectedProvider.key === 'netflix') {
+          setTheme('light');
+        } else {
+          setTheme('dark');
+        }
+    }
+    // Cleanup function to run when component unmounts OR when selectedProvider changes
+    return () => {
+        document.body.style.backgroundColor = '';
+        document.body.style.backgroundImage = '';
+        setTheme('dark');
+    };
+  }, [selectedProvider]);
 
 
   const handleSearch = useCallback(async (query: string) => {
@@ -574,11 +594,25 @@ const App: React.FC = () => {
     }
 
     if (selectedProvider) {
+      const isLightBg = selectedProvider.key === 'netflix';
+      const backButtonClass = `px-4 py-2 text-sm rounded-full transition-colors ${
+        isLightBg
+            ? 'bg-gray-200/80 text-black hover:bg-gray-300/80'
+            : 'glass-panel text-white hover:bg-white/5'
+      }`;
+      const logoClass = `object-contain ${selectedProvider.hubLogoHeight || 'h-8 md:h-10'} ${selectedProvider.hubLogoInvert ? 'brightness-0 invert' : ''}`;
+      
       return (
         <div className="w-full max-w-7xl">
           <div className="flex items-center gap-4 mb-6">
-            <button onClick={() => window.location.hash = '#/streaming'} className="px-4 py-2 text-sm glass-panel rounded-full hover:bg-white/5 transition-colors">&larr; Back to Services</button>
-            <h2 className="text-3xl font-bold">{selectedProvider.name}</h2>
+            <button onClick={() => window.location.hash = '#/streaming'} className={backButtonClass}>&larr; Back to Services</button>
+            {selectedProvider.hubLogoUrl && (
+              <img 
+                src={selectedProvider.hubLogoUrl} 
+                alt={`${selectedProvider.name} logo`}
+                className={logoClass}
+              />
+            )}
           </div>
           {isProviderMediaLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={providerMedia} onSelect={navigateToMedia} />}
         </div>
@@ -661,6 +695,15 @@ const App: React.FC = () => {
   };
 
   const isGameActive = activeTab === 'game' && !selectedItem && !selectedActor;
+  const headerTitleClass = theme === 'light'
+    ? 'text-black'
+    : 'text-white text-glow';
+  
+  const githubButtonClass = `p-3 rounded-full text-gray-200 transition-all duration-300 hover:scale-105 ${
+    theme === 'light'
+      ? 'bg-gray-200/80 text-black hover:bg-gray-300/80'
+      : 'glass-panel text-white hover:bg-white/5'
+  }`;
 
   return (
     <div className={`min-h-screen font-sans`}>
@@ -746,14 +789,14 @@ const App: React.FC = () => {
                                     <path d="M69 33.5L83 41L69 48.5V33.5Z" fill="#002D4F" fillOpacity="0.6"/>
                                 </g>
                             </svg>
-                            <span className="text-2xl sm:text-3xl font-bold tracking-tight text-white text-glow transition-all duration-300 group-hover:brightness-110">ScreenScape</span>
+                            <span className={`text-2xl sm:text-3xl font-bold tracking-tight transition-all duration-300 group-hover:brightness-110 ${headerTitleClass}`}>ScreenScape</span>
                         </a>
                         <div className="flex items-center gap-3">
                             <a 
                                 href="https://github.com/TheJaySmith-Dev/WatchNow" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="p-3 glass-panel rounded-full text-gray-200 transition-all duration-300 hover:bg-white/5 hover:scale-105"
+                                className={githubButtonClass}
                                 aria-label="View source code on GitHub"
                             >
                                 <GitHubIcon className="w-6 h-6" />
@@ -761,14 +804,15 @@ const App: React.FC = () => {
                             <AccountButton 
                                 onSignInClick={() => setIsAuthModalOpen(true)} 
                                 userLocation={userLocation}
+                                theme={theme}
                             />
                         </div>
                     </header>
                     <div className="mb-8 flex justify-center">
-                        <SearchBar onSearch={handleSearch} isLoading={isLoading} />
+                        <SearchBar onSearch={handleSearch} isLoading={isLoading} theme={theme} />
                     </div>
                     <div className="sticky top-4 z-50 mb-8 flex justify-center">
-                        <Navigation activeTab={activeTab} />
+                        <Navigation activeTab={activeTab} theme={theme} />
                     </div>
                     
                     <div className="flex justify-center">

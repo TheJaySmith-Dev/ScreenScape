@@ -8,7 +8,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#4A4A4A">
+  <meta name="theme-color" content="#212121">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
@@ -22,9 +22,10 @@
         sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      background-color: #4A4A4A;
-      background-image: radial-gradient(ellipse at top, #7d7d7d, #4a4a4a);
+      background-color: #212121;
+      background-image: radial-gradient(ellipse at top, #3a3a3a, #212121);
       color: #E5E5E5;
+      transition: background-color 0.5s ease;
     }
 
     #root:empty::before {
@@ -45,6 +46,7 @@
 
     .fade-in {
       animation: fadeIn 0.5s ease-out forwards;
+      opacity: 0;
     }
     
     .text-glow {
