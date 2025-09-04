@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScreenScape</title>
+  <meta name="description" content="ScreenScape is your ultimate destination for discovering movies and TV shows, offering a curated, immersive experience tailored to modern streaming enthusiasts." />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#ffffff">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --glow-color: rgba(22, 163, 175, 0.4);
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: #f0f2f5;
+      background-image:
+        radial-gradient(at 20% 20%, hsla(190, 60%, 85%, 0.3) 0px, transparent 50%),
+        radial-gradient(at 80% 20%, hsla(210, 60%, 85%, 0.3) 0px, transparent 50%),
+        radial-gradient(at 20% 80%, hsla(170, 60%, 85%, 0.3) 0px, transparent 50%),
+        radial-gradient(at 80% 80%, hsla(200, 60%, 85%, 0.3) 0px, transparent 50%);
+    }
+
+    #root:empty::before {
+      content: 'Loading ScreenScape...';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #334155;
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    
+    .text-glow {
+      text-shadow: 0 0 10px var(--glow-color, rgba(255,255,255,0.7));
+    }
+    
+    .media-row {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    }
+    .media-row::-webkit-scrollbar {
+      height: 8px;
+    }
+    .media-row::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .media-row::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+    }
+    
+    .shimmer-effect {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(110deg, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0) 60%);
+      animation: shimmer 2s infinite linear;
+      background-size: 200% 100%;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .glass-panel {
+      background-color: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-open {
+      overflow: hidden;
+    }
+
+    .video-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 5px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.2);
+      outline: none;
+      cursor: pointer;
+    }
+    .video-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: pointer;
+    }
+    .volume-slider {
+      -webkit-appearance: none;
+      width: 8px;
+      height: 70px;
+      background: rgba(255, 255, 255, 0.2);
+      outline: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #ffffff;
+      cursor: pointer;
+    }
+    
+    @keyframes correctGlow {
+      0% { box-shadow: 0 0 0 0 rgba(22, 192, 12, 0.7); }
+      100% { box-shadow: 0 0 0 10px rgba(22, 192, 12, 0); }
+    }
+    .correct-glow {
+      animation: correctGlow 1s ease-out;
+      border-color: #16c00c !important;
+    }
+
+    @keyframes incorrectGlow {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      100% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    }
+    .incorrect-glow {
+      animation: incorrectGlow 1s ease-out;
+      border-color: #ef4444 !important;
+    }
+
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+      40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+    .shake {
+      animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    
+    .crack-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 0.3s ease-in;
+      pointer-events: none;
+    }
+    .show-crack {
+      opacity: 1;
+    }
+    
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://aistudiocdn.com/react@^19.1.1",
+      "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+      "react/": "https://aistudiocdn.com/react@^19.1.1/"
+    }
+  }
+  </script>
+  <script type="module" src="/index.tsx"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(registration => {
+          console.log('SW registered: ', registration);
+        }).catch(registrationError => {
+          console.log('SW registration failed: ', registrationError);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
