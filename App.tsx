@@ -309,11 +309,8 @@ const App: React.FC = () => {
     if (selectedProvider?.hubBgColor) {
         document.body.style.backgroundColor = selectedProvider.hubBgColor;
         document.body.style.backgroundImage = 'none';
-        if (selectedProvider.key === 'netflix') {
-          setTheme('light');
-        } else {
-          setTheme('dark');
-        }
+        // All provider hubs now use a dark theme for UI elements.
+        setTheme('dark');
     }
     // Cleanup function to run when component unmounts OR when selectedProvider changes
     return () => {
@@ -594,7 +591,7 @@ const App: React.FC = () => {
     }
 
     if (selectedProvider) {
-      const isLightBg = selectedProvider.key === 'netflix';
+      const isLightBg = selectedProvider.key === 'netflix' && theme === 'light';
       const backButtonClass = `px-4 py-2 text-sm rounded-full transition-colors ${
         isLightBg
             ? 'bg-gray-200/80 text-black hover:bg-gray-300/80'

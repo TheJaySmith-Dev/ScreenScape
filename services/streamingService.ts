@@ -12,7 +12,7 @@ export const supportedProviders: StreamingProviderInfo[] = [
     hoverGifUrl: 'https://media.giphy.com/media/c69RGBBRK8SKwMO78n/giphy.gif',
     borderColor: '#E50914',
     edgeToEdge: true,
-    hubBgColor: '#FFFFFF',
+    hubBgColor: '#000000',
     hubLogoUrl: 'https://cdn.brandfetch.io/ideQwN5lBE/theme/light/logo.svg?c=1bxid64Mup7aczewSAYMX&t=1741362568562',
     hubLogoHeight: 'h-6 md:h-8',
   },
