@@ -13,10 +13,10 @@ const ActorInfo: React.FC<{ icon: React.ReactNode; label: string; value: string 
   if (!value) return null;
   return (
     <div className="flex items-start gap-3">
-      <div className="text-gray-500 mt-1">{icon}</div>
+      <div className="text-gray-400 mt-1">{icon}</div>
       <div>
-        <p className="font-semibold text-gray-800">{value}</p>
-        <p className="text-xs text-gray-500">{label}</p>
+        <p className="font-semibold text-gray-200">{value}</p>
+        <p className="text-xs text-gray-400">{label}</p>
       </div>
     </div>
   );
@@ -40,7 +40,7 @@ export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMed
   return (
     <div className="w-full max-w-7xl fade-in">
       <div className="flex items-center gap-4 mb-6">
-        <button onClick={onBack} className="px-4 py-2 text-sm bg-black/5 hover:bg-black/10 rounded-full transition-colors">&larr; Back</button>
+        <button onClick={onBack} className="px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">&larr; Back</button>
       </div>
 
       <div className="flex flex-col md:flex-row gap-8 mb-12">
@@ -48,25 +48,25 @@ export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMed
           <img src={actor.profilePath} alt={actor.name} className="w-full rounded-2xl aspect-[2/3] object-cover" />
         </div>
         <div className="w-full">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4">{actor.name}</h1>
+          <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-white">{actor.name}</h1>
           <div className="flex flex-wrap gap-x-8 gap-y-4 mb-6">
             <ActorInfo icon={<CakeIcon className="w-5 h-5" />} label="Birthday" value={formatDate(actor.birthday)} />
             <ActorInfo icon={<LocationMarkerIcon className="w-5 h-5" />} label="Place of Birth" value={actor.placeOfBirth} />
           </div>
           
-          <h2 className="text-xl font-semibold mb-2">Biography</h2>
-          <p className="text-gray-600 leading-relaxed">
+          <h2 className="text-xl font-semibold mb-2 text-white">Biography</h2>
+          <p className="text-gray-300 leading-relaxed">
             {showFullBio ? actor.biography : truncatedBio}
           </p>
           {canTruncate && (
-            <button onClick={() => setShowFullBio(!showFullBio)} className="text-blue-600 hover:text-blue-500 font-semibold mt-2">
+            <button onClick={() => setShowFullBio(!showFullBio)} className="text-blue-400 hover:text-blue-300 font-semibold mt-2">
               {showFullBio ? 'Read Less' : 'Read More'}
             </button>
           )}
         </div>
       </div>
 
-      <h2 className="text-3xl font-bold mb-6">Known For</h2>
+      <h2 className="text-3xl font-bold mb-6 text-white">Known For</h2>
       <RecommendationGrid recommendations={actor.filmography} onSelect={onSelectMedia} />
     </div>
   );

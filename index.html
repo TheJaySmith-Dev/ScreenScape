@@ -8,11 +8,11 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#4A4A4A">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
-      --glow-color: rgba(22, 163, 175, 0.4);
+      --glow-color: rgba(45, 139, 186, 0.4);
     }
 
     body {
@@ -22,12 +22,9 @@
         sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      background-color: #f0f2f5;
-      background-image:
-        radial-gradient(at 20% 20%, hsla(190, 60%, 85%, 0.3) 0px, transparent 50%),
-        radial-gradient(at 80% 20%, hsla(210, 60%, 85%, 0.3) 0px, transparent 50%),
-        radial-gradient(at 20% 80%, hsla(170, 60%, 85%, 0.3) 0px, transparent 50%),
-        radial-gradient(at 80% 80%, hsla(200, 60%, 85%, 0.3) 0px, transparent 50%);
+      background-color: #4A4A4A;
+      background-image: radial-gradient(ellipse at top, #7d7d7d, #4a4a4a);
+      color: #E5E5E5;
     }
 
     #root:empty::before {
@@ -36,7 +33,7 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      color: #334155;
+      color: #E5E5E5;
       font-size: 1.2rem;
       font-weight: 500;
     }
@@ -51,12 +48,12 @@
     }
     
     .text-glow {
-      text-shadow: 0 0 10px var(--glow-color, rgba(255,255,255,0.7));
+      text-shadow: 0 0 10px var(--glow-color, rgba(45, 139, 186, 0.4));
     }
     
     .media-row {
       scrollbar-width: thin;
-      scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+      scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
     }
     .media-row::-webkit-scrollbar {
       height: 8px;
@@ -65,7 +62,7 @@
       background: transparent;
     }
     .media-row::-webkit-scrollbar-thumb {
-      background-color: rgba(0, 0, 0, 0.2);
+      background-color: rgba(255, 255, 255, 0.2);
       border-radius: 10px;
     }
     
@@ -86,10 +83,10 @@
     }
 
     .glass-panel {
-      background-color: rgba(255, 255, 255, 0.5);
+      background-color: rgba(30, 30, 30, 0.5);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .modal-open {
@@ -180,9 +177,9 @@
   <script type="importmap">
   {
     "imports": {
-      "react": "https://aistudiocdn.com/react@^19.1.1",
-      "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-      "react/": "https://aistudiocdn.com/react@^19.1.1/"
+      "react": "https://esm.sh/react@19.0.0-rc.0",
+      "react-dom/": "https://esm.sh/react-dom@19.0.0-rc.0/",
+      "react/": "https://esm.sh/react@19.0.0-rc.0/"
     }
   }
   </script>

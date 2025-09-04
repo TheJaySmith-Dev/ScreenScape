@@ -240,7 +240,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId, o
 
         {/* Controls Overlay */}
         <div
-          className={`absolute inset-0 flex flex-col justify-between p-4 transition-opacity duration-300 backdrop-blur-sm ${
+          className={`absolute inset-0 flex flex-col justify-between p-4 transition-opacity duration-300 text-white ${
             showControls ? 'opacity-100' : 'opacity-0'
           }`}
           style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent 50%, transparent 60%, rgba(0,0,0,0.4))' }}

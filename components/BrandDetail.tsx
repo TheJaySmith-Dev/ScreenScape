@@ -34,29 +34,27 @@ export const BrandDetail: React.FC<BrandDetailProps> = ({
 }) => {
     return (
         <>
-            {brand.backdropUrl ? (
+            {brand.backdropUrl && (
                 <div 
                     className="fixed inset-0 w-full h-full z-0 transition-all duration-500 ease-in-out"
                 >
                     <img 
                         src={brand.backdropUrl} 
                         alt={`${brand.name} backdrop`} 
-                        className="w-full h-full object-cover opacity-20" 
+                        className="w-full h-full object-cover opacity-10" 
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#4A4A4A] via-[#4A4A4A]/80 to-transparent" />
                 </div>
-            ) : (
-                <div className="fixed inset-0 z-0 bg-gray-100" />
             )}
             <div className="relative z-10 w-full max-w-7xl fade-in">
                 <div className="flex items-center gap-4 mb-6">
-                    <button onClick={onBack} className="px-4 py-2 text-sm bg-black/5 hover:bg-black/10 rounded-full transition-colors">&larr; Back to Brands</button>
-                    <h2 className="text-3xl font-bold">{brand.name}</h2>
+                    <button onClick={onBack} className="px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">&larr; Back to Brands</button>
+                    <h2 className="text-3xl font-bold text-white">{brand.name}</h2>
                 </div>
 
                 {brand.characterCollections.length > 0 && (
                     <section className="w-full mb-8 md:mb-12">
-                      <h3 className="text-2xl md:text-3xl font-bold mb-4 ml-4 md:ml-0">Character Collections</h3>
+                      <h3 className="text-2xl md:text-3xl font-bold mb-4 ml-4 md:ml-0 text-white">Character Collections</h3>
                       <div className="media-row flex overflow-x-auto space-x-4 pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
                         {brand.characterCollections.map(collection => (
                           <div key={collection.id} className="flex-shrink-0 w-40 sm:w-44 md:w-48">
@@ -68,7 +66,7 @@ export const BrandDetail: React.FC<BrandDetailProps> = ({
                     </section>
                 )}
 
-                <h3 className="text-2xl md:text-3xl font-bold mb-4">All {brand.name} Content</h3>
+                <h3 className="text-2xl md:text-3xl font-bold mb-4 text-white">All {brand.name} Content</h3>
                 <StudioFilters
                   mediaTypeFilter={mediaTypeFilter}
                   setMediaTypeFilter={setMediaTypeFilter}

@@ -17,13 +17,13 @@ const NavLink: React.FC<{
             className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300 relative overflow-hidden group
                 ${
                 isActive 
-                ? 'bg-black/10 text-gray-900 shadow-[0_0_15px_rgba(0,0,100,0.15)]' 
-                : 'text-gray-600 hover:bg-black/5 hover:text-gray-900'
+                ? 'bg-white/10 text-white shadow-[0_0_15px_rgba(100,150,255,0.15)]' 
+                : 'text-gray-300 hover:bg-white/5 hover:text-white'
             }`}
         >
             <span className="relative z-10">{label}</span>
             {!isActive && (
-                <span className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 rounded-xl transition-all duration-300"></span>
+                <span className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 scale-50 group-hover:scale-100 rounded-xl transition-all duration-300"></span>
             )}
         </a>
     )

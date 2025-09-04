@@ -22,11 +22,11 @@ export const WatchlistPage: React.FC<WatchlistPageProps> = ({ onSelectMedia }) =
 
   if (likes.length === 0) {
     return (
-      <div className="text-center text-gray-600 fade-in">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">Your Watchlist</h2>
+      <div className="text-center text-gray-300 fade-in">
+        <h2 className="text-2xl font-bold mb-4 text-white">Your Watchlist</h2>
         <p>Your liked movies and TV shows will appear here.</p>
         <p className="text-sm mt-2 flex items-center justify-center gap-1">
-            Use the <ThumbsUpIcon className="w-5 h-5 text-green-600" /> button on any title to add it to your list.
+            Use the <ThumbsUpIcon className="w-5 h-5 text-green-400" /> button on any title to add it to your list.
         </p>
       </div>
     );
@@ -34,7 +34,7 @@ export const WatchlistPage: React.FC<WatchlistPageProps> = ({ onSelectMedia }) =
 
   return (
     <div className="w-full max-w-7xl fade-in">
-      <h2 className="text-3xl font-bold mb-6">My Watchlist</h2>
+      <h2 className="text-3xl font-bold mb-6 text-white">My Watchlist</h2>
       <RecommendationGrid recommendations={watchlistItems} onSelect={onSelectMedia} />
     </div>
   );

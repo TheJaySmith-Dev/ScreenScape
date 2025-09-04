@@ -24,8 +24,8 @@ const FilterButton: React.FC<{
     onClick={onClick}
     className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${
       isActive
-        ? 'bg-gray-800 text-white'
-        : 'text-gray-600 bg-black/5 hover:bg-black/10 hover:text-gray-800'
+        ? 'bg-white/20 text-white'
+        : 'text-gray-300 bg-white/5 hover:bg-white/10 hover:text-white'
     }`}
   >
     {label}
@@ -42,14 +42,14 @@ export const StudioFilters: React.FC<StudioFiltersProps> = ({
 }) => {
   return (
     <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
-      <div className="flex items-center justify-center flex-wrap gap-2 p-2 bg-white/30 backdrop-blur-sm border border-black/10 rounded-2xl">
+      <div className="flex items-center justify-center flex-wrap gap-2 p-2 glass-panel rounded-2xl">
         <FilterButton label="All" isActive={mediaTypeFilter === 'all'} onClick={() => setMediaTypeFilter('all')} />
         <FilterButton label="Movies" isActive={mediaTypeFilter === 'movie'} onClick={() => setMediaTypeFilter('movie')} />
         <FilterButton label="Shows" isActive={mediaTypeFilter === 'show'} onClick={() => setMediaTypeFilter('show')} />
         <FilterButton label="Shorts" isActive={mediaTypeFilter === 'short'} onClick={() => setMediaTypeFilter('short')} />
       </div>
 
-      <div className="flex items-center justify-center flex-wrap gap-2 p-2 bg-white/30 backdrop-blur-sm border border-black/10 rounded-2xl">
+      <div className="flex items-center justify-center flex-wrap gap-2 p-2 glass-panel rounded-2xl">
         <FilterButton label="Trending" isActive={sortBy === 'trending'} onClick={() => setSortBy('trending')} />
         <FilterButton label="Newest" isActive={sortBy === 'newest'} onClick={() => setSortBy('newest')} />
         {/* FIX: Conditionally render the Timeline sort button. */}

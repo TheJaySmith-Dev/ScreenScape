@@ -16,10 +16,10 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({ media, o
         onClick={onSelect}
         className="group cursor-pointer rounded-3xl overflow-hidden glass-panel hover:border-blue-400/50 transition-all duration-300 transform hover:scale-105 aspect-[2/3] flex flex-col justify-center items-center text-center p-4"
       >
-        <h3 className="text-gray-800 text-lg font-bold leading-tight">
+        <h3 className="text-gray-200 text-lg font-bold leading-tight">
           {media.title}
         </h3>
-        <p className="text-gray-600 text-sm mt-2">{media.releaseYear}</p>
+        <p className="text-gray-400 text-sm mt-2">{media.releaseYear}</p>
       </div>
     );
   }
