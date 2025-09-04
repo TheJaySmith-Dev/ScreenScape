@@ -1,5 +1,10 @@
 
 
+
+
+
+
+
 import type { Brand } from '../types.ts';
 
 // This is a curated list of MCU films in release order to ensure accuracy
@@ -283,8 +288,12 @@ export const brands: Brand[] = [
   {
     id: 'backtothefuture',
     name: 'Back to the Future',
-    posterUrl: 'https://image.tmdb.org/t/p/original/cR2w1mVyiJ566scKTSL0PV6lSUd.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/cR2w1mVyiJ566scKTSL0PV6lSUd.jpg',
+    // FIX: Add missing 'posterUrl' property to satisfy the Brand type.
+    posterUrl: '', // Not used when logoUrl is present, but required by type.
+    logoUrl: 'https://cdn.brandfetch.io/idVlDHLrJU/w/420/h/240/theme/dark/logo.png?c=1bxid64Mup7aczewSAYMX&t=1754259230882',
+    bgColor: '#FFC700',
+    borderColor: '#E6DB74',
+    hoverGifUrl: 'https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZHNoOWdiZnN6bDR6eGwwOTEzMnN2ejdvMGM4aTJlb3VycWV6dWlxNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/yXaLp6DtmZ1HJPXFlG/giphy.gif',
     characterCollections: [],
     collectionIds: [264], // Back to the Future Collection
     defaultSort: 'timeline',
@@ -305,8 +314,10 @@ export const brands: Brand[] = [
   {
     id: 'fastandfurious',
     name: 'Fast & Furious',
-    posterUrl: 'https://image.tmdb.org/t/p/w1280/abproxa0V1h7BZ2tcZpACkGc8LG.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/w1280/abproxa0V1h7BZ2tcZpACkGc8LG.jpg',
+    posterUrl: '', // Not used when logoUrl is present, but required by type.
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/c/c5/The-fast-and-the-furious-4.png',
+    bgColor: '#FFFFFF',
+    borderColor: '#000000',
     characterCollections: [],
     collectionIds: [9485], // The Fast and the Furious Collection
     defaultSort: 'timeline',
@@ -314,8 +325,11 @@ export const brands: Brand[] = [
   {
     id: 'ghostbusters',
     name: 'Ghostbusters',
-    posterUrl: 'https://cms-assets.tutsplus.com/cdn-cgi/image/width=850/uploads/users/403/posts/108486/final_image/ghostbusters_logo_final_00.jpg',
-    backdropUrl: 'https://cms-assets.tutsplus.com/cdn-cgi/image/width=850/uploads/users/403/posts/108486/final_image/ghostbusters_logo_final_00.jpg',
+    posterUrl: '', // Not used when logoUrl is present, but required by type.
+    logoUrl: 'https://www.freepnglogos.com/uploads/ghostbusters-png-logo/ghostbusters-png-logo-symbol-4.png',
+    bgColor: '#FFFFFF',
+    borderColor: '#ea0000',
+    hoverGifUrl: 'https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExeWsxMGpqMmFpbHprcm53emI4YjZ4bXUxMnpwbDJrbGhvdzNmODNlbSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/RGAtt9ljyN79RMORNj/giphy.gif',
     characterCollections: [],
     collectionIds: [2831], // Ghostbusters Collection
     defaultSort: 'timeline',
