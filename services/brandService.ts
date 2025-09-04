@@ -388,8 +388,11 @@ export const brands: Brand[] = [
   {
     id: 'starwars',
     name: 'Star Wars',
-    posterUrl: 'https://image.tmdb.org/t/p/original/trf3Hi3tPOJARsCBoVMDBlpjPC4.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/trf3Hi3tPOJARsCBoVMDBlpjPC4.jpg',
+    posterUrl: '', // Not used when logoUrl is present
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/9/9b/Star_Wars_Yellow_Logo.svg',
+    bgColor: '#000000',
+    borderColor: '#FFD700',
+    hoverGifUrl: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNDdka2NvdzJ3cHluZmptbzFvd3lpYzY3emZmMnVrZHRnbXdqN2pjNCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/l1uguGf2RVIsTXNDO/giphy.gif',
     characterCollections: [],
     collectionIds: [10], // Star Wars Collection
     defaultSort: 'timeline',
@@ -397,8 +400,11 @@ export const brands: Brand[] = [
   {
     id: 'terminator',
     name: 'Terminator',
-    posterUrl: 'https://image.tmdb.org/t/p/original/lDhKuzL8l29nsc6IKWH1odl66SK.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/original/lDhKuzL8l29nsc6IKWH1odl66SK.jpg',
+    posterUrl: '', // Not used when logoUrl is present
+    logoUrl: 'https://static.wikia.nocookie.net/logopedia/images/c/cb/The-terminator-movie-logo.png/revision/latest?cb=20151101185628',
+    bgColor: '#800808',
+    borderColor: '#5A5A5A',
+    hoverGifUrl: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcXY0eHVpMGo3NXJlY3E1M3A1cTN0M3R4N3ZkNnc3NjRqczd4c2t2MiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/yIzOpBvGCZOQE/giphy.gif',
     characterCollections: [],
     collectionIds: [528], // The Terminator Collection
     defaultSort: 'timeline',
@@ -406,10 +412,12 @@ export const brands: Brand[] = [
   {
     id: 'wizardingworld',
     name: 'Wizarding World',
-    posterUrl: 'https://i.vimeocdn.com/video/741739046-36b4195f4e1f8d856a989d58ebb9973af16e630d57bf400434b2a37a8319d5d8-d?f=webp',
-    backdropUrl: 'https://i.vimeocdn.com/video/741739046-36b4195f4e1f8d856a989d58ebb9973af16e630d57bf400434b2a37a8319d5d8-d?f=webp',
+    posterUrl: '', // Not used when logoUrl is present
+    logoUrl: 'https://cdn.brandfetch.io/idUAB4QPLg/theme/light/logo.svg?c=1bxid64Mup7aczewSAYMX&t=1724772832544',
+    bgColor: '#00001A',
+    borderColor: '#5050EE',
+    hoverGifUrl: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExamI3eThxOXYxMm5qZzNndzlyZTByd2J0dzA2MjZnZWp4NTNuaDQ5aSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/26BRzozg4TCBXv6QU/giphy.gif',
     characterCollections: [],
-    // FIX: Replaced collectionIds with a more reliable, curated list of mediaIds to ensure all films are included.
     mediaIds: wizardingWorldMediaIds,
     defaultSort: 'timeline',
   }
