@@ -364,17 +364,23 @@ export const brands: Brand[] = [
   {
     id: 'marvel',
     name: 'Marvel',
-    posterUrl: 'https://e1.pxfuel.com/desktop-wallpaper/513/887/desktop-wallpaper-marvel-logo-marvel-studios-logo.jpg',
+    posterUrl: '', // Not used when logoUrl is present
+    logoUrl: 'https://cdn.brandfetch.io/idXjyYbtab/theme/dark/logo.svg?c=1bxid64Mup7aczewSAYMX&t=1749703638456',
+    bgColor: '#202020',
+    borderColor: '#EC1D24',
+    hoverGifUrl: 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExMW8wdWdyMDNycGxucGVhcXByZ2hhMjQ2amJ6bDY0NjcyajVoajY5bSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/IhOZQhKKVkQyCvYRSS/giphy.gif',
     mediaIds: mcuMediaIds, // Keep curated list for MCU accuracy
     characterCollections: marvelCharacterCollections,
-    backdropUrl: 'https://e1.pxfuel.com/desktop-wallpaper/513/887/desktop-wallpaper-marvel-logo-marvel-studios-logo.jpg',
     defaultSort: 'timeline',
   },
   {
     id: 'missionimpossible',
     name: 'Mission: Impossible',
-    posterUrl: 'https://image.tmdb.org/t/p/w1280/j6Y1qjfoJcJ0S3ah9kifbI2bzq0.jpg',
-    backdropUrl: 'https://image.tmdb.org/t/p/w1280/j6Y1qjfoJcJ0S3ah9kifbI2bzq0.jpg',
+    posterUrl: '', // Not used when logoUrl is present
+    logoUrl: 'https://static.wikia.nocookie.net/logopedia/images/7/75/Img_0940.png/revision/latest?cb=20160718234043',
+    bgColor: '#000000',
+    borderColor: '#D14836',
+    hoverGifUrl: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNG90cDQzaDhrZjlmeDFmbW5lbTY2d29kZ3VpcW1zN3dpaDdkOW91aSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/7q3By1tKdxjJ6/giphy.gif',
     characterCollections: [],
     collectionIds: [87359], // Mission: Impossible Collection
     defaultSort: 'timeline',
