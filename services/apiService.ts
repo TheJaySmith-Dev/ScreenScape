@@ -96,21 +96,100 @@ export const savePreferences = async (email: string, likes: LikedItem[], dislike
 
 // --- API Keys Management ---
 
-const TMDB_API_KEY_STORAGE_KEY = 'tmdb_api_key';
+const TMDB_API_KEY_STORAGE_KEY = 'screenscape_tmdb_api_key';
+const GEMINI_API_KEY_STORAGE_KEY = 'screenscape_gemini_api_key';
+
+
+export const saveTmdbApiKey = (apiKey: string): void => {
+    try {
+        localStorage.setItem(TMDB_API_KEY_STORAGE_KEY, apiKey);
+    } catch (error) {
+        console.error("Failed to save TMDb API key to local storage", error);
+    }
+};
 
 export const getTmdbApiKey = (): string | null => {
     try {
         return localStorage.getItem(TMDB_API_KEY_STORAGE_KEY);
-    } catch (e) {
-        console.error("Could not read from local storage", e);
+    } catch (error) {
+        console.error("Failed to retrieve TMDb API key from local storage", error);
         return null;
     }
 };
 
-export const setTmdbApiKey = (key: string): void => {
+export const saveGeminiApiKey = (apiKey: string): void => {
     try {
-        localStorage.setItem(TMDB_API_KEY_STORAGE_KEY, key);
-    } catch (e) {
-        console.error("Could not write to local storage", e);
+        localStorage.setItem(GEMINI_API_KEY_STORAGE_KEY, apiKey);
+    } catch (error) {
+        console.error("Failed to save Gemini API key to local storage", error);
+    }
+};
+
+export const getGeminiApiKey = (): string | null => {
+    try {
+        return localStorage.getItem(GEMINI_API_KEY_STORAGE_KEY);
+    } catch (error) {
+        console.error("Failed to retrieve Gemini API key from local storage", error);
+        return null;
+    }
+};
+
+// --- Gemini Rate Limiting ---
+
+const GEMINI_RATE_LIMIT_KEY = 'screenscape_gemini_rate_limit';
+const MAX_REQUESTS_PER_DAY = 500;
+
+interface RateLimitState {
+    count: number;
+    resetTime: number; // Timestamp when the limit resets
+}
+
+export const getRateLimitState = (): { canRequest: boolean; resetTime: number | null; count: number } => {
+    try {
+        const storedState = localStorage.getItem(GEMINI_RATE_LIMIT_KEY);
+        if (!storedState) {
+            return { canRequest: true, resetTime: null, count: 0 };
+        }
+        const state: RateLimitState = JSON.parse(storedState);
+        const now = Date.now();
+
+        if (now > state.resetTime) {
+            // It's a new day, reset.
+            localStorage.removeItem(GEMINI_RATE_LIMIT_KEY);
+            return { canRequest: true, resetTime: null, count: 0 };
+        }
+
+        if (state.count >= MAX_REQUESTS_PER_DAY) {
+            return { canRequest: false, resetTime: state.resetTime, count: state.count };
+        }
+
+        return { canRequest: true, resetTime: state.resetTime, count: state.count };
+    } catch (error) {
+        console.error("Failed to read rate limit state", error);
+        // Fail open, allow the request.
+        return { canRequest: true, resetTime: null, count: 0 };
+    }
+};
+
+export const incrementRequestCount = (): void => {
+    try {
+        const storedState = localStorage.getItem(GEMINI_RATE_LIMIT_KEY);
+        const now = Date.now();
+        let state: RateLimitState;
+
+        if (!storedState || now > JSON.parse(storedState).resetTime) {
+            // First request of the day or state is expired
+            state = {
+                count: 1,
+                resetTime: now + 24 * 60 * 60 * 1000 // 24 hours from now
+            };
+        } else {
+            state = JSON.parse(storedState);
+            state.count += 1;
+        }
+
+        localStorage.setItem(GEMINI_RATE_LIMIT_KEY, JSON.stringify(state));
+    } catch (error) {
+        console.error("Failed to increment request count", error);
     }
 };

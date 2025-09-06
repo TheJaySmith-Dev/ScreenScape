@@ -5,6 +5,8 @@ import { discoverMediaFromAi } from '../services/mediaService.ts';
 import { CloseIcon, SearchIcon } from './icons.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
+import { getRateLimitState } from '../services/apiService.ts';
+import { RateLimitMessage } from './RateLimitMessage.tsx';
 
 interface AiSearchModalProps {
   isOpen: boolean;
@@ -30,10 +32,14 @@ export const AiSearchModal: React.FC<AiSearchModalProps> = ({ isOpen, onClose, o
     const [resultsTitle, setResultsTitle] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [loadingMessage, setLoadingMessage] = useState('Thinking...');
+    const [rateLimit, setRateLimit] = useState<{ canRequest: boolean; resetTime: number | null }>({ canRequest: true, resetTime: null });
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (!isOpen) {
+        if (isOpen) {
+            const state = getRateLimitState();
+            setRateLimit({ canRequest: state.canRequest, resetTime: state.resetTime });
+        } else {
             setTimeout(() => {
                 setSearchState('initial');
                 setQuery('');
@@ -75,10 +81,15 @@ export const AiSearchModal: React.FC<AiSearchModalProps> = ({ isOpen, onClose, o
                 setResultsTitle(response_title);
                 setSearchState('results');
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("AI Search failed:", error);
-            setErrorMessage("An unexpected error occurred. Please try again.");
-            setSearchState('error');
+            if (error.resetTime) {
+                setRateLimit({ canRequest: false, resetTime: error.resetTime });
+                setSearchState('initial'); // Go back to initial state to show rate limit message
+            } else {
+                setErrorMessage(error.message || "An unexpected error occurred. Please check your Gemini API Key and try again.");
+                setSearchState('error');
+            }
         } finally {
             setQuery('');
         }
@@ -109,6 +120,14 @@ export const AiSearchModal: React.FC<AiSearchModalProps> = ({ isOpen, onClose, o
     if (!isOpen) return null;
 
     const renderContent = () => {
+        if (!rateLimit.canRequest && rateLimit.resetTime) {
+            return (
+                <div className="p-6 flex items-center justify-center h-full">
+                     <RateLimitMessage resetTime={rateLimit.resetTime} featureName="AI Search" />
+                </div>
+            )
+        }
+        
         switch (searchState) {
             case 'loading':
                 return (

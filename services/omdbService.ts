@@ -1,5 +1,8 @@
-// A simple, hardcoded API key for the OMDb public API.
-const OMDb_API_KEY = '79a05981';
+
+import type { OmdbDetails } from '../types.ts';
+
+// User-provided API key for the OMDb public API.
+const OMDb_API_KEY = '2b067fb4';
 const OMDb_API_URL = `https://www.omdbapi.com/?apikey=${OMDb_API_KEY}`;
 
 /**
@@ -34,6 +37,29 @@ export const fetchBoxOffice = async (imdbId: string): Promise<number | null> => 
         return null;
     } catch (error) {
         console.error(`Failed to fetch box office for ${imdbId}:`, error);
+        return null;
+    }
+};
+
+/**
+ * Fetches detailed information for a given IMDb ID from OMDb.
+ * @param imdbId The IMDb ID of the media.
+ * @returns A promise that resolves to the OMDb details, or null.
+ */
+export const fetchOmdbDetails = async (imdbId: string): Promise<OmdbDetails | null> => {
+    try {
+        const response = await fetch(`${OMDb_API_URL}&i=${imdbId}&plot=full`);
+        if (!response.ok) {
+            console.error(`OMDb API error for ${imdbId}: ${response.statusText}`);
+            return null;
+        }
+        const data = await response.json();
+        if (data.Response === 'True') {
+            return data;
+        }
+        return null;
+    } catch (error) {
+        console.error(`Failed to fetch details for ${imdbId}:`, error);
         return null;
     }
 };

@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders, FunFact } from '../types.ts';
-import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, SparklesIcon, HomeIcon } from './icons.tsx';
+import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders, OmdbDetails, FunFact } from '../types.ts';
+import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, HomeIcon, SparklesIcon, InfoIcon } from './icons.tsx';
 import { RecommendationCard } from './RecommendationCard.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
 import { usePreferences } from '../hooks/usePreferences.ts';
 import { Providers } from './Providers.tsx';
 import { CinemaAvailability } from './CinemaAvailability.tsx';
-import { getFunFactsForMedia, getAiDescriptionForMedia } from '../services/aiService.ts';
-import { AiDescriptionModal } from './AiDescriptionModal.tsx';
+import { fetchOmdbDetails } from '../services/omdbService.ts';
+import { getFunFactsForMedia } from '../services/aiService.ts';
+import { getRateLimitState } from '../services/apiService.ts';
+import { RateLimitMessage } from './RateLimitMessage.tsx';
 
 interface DetailModalProps {
   item: MediaDetails | CollectionDetails;
@@ -74,14 +76,15 @@ const providersExist = (providers: WatchProviders) => {
 export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, onSelectActor, userLocation }) => {
     const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
     const { likeItem, dislikeItem, unlistItem, isLiked, isDisliked } = usePreferences();
-    const [funFacts, setFunFacts] = useState<FunFact[] | null>(null);
-    const [isFunFactsLoading, setIsFunFactsLoading] = useState(false);
-    const [funFactsError, setFunFactsError] = useState<string | null>(null);
+    const [omdbDetails, setOmdbDetails] = useState<OmdbDetails | null>(null);
+    const [isOmdbLoading, setIsOmdbLoading] = useState(false);
+    const [isDetailsVisible, setIsDetailsVisible] = useState(false);
 
-    const [isAiModalOpen, setIsAiModalOpen] = useState(false);
-    const [aiDescription, setAiDescription] = useState<string | null>(null);
-    const [isAiDescriptionLoading, setIsAiDescriptionLoading] = useState(false);
-    const [aiDescriptionError, setAiDescriptionError] = useState<string | null>(null);
+    // State for AI-generated Fun Facts
+    const [funFacts, setFunFacts] = useState<FunFact[] | null>(null);
+    const [isFactsLoading, setIsFactsLoading] = useState(false);
+    const [factsError, setFactsError] = useState<string | null>(null);
+    const [rateLimit, setRateLimit] = useState<{ canRequest: boolean; resetTime: number | null }>({ canRequest: true, resetTime: null });
 
     // Effect for keyboard shortcuts and scrolling to top
     useEffect(() => {
@@ -99,56 +102,35 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         return () => window.removeEventListener('keydown', handleEsc);
     }, [onClose, trailerVideoId]);
 
-    // Effect to reset AI states when item changes
+    // Check rate limit status when details section is opened
     useEffect(() => {
-        setFunFacts(null);
-        setFunFactsError(null);
-        setIsFunFactsLoading(false);
-        setIsAiModalOpen(false);
-        setAiDescription(null);
-        setAiDescriptionError(null);
-    }, [item.id]);
-
-    const handleFetchFunFacts = async () => {
-        if (!isMediaDetails(item)) return;
-        if (funFacts || isFunFactsLoading) return;
-
-        setIsFunFactsLoading(true);
-        setFunFactsError(null);
-        try {
-            const response = await getFunFactsForMedia(item.title, item.releaseYear, item.type);
-            if (response.facts && response.facts.length > 0) {
-                setFunFacts(response.facts);
-            } else {
-                setFunFactsError("Couldn't find any interesting facts for this title.");
-            }
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-            setFunFactsError(errorMessage);
-            console.error("Failed to fetch fun facts:", error);
-        } finally {
-            setIsFunFactsLoading(false);
+        if (isDetailsVisible) {
+            const state = getRateLimitState();
+            setRateLimit({ canRequest: state.canRequest, resetTime: state.resetTime });
         }
-    };
-    
-    const handleFetchAiDescription = async () => {
-        if (!isMediaDetails(item)) return;
-        setIsAiModalOpen(true);
-        if (aiDescription) return;
+    }, [isDetailsVisible]);
 
-        setIsAiDescriptionLoading(true);
-        setAiDescriptionError(null);
-        try {
-            const response = await getAiDescriptionForMedia(item.title, item.releaseYear, item.type, item.overview);
-            setAiDescription(response);
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-            setAiDescriptionError(errorMessage);
-            console.error("Failed to fetch AI description:", error);
-        } finally {
-            setIsAiDescriptionLoading(false);
+
+    // Effect to fetch OMDb data
+    useEffect(() => {
+        setOmdbDetails(null); // Reset on item change
+        if (isMediaDetails(item) && item.imdbId) {
+            const fetchDetails = async () => {
+                setIsOmdbLoading(true);
+                try {
+                    const details = await fetchOmdbDetails(item.imdbId);
+                    if(details) {
+                        setOmdbDetails(details);
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch OMDb details", e);
+                } finally {
+                    setIsOmdbLoading(false);
+                }
+            };
+            fetchDetails();
         }
-    };
+    }, [item.id, item]);
 
     const handleWatchTrailer = () => {
         if (isMediaDetails(item) && item.trailerUrl) {
@@ -179,71 +161,126 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             dislikeItem(item);
         }
     };
-    
-    const categoryColors: { [key: string]: string } = {
-        CASTING: '#3498db', // Blue
-        PRODUCTION: '#9b59b6', // Purple
-        'BOX OFFICE': '#2ecc71', // Green
-        RECEPTION: '#f1c40f', // Yellow
-        LEGACY: '#e67e22', // Orange
-        'PRE-PRODUCTION': '#1abc9c' // Turquoise
+
+    const handleGenerateFacts = async () => {
+        if (!isMediaDetails(item)) return;
+
+        setIsFactsLoading(true);
+        setFactsError(null);
+        setFunFacts(null);
+        try {
+            const facts = await getFunFactsForMedia(item.title, item.releaseYear);
+            setFunFacts(facts);
+        } catch (e: any) {
+            if (e.resetTime) {
+                setRateLimit({ canRequest: false, resetTime: e.resetTime });
+            } else {
+                const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
+                setFactsError(errorMessage);
+            }
+        } finally {
+            setIsFactsLoading(false);
+        }
     };
 
-    const FunFactsSection: React.FC<{
-        facts: FunFact[] | null;
-        isLoading: boolean;
-        error: string | null;
-        onFetch: () => void;
-    }> = ({ facts, isLoading: factsLoading, error, onFetch }) => {
-        if (factsLoading) {
+    const FunFactsSection: React.FC = () => {
+        if (isFactsLoading) {
             return (
                 <div className="flex items-center justify-center h-24">
                     <LoadingSpinner />
                 </div>
             );
         }
+    
+        if (factsError) {
+            return <p className="text-red-400 text-sm bg-red-500/10 p-3 rounded-lg">{factsError}</p>;
+        }
 
-        if (error) {
-            return <p className="text-red-400 text-center">{error}</p>;
+        if (!funFacts) return null;
+
+        if (funFacts.length === 0) {
+            return <p className="text-gray-400 text-sm">No interesting facts could be generated for this title.</p>;
         }
         
-        if (facts) {
-            return (
-                <div className="fun-facts-container fade-in">
-                    <div className="space-y-4">
-                        {facts.map((fact, index) => (
-                            <div 
-                                key={index} 
-                                className="fun-fact-card fade-in" 
-                                style={{ 
-                                    borderColor: categoryColors[fact.category.toUpperCase()] || '#7f8c8d',
-                                    animationDelay: `${index * 100}ms`
-                                }}
-                            >
-                                <p className="fun-fact-category" style={{ color: categoryColors[fact.category.toUpperCase()] || '#7f8c8d' }}>
-                                    {fact.category}
-                                </p>
-                                <p className="text-gray-200 mt-1">{fact.fact}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        }
+        const categoryColors: { [key: string]: { border: string; text: string } } = {
+            'Casting': { border: 'border-blue-400', text: 'text-blue-300' },
+            'Production': { border: 'border-purple-400', text: 'text-purple-300' },
+            'Trivia': { border: 'border-green-400', text: 'text-green-300' },
+            'Legacy': { border: 'border-yellow-400', text: 'text-yellow-300' },
+            'default': { border: 'border-gray-400', text: 'text-gray-300' },
+        };
 
         return (
-            <div className="text-center">
-                <button
-                    onClick={onFetch}
-                    className="flex items-center justify-center gap-2 px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/10 hover:scale-105"
-                >
-                    <SparklesIcon className="w-5 h-5 text-indigo-400" />
-                    <span>Show Fun Facts</span>
-                </button>
+            <div className="space-y-4 mt-6">
+                {funFacts.map((fact, index) => {
+                    const color = categoryColors[fact.category] || categoryColors.default;
+                    return (
+                        <div key={index} className={`fun-fact-card ${color.border}`}>
+                            <p className={`fun-fact-category mb-1 ${color.text}`}>{fact.category}</p>
+                            <p className="text-gray-200">{fact.fact}</p>
+                        </div>
+                    );
+                })}
             </div>
         );
     };
 
+    const OmdbDetailsSection: React.FC = () => {
+        if (isOmdbLoading) {
+            return (
+                <div className="flex items-center justify-center h-24">
+                    <LoadingSpinner />
+                </div>
+            );
+        }
+    
+        if (!omdbDetails) {
+            return <p className="text-gray-400 text-sm">Additional details could not be loaded.</p>;
+        }
+        
+        const detailItems = [
+            { label: 'Director(s)', value: omdbDetails.Director },
+            { label: 'Writer(s)', value: omdbDetails.Writer },
+            { label: 'Awards', value: omdbDetails.Awards },
+            { label: 'Box Office', value: omdbDetails.BoxOffice },
+            { label: 'Production', value: omdbDetails.Production },
+        ];
+    
+        return (
+            <div className="fun-facts-container fade-in">
+                 {omdbDetails.Plot && omdbDetails.Plot !== 'N/A' && item.overview !== omdbDetails.Plot && (
+                    <div className="mb-6">
+                        <p className="text-gray-200 leading-relaxed">{omdbDetails.Plot}</p>
+                    </div>
+                 )}
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                    {detailItems.filter(i => i.value && i.value !== 'N/A').map(item => (
+                        <div key={item.label}>
+                            <p className="text-sm font-semibold text-gray-400">{item.label}</p>
+                            <p className="text-gray-200">{item.value}</p>
+                        </div>
+                    ))}
+                 </div>
+
+                 <div className="mt-6 pt-6 border-t border-white/10">
+                    { !funFacts && !isFactsLoading && !factsError && (
+                        !rateLimit.canRequest && rateLimit.resetTime ? (
+                            <RateLimitMessage resetTime={rateLimit.resetTime} featureName="AI Facts" />
+                        ) : (
+                         <button
+                            onClick={handleGenerateFacts}
+                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 rounded-xl text-white font-semibold transition-all duration-300"
+                         >
+                            <SparklesIcon className="w-6 h-6 text-indigo-400" />
+                            <span>Generate Behind-the-Scenes Facts</span>
+                         </button>
+                        )
+                    )}
+                    <FunFactsSection />
+                 </div>
+            </div>
+        );
+    };
 
   const renderMediaContent = (media: MediaDetails) => (
     <>
@@ -257,14 +294,15 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                     <span>Watch Trailer</span>
                 </button>
             )}
-             <button
-                onClick={handleFetchAiDescription}
-                className="flex items-center justify-center gap-2 px-6 py-3 glass-panel rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/5 hover:scale-105"
-                aria-label="Get AI-powered information"
-            >
-                <SparklesIcon className="w-6 h-6 text-indigo-400" />
-                <span>More Info • AI</span>
-            </button>
+            {!isLoading && media.imdbId && (
+                <button
+                    onClick={() => setIsDetailsVisible(prev => !prev)}
+                    className="flex items-center justify-center gap-2 px-6 py-3 glass-panel rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/5 hover:scale-105"
+                >
+                    <InfoIcon className="w-6 h-6" />
+                    <span>{isDetailsVisible ? 'Hide Info' : 'More Info & Synopsis'}</span>
+                </button>
+            )}
             <div className="flex items-center gap-2">
                 <button
                     onClick={handleLike}
@@ -293,14 +331,11 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         
         {isLoading && !media.cast && <div className="mt-6 flex justify-center"><LoadingSpinner /></div>}
 
-        <ModalSection title="Fun Facts">
-            <FunFactsSection
-                facts={funFacts}
-                isLoading={isFunFactsLoading}
-                error={funFactsError}
-                onFetch={handleFetchFunFacts}
-            />
-        </ModalSection>
+        {isDetailsVisible && (
+            <ModalSection title="More Details & Synopsis">
+                <OmdbDetailsSection />
+            </ModalSection>
+        )}
 
         {!isLoading && (
             <ModalSection title="Where to Watch">
@@ -466,17 +501,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         <CustomVideoPlayer 
           videoId={trailerVideoId}
           onClose={() => setTrailerVideoId(null)}
-        />
-      )}
-
-      {isMediaDetails(item) && (
-        <AiDescriptionModal
-            isOpen={isAiModalOpen}
-            onClose={() => setIsAiModalOpen(false)}
-            isLoading={isAiDescriptionLoading}
-            title={item.title}
-            description={aiDescription}
-            error={aiDescriptionError}
         />
       )}
     </>

@@ -1,9 +1,7 @@
-
-
 import type { MediaDetails, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor, AiSearchParams } from '../types.ts';
 import { supportedProviders } from './streamingService.ts';
-import { fetchBoxOffice } from './omdbService.ts';
 import { getTmdbApiKey } from './apiService.ts';
+import { fetchBoxOffice } from './omdbService.ts';
 
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 const entityCache = new Map<string, number>();
@@ -11,35 +9,17 @@ const entityCache = new Map<string, number>();
 export const fetchApi = async <T,>(endpoint: string): Promise<T> => {
     const apiKey = getTmdbApiKey();
     if (!apiKey) {
-        const errorMsg = "TMDb API key is missing. Please add your key to access content.";
-        console.error(errorMsg);
-        throw new Error(errorMsg);
+        throw new Error("TMDb API key is not set. Please add it via the UI.");
     }
     const separator = endpoint.includes('?') ? '&' : '?';
     const url = `${API_BASE_URL}${endpoint}${separator}api_key=${apiKey}&language=en-US`;
-
-    let response: Response;
-    try {
-        // Simplifying the fetch call to its most basic form to avoid network-level blocks.
-        response = await fetch(url);
-    } catch (error) {
-        // This catches network-level errors (e.g., no internet connection)
-        console.error(`Network error fetching ${url}:`, error);
-        throw new Error('Could not connect to the server. Please check your internet connection.');
-    }
-
+    const response = await fetch(url);
     if (!response.ok) {
-        // This handles API errors (e.g., bad API key, not found)
         const errorData = await response.json().catch(() => ({})); 
-        const errorMessage = errorData.status_message || `HTTP error ${response.status}`;
-        console.error(`API Error for ${url}:`, errorMessage, errorData);
-        // Throw a specific error for invalid keys
-        if (response.status === 401) {
-            throw new Error('Invalid TMDb API key. Please verify your key.');
-        }
-        throw new Error(`API request failed: ${errorMessage}`);
+        console.error("API Error:", JSON.stringify(errorData, null, 2));
+        const errorMessage = errorData.status_message || response.statusText || 'Unknown error';
+        throw new Error(`API request failed: ${response.status} ${errorMessage}`);
     }
-
     return response.json();
 };
 

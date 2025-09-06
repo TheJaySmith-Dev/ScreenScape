@@ -44,14 +44,14 @@ import { ActorPage } from './components/ActorPage.tsx';
 import { WatchlistPage } from './components/WatchlistPage.tsx';
 import { ComingSoonPage } from './components/ComingSoonPage.tsx';
 import { GitHubIcon, SparklesIcon } from './components/icons.tsx';
+import { ApiKeyModal } from './components/ApiKeyModal.tsx';
+import * as apiService from './services/apiService.ts';
 import { GamePage } from './components/GamePage.tsx';
 import { people as allPeople } from './services/peopleService.ts';
 import { PersonGrid } from './components/PersonGrid.tsx';
 import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { HeroSection } from './components/HeroSection.tsx';
 import { CustomVideoPlayer } from './components/CustomVideoPlayer.tsx';
-import { ApiKeyModal } from './components/ApiKeyModal.tsx';
-import { getTmdbApiKey, setTmdbApiKey } from './services/apiService.ts';
 
 
 type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'people' | 'studios' | 'brands' | 'streaming' | 'networks' | 'game';
@@ -72,10 +72,11 @@ const App: React.FC = () => {
   const [isVpnBlocked, setIsVpnBlocked] = useState<boolean | null>(null); // null: checking, false: ok, true: blocked
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+  const [tmdbApiKey, setTmdbApiKey] = useState<string | null>(null);
+  const [geminiApiKey, setGeminiApiKey] = useState<string | null>(null);
   const [theme, setTheme] = useState<AppTheme>('dark');
   const [isAiSearchOpen, setIsAiSearchOpen] = useState(false);
-  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
-
 
   // State for Streaming hubs
   const [availableProviders, setAvailableProviders] = useState<StreamingProviderInfo[]>([]);
@@ -114,13 +115,40 @@ const App: React.FC = () => {
   const [isComingSoonLoading, setIsComingSoonLoading] = useState(true);
 
   useEffect(() => {
-    const key = getTmdbApiKey();
-    if (!key) {
+    const tmdbKey = apiService.getTmdbApiKey();
+    const geminiKey = apiService.getGeminiApiKey();
+    let keysMissing = false;
+
+    if (tmdbKey) {
+      setTmdbApiKey(tmdbKey);
+    } else {
+      keysMissing = true;
+    }
+
+    if (geminiKey) {
+        setGeminiApiKey(geminiKey);
+    } else {
+        keysMissing = true;
+    }
+
+    if (keysMissing) {
       setIsApiKeyModalOpen(true);
     }
   }, []);
 
+  const handleSaveApiKeys = (keys: { tmdbKey: string; geminiKey: string; }) => {
+    apiService.saveTmdbApiKey(keys.tmdbKey);
+    apiService.saveGeminiApiKey(keys.geminiKey);
+    setTmdbApiKey(keys.tmdbKey);
+    setGeminiApiKey(keys.geminiKey);
+    setIsApiKeyModalOpen(false);
+    // Reload to ensure all services re-initialize with the new keys
+    window.location.reload();
+  };
+
   useEffect(() => {
+    if (!tmdbApiKey) return;
+
     const initApp = async () => {
       setIsVpnBlocked(null);
       setUserLocation(null);
@@ -155,10 +183,9 @@ const App: React.FC = () => {
       }
     };
     initApp();
-  }, []);
+  }, [tmdbApiKey]);
   
   const loadHomePage = useCallback(async () => {
-    if (getTmdbApiKey() === null) return;
     setIsHomeLoading(true);
     setError(null);
     try {
@@ -181,22 +208,23 @@ const App: React.FC = () => {
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
       console.error('Failed to load home page:', errorMessage);
-      setError(errorMessage);
+      setError("Could not load content. Please check your TMDb API key and internet connection.");
     } finally {
       setIsHomeLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'home' && homeSections.length === 0) {
+    if (tmdbApiKey && activeTab === 'home' && homeSections.length === 0) {
       loadHomePage();
     }
-  }, [activeTab, homeSections.length, loadHomePage]);
+  }, [tmdbApiKey, activeTab, homeSections.length, loadHomePage]);
 
   // Main routing effect
   useEffect(() => {
+    if (!tmdbApiKey) return;
+
     const handleRouteChange = async () => {
-      if (isApiKeyModalOpen) return;
       setIsLoading(true);
       setSelectedItem(null);
       setSelectedActor(null);
@@ -271,8 +299,7 @@ const App: React.FC = () => {
             break;
         }
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to load content for this page.";
-        setError(errorMessage);
+        setError("Failed to load content for this page.");
         console.error(err);
       } finally {
         setIsLoading(false);
@@ -285,7 +312,7 @@ const App: React.FC = () => {
     return () => {
       window.removeEventListener('hashchange', handleRouteChange);
     };
-  }, [studios, brands, availableProviders, networks, people, userLocation, homeSections.length, loadHomePage, isApiKeyModalOpen]);
+  }, [tmdbApiKey, studios, brands, availableProviders, networks, people, userLocation, homeSections.length, loadHomePage]);
   
   const handleSelectItem = useCallback(async (item: MediaDetails | Collection) => {
     setIsModalLoading(true);
@@ -368,13 +395,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSaveKeys = ({ tmdbKey }: { tmdbKey: string; }) => {
-    setTmdbApiKey(tmdbKey);
-    setIsApiKeyModalOpen(false);
-    // Force a reload to re-initialize the app with the new key.
-    window.location.reload();
-  };
-
   const mainContent = useMemo(() => {
     if (isLoading && !selectedItem && !selectedActor) {
       return <div className="flex justify-center items-center h-64"><LoadingSpinner /></div>;
@@ -423,7 +443,7 @@ const App: React.FC = () => {
 
   return (
     <div className={`app-container bg-black text-white min-h-screen transition-colors duration-500 ${theme}`}>
-      {isApiKeyModalOpen && <ApiKeyModal onSave={handleSaveKeys} />}
+      {isApiKeyModalOpen && <ApiKeyModal onSave={handleSaveApiKeys} />}
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
       <AiSearchModal isOpen={isAiSearchOpen} onClose={() => setIsAiSearchOpen(false)} onSelectMedia={handleSelectItem} />
       {heroTrailerId && <CustomVideoPlayer videoId={heroTrailerId} onClose={() => setHeroTrailerId(null)} />}

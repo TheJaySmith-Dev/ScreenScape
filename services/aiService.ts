@@ -1,11 +1,33 @@
-
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
-import type { AiSearchParams, FunFact, MediaDetails, ViewingGuide } from '../types.ts';
+import type { AiSearchParams, MediaDetails, ViewingGuide, FunFact } from '../types.ts';
+import { getGeminiApiKey, getRateLimitState, incrementRequestCount } from './apiService.ts';
 
-// Per instructions, the GoogleGenAI instance is initialized using the API key from environment variables.
-// This assumes `process.env.API_KEY` is available in the execution environment.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const model = 'gemini-2.5-flash';
+
+/**
+ * Creates and returns an initialized GoogleGenAI client.
+ * @throws {Error} if the Gemini API key is not set.
+ */
+const getAiClient = (): GoogleGenAI => {
+    const apiKey = getGeminiApiKey();
+    if (!apiKey) {
+        throw new Error("Gemini API key is not set. Please add it via the settings.");
+    }
+    return new GoogleGenAI({ apiKey });
+};
+
+/**
+ * Checks if the user can make an AI request based on the daily limit.
+ * @throws {Error} with a `resetTime` property if the rate limit is exceeded.
+ */
+const checkRateLimit = () => {
+    const { canRequest, resetTime } = getRateLimitState();
+    if (!canRequest) {
+        const error = new Error(`You have exceeded the daily limit of 500 requests. Please try again later.`);
+        (error as any).resetTime = resetTime;
+        throw error;
+    }
+};
 
 // This is a list of common genres from TMDb to help the AI.
 const TMDb_GENRES = "Action, Adventure, Animation, Comedy, Crime, Documentary, Drama, Family, Fantasy, History, Horror, Music, Mystery, Romance, Science Fiction, TV Movie, Thriller, War, Western";
@@ -40,6 +62,8 @@ const getSearchParamsSchema = {
  * Uses Gemini to parse a natural language query into structured search parameters.
  */
 export const getSearchParamsFromQuery = async (query: string): Promise<{ search_params: AiSearchParams; response_title: string; }> => {
+    checkRateLimit();
+    const ai = getAiClient();
     try {
         const response: GenerateContentResponse = await ai.models.generateContent({
             model,
@@ -55,7 +79,7 @@ The JSON object must have two top-level keys: "search_params" and "response_titl
     - genres: An array of strings from the provided list.
     - actors: An array of strings with actor names.
     - directors: An array of strings with director names.
-    - companies: An array of strings with production company names (e.g., "A24").
+    - companies: An array of strings with production company names (e.g., "A24", "Marvel Studios").
     - year_from: A number for the starting year.
     - year_to: A number for the ending year.
     - sort_by: A string, one of 'popularity.desc', 'release_date.desc', or 'vote_average.desc'.
@@ -67,100 +91,24 @@ Rules:
 - Put character names (e.g., "Thor", "Batman") in the 'characters' array.
 - Put moods or vibes (e.g., "happy") in the 'keywords' array.
 - Create a natural sentence for "response_title".
+- **IMPORTANT FRANCHISE RULE**: When a user mentions a major franchise like "Marvel", they almost always mean the Marvel Cinematic Universe (MCU). To handle this, set the 'companies' parameter to "Marvel Studios". This is critical to exclude older, non-MCU films. For example, if the query is "Marvel movie starring Chris Evans", the company should be "Marvel Studios" and the actor should be "Chris Evans".
+- If a user is specific, like "Sam Raimi Spider-Man", then correctly identify the director.
 
 Always respond with ONLY the JSON object.`,
                 responseMimeType: "application/json",
                 responseSchema: getSearchParamsSchema,
             }
         });
-
+        
+        incrementRequestCount();
         const result = JSON.parse(response.text);
         result.search_params.original_query = query;
         return result;
 
     } catch (error) {
         console.error('Error getting search params from AI:', error);
-        // Fallback to a simple keyword search if AI fails
-        return { 
-            search_params: { keywords: [query], original_query: query },
-            response_title: `Here are the results for "${query}"`
-        };
-    }
-};
-
-const funFactsSchema = {
-    type: Type.OBJECT,
-    properties: {
-        facts: {
-            type: Type.ARRAY,
-            description: "An array of fun facts about the media.",
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    category: {
-                        type: Type.STRING,
-                        description: "The category of the fact (e.g., CASTING, PRODUCTION, RECEPTION, LEGACY, BOX OFFICE, PRE-PRODUCTION)."
-                    },
-                    fact: {
-                        type: Type.STRING,
-                        description: "The fun fact itself."
-                    }
-                },
-                required: ['category', 'fact']
-            }
-        }
-    },
-    required: ['facts']
-};
-
-/**
- * Generates fun facts for a given media title.
- */
-export const getFunFactsForMedia = async (title: string, releaseYear: string, type: 'movie' | 'tv'): Promise<{ facts: FunFact[] }> => {
-    try {
-        const response: GenerateContentResponse = await ai.models.generateContent({
-            model,
-            contents: `Find 3-5 interesting and uncommon fun facts about the ${type} "${title}" (${releaseYear}). Focus on behind-the-scenes, casting, production, or legacy details.`,
-            config: {
-                systemInstruction: `You are a movie and TV show trivia expert. Provide fun facts in a structured JSON format. The top-level key must be "facts", which is an array of objects. Each object must have a "category" (e.g., CASTING, PRODUCTION, RECEPTION, LEGACY, 'BOX OFFICE', 'PRE-PRODUCTION') and a "fact" (the trivia string).`,
-                responseMimeType: "application/json",
-                responseSchema: funFactsSchema
-            }
-        });
-
-        const result = JSON.parse(response.text);
-        if (result && result.facts) {
-            return result;
-        } else {
-            throw new Error("AI response is not in the expected format.");
-        }
-    } catch (error) {
-        console.error('Error getting fun facts from AI:', error);
-        throw new Error("Could not generate fun facts.");
-    }
-};
-
-/**
- * Generates an evocative, spoiler-free description for a media title.
- */
-export const getAiDescriptionForMedia = async (title: string, releaseYear: string, type: 'movie' | 'tv', overview: string): Promise<string> => {
-    try {
-        const response: GenerateContentResponse = await ai.models.generateContent({
-            model,
-            contents: `Title: ${title} (${releaseYear})
-Type: ${type}
-Official Overview: "${overview}"
-
-Based on the official overview, write an expanded, more evocative, and engaging description. Your goal is to entice a potential viewer by highlighting themes, tone, and potential emotional impact, without giving away major spoilers. Aim for 2-3 paragraphs.`,
-            config: {
-                systemInstruction: `You are a creative and insightful film and television critic. You write compelling, spoiler-free summaries that capture the essence of a show or movie.`
-            }
-        });
-
-        return response.text;
-    } catch (error) {
-        console.error('Error getting AI description:', error);
-        throw new Error("Could not generate an AI-powered description.");
+        // Propagate the error to be handled by the UI
+        throw error;
     }
 };
 
@@ -201,6 +149,8 @@ const viewingGuideSchema = {
  * Generates curated viewing guides for a franchise.
  */
 export const getViewingGuidesForBrand = async (brandName: string, mediaList: MediaDetails[]): Promise<{ guides: ViewingGuide[] }> => {
+    checkRateLimit();
+    const ai = getAiClient();
     const mediaString = mediaList.map(m => `${m.type.toUpperCase()}:${m.id} - ${m.title} (${m.releaseYear})`).join('\n');
     try {
         const response: GenerateContentResponse = await ai.models.generateContent({
@@ -224,6 +174,7 @@ The output MUST be a JSON object with a single top-level key "guides".`,
             }
         });
 
+        incrementRequestCount();
         const result = JSON.parse(response.text);
         if (result && result.guides) {
             return result;
@@ -233,6 +184,63 @@ The output MUST be a JSON object with a single top-level key "guides".`,
 
     } catch (error) {
         console.error(`Error getting viewing guides for ${brandName}:`, error);
-        throw new Error(`Could not generate viewing guides for ${brandName}.`);
+        throw error;
+    }
+};
+
+const funFactsSchema = {
+    type: Type.OBJECT,
+    properties: {
+        facts: {
+            type: Type.ARRAY,
+            description: "A list of fun facts about the movie.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    category: {
+                        type: Type.STRING,
+                        description: "A category for the fact, e.g., 'Casting', 'Production', 'Trivia', 'Legacy'."
+                    },
+                    fact: {
+                        type: Type.STRING,
+                        description: "The interesting fact or piece of trivia."
+                    }
+                },
+                required: ['category', 'fact']
+            }
+        }
+    },
+    required: ['facts']
+};
+
+
+/**
+ * Generates fun facts for a given media title.
+ */
+export const getFunFactsForMedia = async (title: string, year: string): Promise<FunFact[]> => {
+    checkRateLimit();
+    const ai = getAiClient();
+    try {
+        const response: GenerateContentResponse = await ai.models.generateContent({
+            model,
+            contents: `Generate 3-5 interesting, little-known, behind-the-scenes fun facts for the movie titled "${title}" released around ${year}.`,
+            config: {
+                systemInstruction: "You are a movie trivia expert. Your task is to provide fun facts in a structured JSON format. For each fact, provide a relevant category like 'Casting', 'Production', 'Trivia', or 'Legacy'. Respond with ONLY a JSON object containing a 'facts' array.",
+                responseMimeType: "application/json",
+                responseSchema: funFactsSchema,
+            }
+        });
+        
+        incrementRequestCount();
+        const result = JSON.parse(response.text);
+        if (result && result.facts) {
+            return result.facts;
+        } else {
+            throw new Error("AI response did not contain 'facts' array.");
+        }
+
+    } catch (error) {
+        console.error(`Error getting fun facts for ${title}:`, error);
+        throw error;
     }
 };
