@@ -96,40 +96,21 @@ export const savePreferences = async (email: string, likes: LikedItem[], dislike
 
 // --- API Keys Management ---
 
-const TMDB_API_KEY_STORAGE_KEY = 'screenscape_tmdb_api_key';
-const GEMINI_API_KEY_STORAGE_KEY = 'screenscape_gemini_api_key';
-
-
-export const saveTmdbApiKey = (apiKey: string): void => {
-    try {
-        localStorage.setItem(TMDB_API_KEY_STORAGE_KEY, apiKey);
-    } catch (error) {
-        console.error("Failed to save TMDb API key to local storage", error);
-    }
-};
+const TMDB_API_KEY_STORAGE_KEY = 'tmdb_api_key';
 
 export const getTmdbApiKey = (): string | null => {
     try {
         return localStorage.getItem(TMDB_API_KEY_STORAGE_KEY);
-    } catch (error) {
-        console.error("Failed to retrieve TMDb API key from local storage", error);
+    } catch (e) {
+        console.error("Could not read from local storage", e);
         return null;
     }
 };
 
-export const saveGeminiApiKey = (apiKey: string): void => {
+export const setTmdbApiKey = (key: string): void => {
     try {
-        localStorage.setItem(GEMINI_API_KEY_STORAGE_KEY, apiKey);
-    } catch (error) {
-        console.error("Failed to save Gemini API key to local storage", error);
-    }
-};
-
-export const getGeminiApiKey = (): string | null => {
-    try {
-        return localStorage.getItem(GEMINI_API_KEY_STORAGE_KEY);
-    } catch (error) {
-        console.error("Failed to retrieve Gemini API key from local storage", error);
-        return null;
+        localStorage.setItem(TMDB_API_KEY_STORAGE_KEY, key);
+    } catch (e) {
+        console.error("Could not write to local storage", e);
     }
 };
