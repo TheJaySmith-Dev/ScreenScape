@@ -61,10 +61,10 @@ export const AiSearchModal: React.FC<AiSearchModalProps> = ({ isOpen, onClose, o
         
         try {
             setLoadingMessage('Understanding your request...');
-            const params = await getSearchParamsFromQuery(searchQuery);
+            const { search_params, response_title } = await getSearchParamsFromQuery(searchQuery);
 
             setLoadingMessage('Finding matching titles...');
-            const mediaResults = await discoverMediaFromAi(params);
+            const mediaResults = await discoverMediaFromAi(search_params);
 
             if (mediaResults.length === 0) {
                 setResultsTitle(`Results for "${searchQuery}"`);
@@ -72,7 +72,7 @@ export const AiSearchModal: React.FC<AiSearchModalProps> = ({ isOpen, onClose, o
                 setSearchState('error');
             } else {
                 setResults(mediaResults);
-                setResultsTitle(`Here's what I found for "${searchQuery}"`);
+                setResultsTitle(response_title);
                 setSearchState('results');
             }
         } catch (error) {

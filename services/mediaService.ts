@@ -1,15 +1,13 @@
-
-
 import type { MediaDetails, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor, AiSearchParams } from '../types.ts';
 import { supportedProviders } from './streamingService.ts';
-import { getApiKey } from './apiService.ts';
+import { getTmdbApiKey } from './apiService.ts';
 import { fetchBoxOffice } from './omdbService.ts';
 
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 const entityCache = new Map<string, number>();
 
 export const fetchApi = async <T,>(endpoint: string): Promise<T> => {
-    const apiKey = getApiKey();
+    const apiKey = getTmdbApiKey();
     if (!apiKey) {
         throw new Error("TMDb API key is not set. Please add it via the UI.");
     }
@@ -262,8 +260,22 @@ const getEntityId = async (name: string, type: 'genre' | 'company' | 'person' | 
 };
 
 export const discoverMediaFromAi = async (params: AiSearchParams): Promise<MediaDetails[]> => {
-    const { keywords, genres, actors, directors, companies, year_from, year_to, sort_by } = params;
+    const { keywords, genres, actors, directors, companies, characters, year_from, year_to, sort_by } = params;
     
+    // If the search is for a specific character, a standard text search is often more effective than discovery.
+    if (characters && characters.length > 0) {
+        const searchQuery = [
+            ...(companies || []),
+            ...(characters || []),
+            ...(keywords || []),
+            ...(genres || []), // Genres as keywords might help
+        ].join(' ');
+        
+        if (searchQuery.trim()) {
+            return searchMedia(searchQuery);
+        }
+    }
+
     const with_genres = genres ? (await Promise.all(genres.map(g => getEntityId(g, 'genre')))).filter(Boolean).join(',') : '';
     const with_companies = companies ? (await Promise.all(companies.map(c => getEntityId(c, 'company')))).filter(Boolean).join(',') : '';
     const with_cast = actors ? (await Promise.all(actors.map(a => getEntityId(a, 'person')))).filter(Boolean).join(',') : '';

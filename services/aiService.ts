@@ -1,113 +1,170 @@
 import type { AiSearchParams, FunFact } from '../types.ts';
 
-// User-provided API Key
-const API_KEY = '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';
+const API_KEY = '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';
 const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const MODEL = 'deepseek/deepseek-chat';
+
+/**
+ * A generic function to call the AI model with improved error handling and JSON parsing.
+ * @param systemPrompt The system prompt to guide the model.
+ * @param userQuery The user's input.
+ * @param expectJson Whether to expect a JSON object as a response.
+ * @param maxTokens The maximum number of tokens to generate.
+ * @param useWebSearch Whether to enable the web search tool for the model.
+ * @returns The parsed AI response (string or object).
+ */
+const callAi = async (systemPrompt: string, userQuery: string, expectJson: boolean, maxTokens?: number, useWebSearch: boolean = false): Promise<any> => {
+    const headers = {
+        'Authorization': `Bearer ${API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://screenscape.dev', // Recommended by OpenRouter
+        'X-Title': 'ScreenScape'                 // Recommended by OpenRouter
+    };
+
+    const body: any = {
+        model: MODEL,
+        messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userQuery }
+        ],
+    };
+
+    if (expectJson) {
+        body.response_format = { type: 'json_object' };
+    }
+
+    if (maxTokens) {
+        body.max_tokens = maxTokens;
+    }
+
+    // Enable web search if requested
+    if (useWebSearch) {
+        body.tool_choice = "auto";
+        body.tools = [{ "type": "web_search" }];
+    }
+
+    const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error('AI API Error:', errorText);
+        let errorMessage = `AI API request failed: ${response.status} ${response.statusText}`;
+        try {
+            const errorJson = JSON.parse(errorText);
+            if (errorJson.error?.message) {
+                errorMessage = `AI Error: ${errorJson.error.message}`;
+            }
+        } catch (e) { /* Ignore JSON parsing error on the error text */ }
+        throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0]?.message?.content;
+
+    if (!content) {
+        throw new Error('AI returned an empty response.');
+    }
+    
+    if (expectJson) {
+        try {
+            // The `response_format` should return clean JSON, so try parsing directly first.
+            return JSON.parse(content);
+        } catch (e1) {
+            // If direct parsing fails, the model might have wrapped the JSON in text/markdown.
+            // Extract the first valid JSON object from the string.
+            console.warn("Direct JSON parsing failed, attempting to extract from text.", e1);
+            const match = content.match(/\{[\s\S]*\}/);
+            if (match) {
+                try {
+                    return JSON.parse(match[0]);
+                } catch (e2) {
+                    console.error("Failed to parse extracted JSON:", e2);
+                    console.error("Original content from AI:", content);
+                    throw new Error("AI returned invalid JSON.");
+                }
+            }
+            console.error("No valid JSON object found in AI response:", content);
+            throw new Error("AI did not return a valid JSON object.");
+        }
+    }
+    
+    return content;
+};
+
 
 // This is a list of common genres from TMDb to help the AI.
 const TMDb_GENRES = "Action, Adventure, Animation, Comedy, Crime, Documentary, Drama, Family, Fantasy, History, Horror, Music, Mystery, Romance, Science Fiction, TV Movie, Thriller, War, Western";
 
-const systemPrompt = `
-You are an expert movie and TV show recommendation assistant. Your task is to interpret a user's natural language query and convert it into a structured JSON object that can be used to search The Movie Database (TMDb).
+const getSearchParamsSystemPrompt = `
+You are an expert movie and TV show recommendation assistant. Your task is to interpret a user's natural language query and convert it into a structured JSON object.
 
-The JSON object should have the following structure:
-- keywords: An array of strings. These are general search terms, vibes, or plot elements.
-- genres: An array of strings. Must be from the provided list of valid genres.
-- actors: An array of strings, containing actor names.
-- directors: An array of strings, containing director names.
-- companies: An array of strings, containing production company or studio names (e.g., "Disney", "A24").
-- year_from: A number representing the starting year of a range.
-- year_to: A number representing the ending year of a range.
-- sort_by: A string, either 'popularity.desc', 'release_date.desc', or 'vote_average.desc'. Default to 'popularity.desc'.
+The JSON object must have two top-level keys: "search_params" and "response_title".
 
-Rules:
-1.  Analyze the user's query to extract relevant entities.
-2.  For genres, ONLY use values from this list: ${TMDb_GENRES}. Do not invent genres.
-3.  If a query contains a mood or vibe (e.g., "happy", "mind-bending"), add it to the 'keywords' array.
-4.  If no specific entities can be extracted, use the entire query as a single keyword.
-5.  Always respond with ONLY the JSON object that can be parsed by JSON.parse(). Do not add any extra text, explanations, or markdown formatting like \`\`\`json.
+1. "search_params": An object containing search parameters for TMDb. It can have the following keys:
+    - keywords: An array of strings for general search terms, vibes, or plot elements.
+    - characters: An array of strings for specific character names mentioned (e.g., "Tony Stark").
+    - genres: An array of strings from the provided list.
+    - actors: An array of strings with actor names.
+    - directors: An array of strings with director names.
+    - companies: An array of strings with production company names (e.g., "A24").
+    - year_from: A number for the starting year.
+    - year_to: A number for the ending year.
+    - sort_by: A string, one of 'popularity.desc', 'release_date.desc', or 'vote_average.desc'.
+
+2. "response_title": A short, friendly, conversational title for the search results page that summarizes the user's request.
+
+Rules for "search_params":
+- For genres, ONLY use values from this list: ${TMDb_GENRES}.
+- Put character names (e.g., "Thor", "Batman", "Tony Stark") in the 'characters' array, NOT 'actors' or 'keywords'.
+- Put moods or vibes (e.g., "happy") in the 'keywords' array.
+
+Rule for "response_title":
+- Create a natural sentence. If a search for a character returns results that are just "mentions", it's good to hint at that. For example, for "Marvel movies with Tony Stark", a good title could be "Here are Marvel movies that mention or feature Tony Stark!".
+
+Always respond with ONLY the JSON object.
 
 Examples:
-- User: "A happy Disney movie."
-- You:
+- User: "A happy Disney movie." ->
 {
-  "keywords": ["happy"],
-  "companies": ["Disney"]
+  "search_params": { "keywords": ["happy"], "companies": ["Disney"] },
+  "response_title": "Here are some happy movies from Disney!"
 }
-
-- User: "A Marvel movie starring Chris Evans"
-- You:
+- User: "Marvel movies starring Thor" ->
 {
-  "companies": ["Marvel Studios"],
-  "actors": ["Chris Evans"]
+  "search_params": { "companies": ["Marvel Studios"], "characters": ["Thor"] },
+  "response_title": "Here are Marvel movies featuring Thor!"
 }
-
-- User: "mind-bending sci-fi movies from the 90s"
-- You:
+- User: "mind-bending sci-fi movies from the 90s" ->
 {
-  "keywords": ["mind-bending"],
-  "genres": ["Science Fiction"],
-  "year_from": 1990,
-  "year_to": 1999
-}
-
-- User: "something funny and upbeat"
-- You:
-{
-  "keywords": ["funny", "upbeat"],
-  "genres": ["Comedy"]
+  "search_params": { "keywords": ["mind-bending"], "genres": ["Science Fiction"], "year_from": 1990, "year_to": 1999 },
+  "response_title": "Here are some mind-bending sci-fi movies from the 90s."
 }
 `;
 
 /**
  * Uses an AI to parse a natural language query into structured search parameters.
  */
-export const getSearchParamsFromQuery = async (query: string): Promise<AiSearchParams> => {
+export const getSearchParamsFromQuery = async (query: string): Promise<{ search_params: AiSearchParams; response_title: string; }> => {
     try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${API_KEY}`,
-                'HTTP-Referer': 'https://screenscape.com', // Required by some providers like OpenRouter
-                'X-Title': 'ScreenScape AI Search', // Required by some providers
-            },
-            body: JSON.stringify({
-                model: 'openai/gpt-3.5-turbo', // A good default model
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: query },
-                ],
-                response_format: { type: "json_object" },
-            }),
-        });
-
-        if (!response.ok) {
-            const errorBody = await response.text();
-            console.error('AI API Error:', response.status, errorBody);
-            throw new Error(`AI service failed: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        const content = data.choices[0]?.message?.content;
-        
-        if (!content) {
-            throw new Error('AI returned an empty response.');
-        }
-
-        const params: AiSearchParams = JSON.parse(content);
-        params.original_query = query;
-        return params;
-
+        const response: { search_params: AiSearchParams; response_title: string; } = await callAi(getSearchParamsSystemPrompt, query, true, 1024);
+        response.search_params.original_query = query;
+        return response;
     } catch (error) {
         console.error('Error getting search params from AI:', error);
         // Fallback: If AI fails, treat the whole query as a keyword search.
-        return { keywords: [query], original_query: query };
+        return { 
+            search_params: { keywords: [query], original_query: query },
+            response_title: `Here are the results for "${query}"`
+        };
     }
 };
 
 const funFactsSystemPrompt = `
-You are a movie and TV show trivia expert. Your task is to generate 5-7 interesting, concise, and little-known fun facts about a specific media title.
+You are a movie and TV show trivia expert. Your task is to generate 5-7 interesting, concise, and little-known fun facts about a specific media title. You have access to the web to find up-to-date and accurate information.
 
 You must cover a variety of topics, including:
 - **Casting**: "What if" scenarios, original casting choices, actor preparations.
@@ -118,7 +175,7 @@ You must cover a variety of topics, including:
 
 The user will provide the title, release year, and type (movie/tv).
 
-You MUST respond with ONLY a JSON object that can be parsed by \`JSON.parse()\`. The JSON object must have a single key "facts" which is an array of objects. Each object in the array must have two keys: "category" (a string from the list above) and "fact" (a string containing the fun fact).
+You MUST respond with a JSON object with a single key "facts" which is an array of objects. Each object in the array should have two keys: "category" (string) and "fact" (string).
 
 Example Request:
 Title: Back to the Future, Year: 1985, Type: movie
@@ -133,10 +190,6 @@ Example Response:
     {
       "category": "Production",
       "fact": "The DeLorean was chosen for its futuristic, spaceship-like appearance. The speedometer was custom-built for the film because no car at the time had a speedometer that went up to 88 mph."
-    },
-    {
-      "category": "Reception",
-      "fact": "President Ronald Reagan was a huge fan of the film and even quoted it in his 1986 State of the Union address, saying, 'Where we're going, we don't need roads.'"
     }
   ]
 }
@@ -145,38 +198,11 @@ Example Response:
 export const getFunFactsForMedia = async (title: string, year: string, type: 'movie' | 'tv'): Promise<{facts: FunFact[]}> => {
     const query = `Title: ${title}, Year: ${year}, Type: ${type}`;
     try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${API_KEY}`,
-                'HTTP-Referer': 'https://screenscape.com',
-                'X-Title': 'ScreenScape Fun Facts',
-            },
-            body: JSON.stringify({
-                model: 'openai/gpt-3.5-turbo',
-                messages: [
-                    { role: 'system', content: funFactsSystemPrompt },
-                    { role: 'user', content: query },
-                ],
-                response_format: { type: "json_object" },
-            }),
-        });
-
-        if (!response.ok) {
-            const errorBody = await response.text();
-            console.error('AI API Error (Fun Facts):', response.status, errorBody);
-            throw new Error(`AI service failed for fun facts: ${response.statusText}`);
+        const funFactsData: {facts: FunFact[]} = await callAi(funFactsSystemPrompt, query, true, 2048, true);
+        // Ensure the response has the correct structure.
+        if (!funFactsData || !Array.isArray(funFactsData.facts)) {
+             throw new Error("AI returned data in an unexpected format.");
         }
-
-        const data = await response.json();
-        const content = data.choices[0]?.message?.content;
-        
-        if (!content) {
-            throw new Error('AI returned an empty response for fun facts.');
-        }
-
-        const funFactsData: {facts: FunFact[]} = JSON.parse(content);
         return funFactsData;
 
     } catch (error) {
@@ -186,12 +212,12 @@ export const getFunFactsForMedia = async (title: string, year: string, type: 'mo
 };
 
 const aiDescriptionSystemPrompt = `
-You are a passionate film and TV critic. Your task is to provide a deeper, more insightful analysis of a media title based on the details provided.
+You are a passionate film and TV critic with access to web search for the latest information and context. Your task is to provide a deeper, more insightful analysis of a media title based on the details provided.
 
 Rules:
 1.  Write an engaging, extended description of about 150-200 words.
 2.  Do NOT simply rephrase the provided overview. Go deeper.
-3.  Touch upon the main themes, character motivations, overall tone, and what makes the title unique or appealing.
+3.  Touch upon the main themes, character motivations, overall tone, and what makes the title unique or appealing. Use your web search ability to find critical reception or interesting production details to include.
 4.  Your tone should be enthusiastic and insightful, like a professional critic writing for an entertainment magazine.
 5.  Respond with ONLY the descriptive text. Do not include any headers, titles, or introductory phrases like "Here is the description:".
 
@@ -205,37 +231,7 @@ Example Response:
 export const getAiDescriptionForMedia = async (title: string, year: string, type: 'movie' | 'tv', overview: string): Promise<string> => {
     const query = `Title: ${title}, Year: ${year}, Type: ${type}, Overview: "${overview}"`;
     try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${API_KEY}`,
-                'HTTP-Referer': 'https://screenscape.com',
-                'X-Title': 'ScreenScape AI Description',
-            },
-            body: JSON.stringify({
-                model: 'openai/gpt-3.5-turbo',
-                messages: [
-                    { role: 'system', content: aiDescriptionSystemPrompt },
-                    { role: 'user', content: query },
-                ],
-                max_tokens: 300,
-            }),
-        });
-
-        if (!response.ok) {
-            const errorBody = await response.text();
-            console.error('AI API Error (Description):', response.status, errorBody);
-            throw new Error(`AI service failed for description: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        const content = data.choices[0]?.message?.content;
-        
-        if (!content) {
-            throw new Error('AI returned an empty response for the description.');
-        }
-
+        const content: string = await callAi(aiDescriptionSystemPrompt, query, false, 512, true);
         return content.trim();
 
     } catch (error) {

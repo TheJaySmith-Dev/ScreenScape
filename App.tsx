@@ -73,7 +73,7 @@ const App: React.FC = () => {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
-  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [tmdbApiKey, setTmdbApiKey] = useState<string | null>(null);
   const [theme, setTheme] = useState<AppTheme>('dark');
   const [isAiSearchOpen, setIsAiSearchOpen] = useState(false);
 
@@ -114,22 +114,22 @@ const App: React.FC = () => {
   const [isComingSoonLoading, setIsComingSoonLoading] = useState(true);
 
   useEffect(() => {
-    const key = apiService.getApiKey();
-    if (key) {
-      setApiKey(key);
+    const tmdbKey = apiService.getTmdbApiKey();
+    if (tmdbKey) {
+      setTmdbApiKey(tmdbKey);
     } else {
       setIsApiKeyModalOpen(true);
     }
   }, []);
 
-  const handleSaveApiKey = (newKey: string) => {
-    apiService.saveApiKey(newKey);
-    setApiKey(newKey);
+  const handleSaveApiKeys = (keys: { tmdbKey: string; }) => {
+    apiService.saveTmdbApiKey(keys.tmdbKey);
+    setTmdbApiKey(keys.tmdbKey);
     setIsApiKeyModalOpen(false);
   };
 
   useEffect(() => {
-    if (!apiKey) return;
+    if (!tmdbApiKey) return;
 
     const initApp = async () => {
       setIsVpnBlocked(null);
@@ -161,19 +161,53 @@ const App: React.FC = () => {
         setIsVpnBlocked(false);
         const defaultLoc = { name: 'United States', code: 'US' };
         setUserLocation(defaultLoc);
-        // Fallback to showing curated providers on error
         setAvailableProviders(supportedProviders);
       }
     };
     initApp();
-  }, [apiKey]);
+  }, [tmdbApiKey]);
+  
+  const loadHomePage = useCallback(async () => {
+    setIsHomeLoading(true);
+    setError(null);
+    try {
+      const trending = await getTrending();
+      const popularMovies = await getPopularMovies();
+      const popularTv = await getPopularTv();
+      const nowPlaying = await getNowPlayingMovies();
+      const topRatedMovies = await getTopRatedMovies();
+
+      const heroCandidates = [...trending, ...nowPlaying].filter(item => item.backdropUrl && !item.backdropUrl.includes('picsum.photos'));
+      setHeroItem(heroCandidates.length > 0 ? heroCandidates[Math.floor(Math.random() * heroCandidates.length)] : null);
+
+      setHomeSections([
+        { title: 'Trending This Week', items: trending, type: 'mixed' },
+        { title: 'Now Playing in Theaters', items: nowPlaying, type: 'movie' },
+        { title: 'Popular Movies', items: popularMovies, type: 'movie' },
+        { title: 'Popular TV Shows', items: popularTv, type: 'tv' },
+        { title: 'Top Rated Movies', items: topRatedMovies, type: 'movie' },
+      ]);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+      console.error('Failed to load home page:', errorMessage);
+      setError("Could not load content. Please check your TMDb API key and internet connection.");
+    } finally {
+      setIsHomeLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (tmdbApiKey && activeTab === 'home' && homeSections.length === 0) {
+      loadHomePage();
+    }
+  }, [tmdbApiKey, activeTab, homeSections.length, loadHomePage]);
 
   // Main routing effect
   useEffect(() => {
-    if (!apiKey) return;
+    if (!tmdbApiKey) return;
 
     const handleRouteChange = async () => {
-      // Clear all page-specific content to avoid showing stale data from previous view
+      setIsLoading(true);
       setSelectedItem(null);
       setSelectedActor(null);
       setSelectedStudio(null);
@@ -184,717 +218,253 @@ const App: React.FC = () => {
       setRecommendations([]);
       setError(null);
       
-      const hash = window.location.hash.substring(1); // remove '#'
+      const hash = window.location.hash.substring(1);
       const parts = hash.split('/').filter(Boolean);
-      const [page, ...params] = parts;
+      const [page, param] = parts;
 
-      const mainTabs: ActiveTab[] = ['home', 'foryou', 'watchlist', 'movies', 'tv', 'collections', 'people', 'studios', 'brands', 'streaming', 'networks', 'game'];
-      const currentTab = mainTabs.includes(page as ActiveTab) ? (page as ActiveTab) : 'home';
-      setActiveTab(currentTab);
-
-      // Don't load content if VPN is blocked
-      if (isVpnBlocked) {
-        setIsLoading(false);
-        return;
-      }
-      
-      if (currentTab !== 'game') {
-        setIsLoading(true);
-      }
+      const newActiveTab = (page || 'home') as ActiveTab;
+      setActiveTab(newActiveTab);
 
       try {
-        switch (page) {
-          case 'media': {
-            const [type, idStr] = params;
-            if ((type === 'movie' || type === 'tv') && idStr) {
-              await handleSelectMedia(parseInt(idStr, 10), type);
-            }
-            break;
-          }
-          case 'collection': {
-            const [idStr] = params;
-            if (idStr) await handleSelectCollection(parseInt(idStr, 10));
-            break;
-          }
-          case 'actor': {
-            const [idStr] = params;
-            if (idStr) await handleSelectActor(parseInt(idStr, 10));
-            break;
-          }
-          case 'studios': {
-            const [idStr] = params;
-            const studio = studios.find(s => s.id === parseInt(idStr));
-            if (studio) await handleSelectStudio(studio);
-            break;
-          }
-          case 'brands': {
-            const [idStr] = params;
-            const brand = brands.find(b => b.id === idStr);
-            if (brand) await handleSelectBrand(brand);
-            break;
-          }
-          case 'streaming': {
-            const [key] = params;
-            const provider = availableProviders.find(p => p.key === key);
-            if (provider) await handleSelectProvider(provider);
-            break;
-          }
-          case 'networks': {
-            const [idStr] = params;
-            const network = networks.find(n => n.id === parseInt(idStr));
-            if (network) await handleSelectNetwork(network);
-            break;
-          }
-          case 'people': {
-            const [idStr] = params;
-            const person = people.find(p => p.id === idStr);
-            if (person) await handleSelectPerson(person);
-            break;
-          }
+        switch (newActiveTab) {
           case 'home':
+            if (homeSections.length === 0) await loadHomePage();
+            break;
           case 'movies':
+            setRecommendations(await getPopularMovies());
+            break;
           case 'tv':
-          default: { // Also handles empty hash
-            if (isVpnBlocked === false) {
-                setIsHomeLoading(true);
-                setError(null);
-                setHeroItem(null);
-                try {
-                  const [trending, popularMovies, popularTv, nowPlayingMovies, topRatedMovies, topRatedTv] = await Promise.all([
-                    getTrending(), getPopularMovies(), getPopularTv(), getNowPlayingMovies(), getTopRatedMovies(), getTopRatedTv(),
-                  ]);
-
-                  if (trending.length > 0) {
-                      setHeroItem(trending[0]);
-                  }
-                  
-                  const sections = [
-                    { title: 'Trending This Week', items: trending, type: 'mixed' as const },
-                    { title: 'Popular Movies', items: popularMovies, type: 'movie' as const },
-                    { title: 'Critically Acclaimed Movies', items: topRatedMovies, type: 'movie' as const },
-                    { title: 'Popular TV Shows', items: popularTv, type: 'tv' as const },
-                    { title: 'Critically Acclaimed TV Shows', items: topRatedTv, type: 'tv' as const },
-                    { title: 'Now Playing in Theaters', items: nowPlayingMovies, type: 'movie' as const },
-                  ];
-                  setHomeSections(sections.filter(s => s.items.length > 0));
-                } catch (err) {
-                  console.error("Failed to load home data:", err);
-                  setError("Could not load content. Please check your network connection.");
-                } finally {
-                  setIsHomeLoading(false);
-                }
+            setRecommendations(await getPopularTv());
+            break;
+          case 'studios':
+            if (param) {
+              const studio = studios.find(s => s.id === parseInt(param));
+              setSelectedStudio(studio || null);
             }
             break;
-          }
-          case 'collections': {
-              setIsComingSoonLoading(true);
-              setError(null);
-              try {
-                  const media = await getComingSoonMedia();
-                  setComingSoonMedia(media);
-              } catch (err) {
-                  console.error("Failed to load coming soon data:", err);
-                  setError("Could not load upcoming content. Please try again later.");
-              } finally {
-                  setIsComingSoonLoading(false);
-              }
-              break;
-          }
+          case 'brands':
+            if (param) {
+              const brand = brands.find(b => b.id === param);
+              setSelectedBrand(brand || null);
+            }
+            break;
+          case 'streaming':
+            if (param && userLocation) {
+              const provider = availableProviders.find(p => p.key === param);
+              setSelectedProvider(provider || null);
+            }
+            break;
+          case 'networks':
+            if (param) {
+              const network = networks.find(n => n.id === parseInt(param));
+              setSelectedNetwork(network || null);
+            }
+            break;
+          case 'people':
+            if (param) {
+              const person = people.find(p => p.id === param);
+              setSelectedPerson(person || null);
+            }
+            break;
+          case 'collections':
+            setIsComingSoonLoading(true);
+            setComingSoonMedia(await getComingSoonMedia());
+            setIsComingSoonLoading(false);
+            break;
+          case 'foryou':
+          case 'watchlist':
           case 'game':
-            // The GamePage component handles its own loading state.
+            break; // Handled by their own components
+          default:
+            // Fallback to home if route is unknown
+            window.location.hash = '/home';
             break;
         }
       } catch (err) {
-          console.error("Routing error:", err);
-          setError("An error occurred. Please try again.");
+        setError("Failed to load content for this page.");
+        console.error(err);
       } finally {
-          setIsLoading(false);
+        setIsLoading(false);
       }
     };
 
-    window.addEventListener('hashchange', handleRouteChange, false);
-    handleRouteChange(); // initial load
+    handleRouteChange();
+    window.addEventListener('hashchange', handleRouteChange);
 
-    return () => window.removeEventListener('hashchange', handleRouteChange, false);
-  }, [isVpnBlocked, userLocation, availableProviders, brands, apiKey]); // Re-run if VPN status or brands change.
-
-  // Effect for dynamic hub background colors and themes
-  useEffect(() => {
-    if (selectedProvider?.hubBgColor) {
-        document.body.style.backgroundColor = selectedProvider.hubBgColor;
-        document.body.style.backgroundImage = 'none';
-        // All provider hubs now use a dark theme for UI elements.
-        setTheme('dark');
-    }
-    // Cleanup function to run when component unmounts OR when selectedProvider changes
     return () => {
-        document.body.style.backgroundColor = '';
-        document.body.style.backgroundImage = '';
-        setTheme('dark');
+      window.removeEventListener('hashchange', handleRouteChange);
     };
-  }, [selectedProvider]);
-
-
-  const handleSearch = useCallback(async (query: string) => {
-    if (!query) return;
-
-    window.location.hash = '#/home'; // Navigate to home to show search results
-    setIsLoading(true);
-    setError(null);
-    setRecommendations([]);
-    setHeroItem(null); // Clear hero item on search
+  }, [tmdbApiKey, studios, brands, availableProviders, networks, people, userLocation, homeSections.length, loadHomePage]);
+  
+  const handleSelectItem = useCallback(async (item: MediaDetails | Collection) => {
+    setIsModalLoading(true);
+    setSelectedItem(item);
+    window.scrollTo(0, 0);
 
     try {
-      const searchResults = await searchMedia(query);
-      if (!searchResults || searchResults.length === 0) {
-        setError(`No results found for "${query}".`);
-      } else {
-        setRecommendations(searchResults);
-      }
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
-      console.error(errorMessage);
-      setError("An error occurred while searching. Please try again.");
+        if ('type' in item) { // It's MediaDetails
+            if (userLocation) {
+                const details = await fetchDetailsForModal(item.id, item.type, userLocation.code);
+                setSelectedItem(prev => prev ? { ...prev, ...details } : null);
+            }
+        } else { // It's Collection
+            const details = await fetchCollectionDetails(item.id);
+            setSelectedItem(prev => prev ? { ...prev, ...details } : null);
+        }
+    } catch (error) {
+        console.error("Error fetching details for modal:", error);
+        setError("Could not load details for this item.");
+    } finally {
+        setIsModalLoading(false);
+    }
+  }, [userLocation]);
+  
+  const handleSelectActor = useCallback(async (actorId: number) => {
+    setIsLoading(true);
+    setSelectedActor(null);
+    setSelectedItem(null);
+    window.location.hash = `#/actor/${actorId}`;
+    try {
+      const details = await fetchActorDetails(actorId);
+      setSelectedActor(details);
+    } catch (error) {
+      setError("Could not load actor details.");
     } finally {
       setIsLoading(false);
     }
   }, []);
-
-  const handleSelectMedia = useCallback(async (id: number, type: 'movie' | 'tv') => {
-    // Set a minimal object first for faster perceived load
-    setSelectedItem({ id, type, title: 'Loading...', posterUrl: '', backdropUrl: '', overview: '', rating: 0, releaseYear: '', trailerUrl: null });
-    setIsModalLoading(true);
   
-    try {
-      const details = await fetchDetailsForModal(id, type, userLocation?.code || 'US');
-      setSelectedItem(current => 
-        current && 'type' in current && current.id === id
-          ? { ...current, ...details, title: details.title || current.title } 
-          : current
-      );
-    } catch (err) {
-      console.error("Failed to fetch additional details for modal:", err);
-      setError("Failed to load details for this item.");
-    } finally {
-      setIsModalLoading(false);
-    }
-  }, [userLocation]);
-  
-  const navigateToMedia = (media: MediaDetails) => {
-    window.location.hash = `#/media/${media.type}/${media.id}`;
-  };
-
-  const handlePlayHeroTrailer = useCallback(async (item: MediaDetails) => {
-    try {
-      const details = await fetchApi<any>(`/${item.type}/${item.id}?append_to_response=videos`);
-      const trailer = findBestTrailer(details.videos?.results);
-      if (trailer?.key) {
-        setHeroTrailerId(trailer.key);
-      } else {
-        // If no trailer, just go to the details page as a fallback.
-        navigateToMedia(item);
-      }
-    } catch (err) {
-      console.error("Failed to fetch trailer for hero item:", err);
-      navigateToMedia(item); // Fallback on error
-    }
-  }, []);
-  
-  const handleSelectCollection = useCallback(async (id: number) => {
-    setSelectedItem({ id, name: 'Loading...', posterUrl: '', backdropUrl: '', overview: '', parts: [] });
-    setIsModalLoading(true);
-    try {
-        const details = await fetchCollectionDetails(id);
-        setSelectedItem(details);
-    } catch(err) {
-        console.error("Failed to fetch collection details:", err);
-        setError("Failed to load collection details.");
-    } finally {
-        setIsModalLoading(false);
-    }
-  }, []);
-
-  const navigateToCollection = (collection: Collection) => {
-    window.location.hash = `#/collection/${collection.id}`;
-  };
-
-  const handleSelectStudio = useCallback(async (studio: Studio) => {
-    setSelectedStudio(studio);
-    setStudioMedia([]);
-    setStudioMediaTypeFilter('all');
-    setStudioSortBy('trending');
-    try {
-        const media = await getMediaByStudio(studio.id);
-        setStudioMedia(media);
-    } catch (err) {
-        console.error(`Failed to load media for ${studio.name}:`, err);
-        setError(`Could not load media for ${studio.name}.`);
-    }
-  }, []);
-
-  const displayedStudioMedia = useMemo(() => {
-    let filtered = [...studioMedia];
-    if (studioMediaTypeFilter !== 'all') {
-        filtered = filtered.filter(media => {
-            if (studioMediaTypeFilter === 'movie') return media.type === 'movie' && media.mediaSubType !== 'short';
-            if (studioMediaTypeFilter === 'show') return media.type === 'tv';
-            if (studioMediaTypeFilter === 'short') return media.mediaSubType === 'short';
-            return true;
-        });
-    }
-    if (studioSortBy === 'newest') {
-        filtered.sort((a, b) => (new Date(b.releaseDate || 0).getTime()) - (new Date(a.releaseDate || 0).getTime()));
-    } else {
-         filtered.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
-    }
-    return filtered;
-  }, [studioMedia, studioMediaTypeFilter, studioSortBy]);
-  
-  const handleSelectBrand = useCallback(async (brand: Brand) => {
-    setSelectedBrand(brand);
-    setBrandMedia([]);
-    setBrandMediaTypeFilter('all');
-    setBrandSortBy(brand.defaultSort || 'trending');
-    try {
-        let media: MediaDetails[] = [];
-        if (brand.collectionIds && brand.collectionIds.length > 0) {
-            media = await fetchMediaByCollectionIds(brand.collectionIds);
-        } else if (brand.mediaIds && brand.mediaIds.length > 0) {
-            media = await fetchMediaByIds(brand.mediaIds);
-        } else if (brand.companyId) {
-            media = await getMediaByStudio(brand.companyId);
-        }
-        setBrandMedia(media);
-    } catch (err) {
-        console.error(`Failed to load media for ${brand.name}:`, err);
-        setError(`Could not load media for ${brand.name}.`);
-    }
-  }, []);
-
-  const displayedBrandMedia = useMemo(() => {
-    let filtered = [...brandMedia];
-    if (brandMediaTypeFilter !== 'all') {
-        filtered = filtered.filter(media => {
-            if (brandMediaTypeFilter === 'movie') return media.type === 'movie' && media.mediaSubType !== 'short';
-            if (brandMediaTypeFilter === 'show') return media.type === 'tv';
-            if (brandMediaTypeFilter === 'short') return media.mediaSubType === 'short';
-            return true;
-        });
-    }
-    if (brandSortBy === 'newest') {
-        filtered.sort((a, b) => (new Date(b.releaseDate || 0).getTime()) - (new Date(a.releaseDate || 0).getTime()));
-    } else if (brandSortBy === 'timeline') {
-        filtered.sort((a, b) => (new Date(a.releaseDate || 0).getTime()) - (new Date(b.releaseDate || 0).getTime()));
-    } else { // 'trending'
-         filtered.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
-    }
-    return filtered;
-  }, [brandMedia, brandMediaTypeFilter, brandSortBy]);
-  
-  const handleSelectProvider = useCallback(async (provider: StreamingProviderInfo) => {
-    setSelectedProvider(provider);
-    setProviderMedia([]);
-    setIsProviderMediaLoading(true);
-    try {
-        const media = await getMediaByStreamingProvider(provider.key, userLocation?.code || 'US');
-        setProviderMedia(media);
-        if (media.length === 0) {
-            setError(`Could not find popular content for ${provider.name} in your region (${userLocation?.name || 'US'}).`);
-        }
-    } catch (err) {
-        console.error(`Failed to load data for ${provider.name}:`, err);
-        setError(`Could not load content for ${provider.name}.`);
-    } finally {
-        setIsProviderMediaLoading(false);
-    }
-  }, [userLocation]);
-
-  const handleSelectNetwork = useCallback(async (network: Network) => {
-    setSelectedNetwork(network);
-    setNetworkMedia([]);
-    try {
-        const media = await getMediaByNetwork(network.id);
-        setNetworkMedia(media);
-    } catch (err) {
-        console.error(`Failed to load media for ${network.name}:`, err);
-        setError(`Could not load media for ${network.name}.`);
-    }
-  }, []);
-
-  const handleSelectActor = useCallback(async (actorId: number) => {
-    try {
-        const actorDetails = await fetchActorDetails(actorId);
-        setSelectedActor(actorDetails);
-    } catch (err) {
-        console.error(`Failed to load details for actor ${actorId}:`, err);
-        setError(`Could not load actor details.`);
-    }
-  }, []);
-
-  const handleSelectPerson = useCallback(async (person: Person) => {
-    setSelectedPerson(person);
-    setPersonMedia([]);
-    try {
-        const media = await getMediaByPerson(person.tmdbId, person.role);
-        setPersonMedia(media);
-    } catch (err) {
-        console.error(`Failed to load media for ${person.name}:`, err);
-        setError(`Could not load media for ${person.name}.`);
-    }
-  }, []);
-  
-  const handleBack = () => {
-    if (selectedItem && 'parts' in selectedItem && selectedBrand) {
-      setSelectedItem(null);
-    } else {
+  const handleCloseModal = () => {
+    setSelectedItem(null);
+    setSelectedActor(null);
+    // Go back in history if we are on a deep-linked detail page
+    const hashParts = window.location.hash.split('/');
+    if (hashParts[1] === 'actor' || hashParts[1] === 'movie' || hashParts[1] === 'tv') {
       window.history.back();
     }
   };
 
-  const handleBrandCollectionSelect = useCallback(async (collection: CharacterCollection) => {
-    if (collection.mediaIds && collection.mediaIds.length > 0) {
-      setIsModalLoading(true);
-      setSelectedItem({ id: collection.id, name: collection.name, posterUrl: collection.posterUrl, backdropUrl: collection.backdropUrl, overview: 'Loading collection...', parts: [] });
-      
-      try {
-        const media = await fetchMediaByIds(collection.mediaIds);
-        const curatedDetails: CollectionDetails = {
-          id: collection.id,
-          name: collection.name,
-          overview: `A curated collection of essential appearances for ${collection.name}.`,
-          posterUrl: collection.posterUrl,
-          backdropUrl: collection.backdropUrl,
-          parts: media,
-        };
-        setSelectedItem(curatedDetails);
-      } catch (err) {
-        console.error('Failed to fetch curated collection details:', err);
-        setError('Could not load curated collection details.');
-        setSelectedItem(null);
-      } finally {
-        setIsModalLoading(false);
-      }
-    } else {
-      navigateToCollection(collection);
-    }
-  }, []);
-
-  const renderHomePageContent = () => {
-    if (isLoading && !selectedStudio && !selectedBrand && !selectedProvider && !selectedNetwork && !selectedPerson && !heroItem) {
-        return <div className="flex justify-center mt-10"><LoadingSpinner /></div>;
-    }
-    if (error && recommendations.length === 0 && !selectedStudio && !selectedBrand && !selectedProvider && !selectedNetwork && !selectedPerson) {
-        return <div className="text-red-400 glass-panel p-4 rounded-2xl container mx-auto">{error}</div>;
-    }
-    
-    if (recommendations.length > 0) {
-      return <div className="container mx-auto px-4 sm:px-6 lg:px-8"><RecommendationGrid recommendations={recommendations} onSelect={navigateToMedia} /></div>;
-    }
-
-    if (selectedStudio) {
-      return (
-        <div className="w-full max-w-7xl">
-            <div className="flex items-center gap-4 mb-6">
-                <button onClick={() => window.location.hash = '#/studios'} className="px-4 py-2 text-sm glass-panel rounded-full hover:bg-white/5 transition-colors">&larr; Back to Studios</button>
-                <h2 className="text-3xl font-bold">{selectedStudio.name}</h2>
-            </div>
-            <StudioFilters
-              mediaTypeFilter={studioMediaTypeFilter}
-              setMediaTypeFilter={setStudioMediaTypeFilter}
-              sortBy={studioSortBy}
-              setSortBy={setStudioSortBy}
-            />
-            {isLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={displayedStudioMedia} onSelect={navigateToMedia} />}
-        </div>
-      );
-    }
-
-    if (selectedBrand) {
-        return <BrandDetail 
-            brand={selectedBrand} 
-            media={displayedBrandMedia}
-            mediaTypeFilter={brandMediaTypeFilter}
-            setMediaTypeFilter={setBrandMediaTypeFilter}
-            sortBy={brandSortBy}
-            setSortBy={setBrandSortBy}
-            onBack={() => window.location.hash = '#/brands'}
-            onSelectMedia={navigateToMedia}
-            onSelectCollection={handleBrandCollectionSelect}
-        />;
-    }
-
-    if (selectedProvider) {
-      const isLightBg = selectedProvider.key === 'netflix' && theme === 'light';
-      const backButtonClass = `px-4 py-2 text-sm rounded-full transition-colors ${
-        isLightBg
-            ? 'bg-gray-200/80 text-black hover:bg-gray-300/80'
-            : 'glass-panel text-white hover:bg-white/5'
-      }`;
-      const logoClass = `object-contain ${selectedProvider.hubLogoHeight || 'h-8 md:h-10'} ${selectedProvider.hubLogoInvert ? 'brightness-0 invert' : ''}`;
-      
-      return (
-        <div className="w-full max-w-7xl">
-          <div className="flex items-center gap-4 mb-6">
-            <button onClick={() => window.location.hash = '#/streaming'} className={backButtonClass}>&larr; Back to Services</button>
-            {selectedProvider.hubLogoUrl && (
-              <img 
-                src={selectedProvider.hubLogoUrl} 
-                alt={`${selectedProvider.name} logo`}
-                className={logoClass}
-              />
-            )}
-          </div>
-          {isProviderMediaLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={providerMedia} onSelect={navigateToMedia} />}
-        </div>
-      );
-    }
-
-    if (selectedNetwork) {
-      return (
-        <div className="w-full max-w-7xl">
-          <div className="flex items-center gap-4 mb-6">
-            <button onClick={() => window.location.hash = '#/networks'} className="px-4 py-2 text-sm glass-panel rounded-full hover:bg-white/5 transition-colors">&larr; Back to Networks</button>
-            <h2 className="text-3xl font-bold">{selectedNetwork.name}</h2>
-          </div>
-          {isLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={networkMedia} onSelect={navigateToMedia} />}
-        </div>
-      );
-    }
-
-    if (selectedPerson) {
-      return (
-        <div className="w-full max-w-7xl">
-            <div className="flex items-center gap-4 mb-6">
-                <button onClick={() => window.location.hash = '#/people'} className="px-4 py-2 text-sm glass-panel rounded-full hover:bg-white/5 transition-colors">&larr; Back to Talent</button>
-                <h2 className="text-3xl font-bold">{selectedPerson.name}</h2>
-            </div>
-            {isLoading ? <LoadingSpinner /> : <RecommendationGrid recommendations={personMedia} onSelect={navigateToMedia} />}
-        </div>
-      );
-    }
-
-    switch(activeTab) {
-      case 'home':
-      case 'movies':
-      case 'tv': {
-        if (isHomeLoading) return <div className="flex justify-center mt-10"><LoadingSpinner /></div>;
-        
-        let filteredSections = homeSections;
-        if (activeTab === 'movies') {
-            filteredSections = homeSections.filter(s => s.type === 'movie' || s.title === 'Trending This Week');
-        } else if (activeTab === 'tv') {
-            filteredSections = homeSections.filter(s => s.type === 'tv' || s.title === 'Trending This Week');
-        }
-
-        return (
-          <div className="w-full flex flex-col items-center">
-            {activeTab === 'home' && heroItem && (
-                 <HeroSection 
-                    item={heroItem}
-                    onPlay={handlePlayHeroTrailer}
-                    onMoreInfo={navigateToMedia}
-                 />
-            )}
-            <div className="w-full max-w-screen-2xl flex flex-col gap-8 md:gap-12 relative z-10 -mt-24 md:-mt-36">
-              {filteredSections.map((section, index) => (
-                  <MediaRow 
-                      key={section.title} 
-                      title={section.title} 
-                      items={section.items} 
-                      onSelect={navigateToMedia}
-                      animationDelay={`${index * 150}ms`}
-                  />
-              ))}
-            </div>
-          </div>
-        );
-      }
-      case 'collections':
-        if (isComingSoonLoading) return <LoadingSpinner />;
-        return <ComingSoonPage media={comingSoonMedia} onSelectMedia={navigateToMedia} />;
-      case 'studios':
-        return <StudioGrid studios={studios} onSelect={(studio) => window.location.hash = `#/studios/${studio.id}`} />;
-      case 'brands':
-        return <BrandGrid brands={brands} onSelect={(brand) => window.location.hash = `#/brands/${brand.id}`} />;
-      case 'foryou':
-        return <ForYouPage onSelectMedia={navigateToMedia} />;
-      case 'streaming':
-        return <StreamingGrid providers={availableProviders} onSelect={(provider) => window.location.hash = `#/streaming/${provider.key}`} />;
-      case 'networks':
-        return <NetworkGrid networks={networks} onSelect={(network) => window.location.hash = `#/networks/${network.id}`} />;
-      case 'watchlist':
-        return <WatchlistPage onSelectMedia={navigateToMedia} />;
-      case 'people':
-        return <PersonGrid people={people} onSelect={(person) => window.location.hash = `#/people/${person.id}`} />;
-      case 'game':
-        return <GamePage />;
-      default:
-        return <p>Welcome!</p>;
+  const handleSearch = async (query: string) => {
+    if (!query) return;
+    setIsLoading(true);
+    setRecommendations([]);
+    setActiveTab('home'); // Reset tab to a neutral state
+    setSelectedItem(null);
+    setHeroItem(null);
+    setHomeSections([]);
+    try {
+      const results = await searchMedia(query);
+      setRecommendations(results);
+    } catch (err) {
+      setError("Search failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const isGameActive = activeTab === 'game' && !selectedItem && !selectedActor;
-  const headerTitleClass = theme === 'light'
-    ? 'text-black'
-    : 'text-white text-glow';
-  
-  const githubButtonClass = `p-3 rounded-full text-gray-200 transition-all duration-300 hover:scale-105 ${
-    theme === 'light'
-      ? 'bg-gray-200/80 text-black hover:bg-gray-300/80'
-      : 'glass-panel text-white hover:bg-white/5'
-  }`;
+  const handlePlayHeroTrailer = async (item: MediaDetails) => {
+    try {
+        const details = await fetchApi<{ videos: { results: any[] } }>(`/${item.type}/${item.id}?append_to_response=videos`);
+        const trailer = findBestTrailer(details.videos.results);
+        if (trailer) {
+            setHeroTrailerId(trailer.key);
+        } else {
+            // Fallback to searching on YouTube
+            window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(item.title + ' trailer')}`, '_blank');
+        }
+    } catch (error) {
+        console.error("Could not fetch trailer:", error);
+    }
+  };
+
+  const mainContent = useMemo(() => {
+    if (isLoading && !selectedItem && !selectedActor) {
+      return <div className="flex justify-center items-center h-64"><LoadingSpinner /></div>;
+    }
+    if (error) {
+      return <div className="text-center text-red-400 p-4 bg-red-500/20 rounded-lg">{error}</div>;
+    }
+    if (selectedActor) {
+      return <ActorPage actor={selectedActor} onBack={handleCloseModal} onSelectMedia={handleSelectItem} />;
+    }
+    if (selectedItem) {
+      return <DetailModal item={selectedItem} onClose={handleCloseModal} isLoading={isModalLoading} onSelectMedia={handleSelectItem} onSelectActor={handleSelectActor} userLocation={userLocation} />;
+    }
+
+    if (recommendations.length > 0) {
+      return <RecommendationGrid recommendations={recommendations} onSelect={handleSelectItem} />;
+    }
+
+    switch (activeTab) {
+      case 'home':
+        return homeSections.map((section, index) => (
+          <MediaRow key={section.title} title={section.title} items={section.items} onSelect={handleSelectItem} animationDelay={`${index * 150}ms`} />
+        ));
+      case 'studios':
+        return selectedStudio ? <div>Studio Detail Page: {selectedStudio.name}</div> : <StudioGrid studios={studios} onSelect={(studio) => window.location.hash = `/studios/${studio.id}`} />;
+      case 'brands':
+        return selectedBrand ? <BrandDetail brand={selectedBrand} media={brandMedia} mediaTypeFilter={brandMediaTypeFilter} setMediaTypeFilter={setBrandMediaTypeFilter} sortBy={brandSortBy} setSortBy={setBrandSortBy} onBack={() => window.location.hash = '/brands'} onSelectMedia={handleSelectItem} onSelectCollection={handleSelectItem} /> : <BrandGrid brands={brands} onSelect={(brand) => window.location.hash = `/brands/${brand.id}`} />;
+      case 'streaming':
+        return selectedProvider ? <div>Provider Detail Page: {selectedProvider.name}</div> : <StreamingGrid providers={availableProviders} onSelect={(provider) => window.location.hash = `/streaming/${provider.key}`} />;
+      case 'networks':
+        return selectedNetwork ? <div>Network Detail Page: {selectedNetwork.name}</div> : <NetworkGrid networks={networks} onSelect={(network) => window.location.hash = `/networks/${network.id}`} />;
+      case 'people':
+        return selectedPerson ? <div>Person Detail Page: {selectedPerson.name}</div> : <PersonGrid people={people} onSelect={(person) => window.location.hash = `/people/${person.id}`} />;
+      case 'foryou':
+        return <ForYouPage onSelectMedia={handleSelectItem} />;
+      case 'watchlist':
+        return <WatchlistPage onSelectMedia={handleSelectItem} />;
+      case 'collections':
+        return isComingSoonLoading ? <LoadingSpinner /> : <ComingSoonPage media={comingSoonMedia} onSelectMedia={handleSelectItem} />;
+      case 'game':
+        return <GamePage />;
+      default:
+        return null;
+    }
+  }, [isLoading, selectedItem, selectedActor, error, recommendations, activeTab, homeSections, handleSelectItem, handleCloseModal, isModalLoading, handleSelectActor, userLocation, selectedStudio, studios, selectedBrand, brandMedia, brandMediaTypeFilter, brandSortBy, brands, selectedProvider, availableProviders, selectedNetwork, networks, selectedPerson, people, isComingSoonLoading, comingSoonMedia]);
 
   return (
-    <div className={`min-h-screen font-sans`}>
-      {isApiKeyModalOpen && <ApiKeyModal onSave={handleSaveApiKey} />}
-
-      {!apiKey && !isApiKeyModalOpen && (
-         <div className="fixed inset-0 bg-gray-900 z-[100] flex items-center justify-center">
-            <LoadingSpinner />
-         </div>
-      )}
-
-      {apiKey && (
-        <>
-        {isVpnBlocked === true && (
-            <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-            <div className="max-w-md text-center glass-panel p-8 rounded-2xl border-red-500/50">
-                <h2 className="text-2xl font-bold text-red-500 mb-4">VPN/Proxy Detected</h2>
-                <p className="text-gray-300">
-                This service is not available when using a VPN or proxy. Please disable it and refresh the page to continue.
-                </p>
-            </div>
-            </div>
-        )}
-        
-        {isVpnBlocked === null && (
-            <div className="fixed inset-0 bg-gray-900 z-[100] flex items-center justify-center">
-                <LoadingSpinner />
-            </div>
-        )}
-
-        {isVpnBlocked === false && (
-            <>
-            {selectedItem ? (
-                <main className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <DetailModal 
-                    item={selectedItem} 
-                    onClose={handleBack} 
-                    isLoading={isModalLoading}
-                    onSelectMedia={(media) => window.location.hash = `#/media/${media.type}/${media.id}`}
-                    onSelectActor={(actorId) => window.location.hash = `#/actor/${actorId}`}
-                    userLocation={userLocation}
-                    />
-                </main>
-            ) : selectedActor ? (
-                <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <ActorPage
-                        actor={selectedActor}
-                        onBack={handleBack}
-                        onSelectMedia={navigateToMedia}
-                    />
-                </main>
-            ) : (
-                <main className="pb-8">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-                        <header className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-                            <a href="#/home" className="flex items-center gap-3 group">
-                                <svg viewBox="0 0 144 85" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 transition-all duration-300 group-hover:brightness-110 drop-shadow-[0_0_8px_rgba(45,139,186,0.5)]">
-                                    <defs>
-                                        <linearGradient id="screen-gradient" x1="72" y1="12" x2="72" y2="60" gradientUnits="userSpaceOnUse">
-                                            <stop stopColor="#2D8BBA"/>
-                                            <stop offset="1" stopColor="#005A9C"/>
-                                        </linearGradient>
-                                        <filter id="logo-glow" x="-10" y="-10" width="164" height="105" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
-                                            <feFlood floodOpacity="0" result="BackgroundImageFix"/>
-                                            <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-                                            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-                                            <feOffset dy="1"/>
-                                            <feGaussianBlur stdDeviation="3"/>
-                                            <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
-                                            <feColorMatrix type="matrix" values="0 0 0 0 0.05 0 0 0 0 0.3 0 0 0 0 0.8 0 0 0 0.3 0"/>
-                                            <feBlend mode="normal" in2="shape" result="effect1_innerShadow"/>
-                                        </filter>
-                                    </defs>
-                                    <g filter="url(#logo-glow)">
-                                        <path d="M4 64C32.8333 82.1667 111.1 82.1667 140 64C122.5 68.5 21.5 68.5 4 64Z" fill="#003D6B"/>
-                                        <g>
-                                            <rect x="12" y="24" width="28" height="40" rx="4" fill="url(#screen-gradient)"/>
-                                            <rect x="104" y="24" width="28" height="40" rx="4" fill="url(#screen-gradient)"/>
-                                            <rect x="40" y="12" width="64" height="48" rx="8" fill="url(#screen-gradient)"/>
-                                            <rect x="12.5" y="24.5" width="27" height="39" rx="3.5" stroke="#002D4F" strokeOpacity="0.8"/>
-                                            <rect x="104.5" y="24.5" width="27" height="39" rx="3.5" stroke="#002D4F" strokeOpacity="0.8"/>
-                                            <rect x="40.5" y="12.5" width="63" height="47" rx="7.5" stroke="#002D4F" strokeOpacity="0.8"/>
-                                        </g>
-                                        <path d="M69 33.5L83 41L69 48.5V33.5Z" fill="#002D4F" fillOpacity="0.6"/>
-                                    </g>
-                                </svg>
-                                <span className={`text-2xl sm:text-3xl font-bold tracking-tight transition-all duration-300 group-hover:brightness-110 ${headerTitleClass}`}>ScreenScape</span>
-                            </a>
-                            <div className="flex items-center gap-3">
-                                <a 
-                                    href="https://github.com/TheJaySmith-Dev/WatchNow" 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className={githubButtonClass}
-                                    aria-label="View source code on GitHub"
-                                >
-                                    <GitHubIcon className="w-6 h-6" />
-                                </a>
-                                <AccountButton 
-                                    onSignInClick={() => setIsAuthModalOpen(true)} 
-                                    userLocation={userLocation}
-                                    theme={theme}
-                                />
-                            </div>
-                        </header>
-                        <div className="mb-8 flex justify-center items-center gap-3">
-                            <SearchBar onSearch={handleSearch} isLoading={isLoading} theme={theme} />
-                            <button
-                                onClick={() => setIsAiSearchOpen(true)}
-                                className={`p-4 rounded-2xl shrink-0 transition-colors group ${
-                                theme === 'light'
-                                    ? 'bg-gray-200/80 text-black hover:bg-gray-300/80'
-                                    : 'glass-panel text-white hover:bg-white/5'
-                                }`}
-                                aria-label="Open AI Search"
-                                title="Open AI Search"
-                            >
-                                <SparklesIcon className="w-6 h-6 text-indigo-400" />
-                            </button>
-                        </div>
-                        <div className="sticky top-4 z-50 mb-8 flex justify-center">
-                            <Navigation activeTab={activeTab} theme={theme} />
-                        </div>
-                    </div>
-                    
-                    <div className="flex justify-center">
-                        {renderHomePageContent()}
-                    </div>
-                </main>
-            )}
-            </>
-        )}
-        </>
-      )}
-
+    <div className={`app-container bg-black text-white min-h-screen transition-colors duration-500 ${theme}`}>
+      {isApiKeyModalOpen && <ApiKeyModal onSave={handleSaveApiKeys} />}
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
-       {isAiSearchOpen && (
-        <AiSearchModal
-          isOpen={isAiSearchOpen}
-          onClose={() => setIsAiSearchOpen(false)}
-          onSelectMedia={(media) => {
-            setIsAiSearchOpen(false);
-            navigateToMedia(media);
-          }}
-        />
-      )}
-      {heroTrailerId && (
-        <CustomVideoPlayer 
-          videoId={heroTrailerId}
-          onClose={() => setHeroTrailerId(null)}
-        />
-      )}
+      <AiSearchModal isOpen={isAiSearchOpen} onClose={() => setIsAiSearchOpen(false)} onSelectMedia={handleSelectItem} />
+      {heroTrailerId && <CustomVideoPlayer videoId={heroTrailerId} onClose={() => setHeroTrailerId(null)} />}
+
+      <header className="fixed top-0 left-0 right-0 z-40 p-4 transition-all duration-300">
+        <div className="container mx-auto flex justify-between items-center">
+            <div className="flex items-center gap-2">
+                {/* Logo or App Name could go here */}
+            </div>
+            <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setIsAiSearchOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 glass-panel rounded-full font-semibold text-white transition-all duration-300 hover:bg-white/5 hover:scale-105"
+                  aria-label="Open AI-powered search"
+                >
+                    <SparklesIcon className="w-5 h-5 text-indigo-400"/>
+                    <span className="hidden sm:inline">AI Search</span>
+                </button>
+                <a href="https://github.com/google/labs-prototypes/tree/main/seeds/screenscape-dev-v2" target="_blank" rel="noopener noreferrer" className="p-2.5 glass-panel rounded-full text-white transition-all duration-300 hover:bg-white/5 hover:scale-105">
+                    <GitHubIcon className="w-5 h-5"/>
+                </a>
+                <AccountButton onSignInClick={() => setIsAuthModalOpen(true)} userLocation={userLocation} />
+            </div>
+        </div>
+      </header>
+      
+      <main className="flex flex-col items-center">
+        {!selectedItem && !selectedActor && heroItem && activeTab === 'home' && (
+          <HeroSection item={heroItem} onPlay={handlePlayHeroTrailer} onMoreInfo={handleSelectItem} />
+        )}
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 w-full z-10" style={{ paddingTop: (!selectedItem && !selectedActor && heroItem && activeTab === 'home') ? '0' : '80px' }}>
+          <div className="flex flex-col items-center gap-8 py-8">
+            <SearchBar onSearch={handleSearch} isLoading={isLoading} />
+            <Navigation activeTab={activeTab} />
+            {mainContent}
+          </div>
+        </div>
+      </main>
     </div>
   );
 };

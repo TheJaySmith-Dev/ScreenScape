@@ -57,8 +57,9 @@ export interface Collection {
 }
 
 export interface CollectionDetails extends Collection {
-    overview: string;
-    parts: MediaDetails[];
+    // FIX: Made overview and parts optional to allow a Collection to be a valid intermediate state.
+    overview?: string;
+    parts?: MediaDetails[];
 }
 
 export interface UserLocation {
@@ -231,6 +232,7 @@ export interface AiSearchParams {
   actors?: string[];
   directors?: string[];
   companies?: string[];
+  characters?: string[];
   year_from?: number;
   year_to?: number;
   sort_by?: 'popularity.desc' | 'release_date.desc' | 'vote_average.desc';
