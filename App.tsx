@@ -22,6 +22,8 @@ import {
   fetchMediaByIds,
   fetchMediaByCollectionIds,
   getMediaByPerson,
+  fetchApi,
+  findBestTrailer
 } from './services/mediaService.ts';
 import type { MediaDetails, Collection, CollectionDetails, UserLocation, Studio, Brand, StreamingProviderInfo, Network, ActorDetails, CharacterCollection, MediaTypeFilter, SortBy, Person } from './types.ts';
 import { popularStudios } from './services/studioService.ts';
@@ -41,12 +43,15 @@ import { NetworkGrid } from './components/NetworkGrid.tsx';
 import { ActorPage } from './components/ActorPage.tsx';
 import { WatchlistPage } from './components/WatchlistPage.tsx';
 import { ComingSoonPage } from './components/ComingSoonPage.tsx';
-import { GitHubIcon } from './components/icons.tsx';
+import { GitHubIcon, SparklesIcon } from './components/icons.tsx';
 import { ApiKeyModal } from './components/ApiKeyModal.tsx';
 import * as apiService from './services/apiService.ts';
 import { GamePage } from './components/GamePage.tsx';
 import { people as allPeople } from './services/peopleService.ts';
 import { PersonGrid } from './components/PersonGrid.tsx';
+import { AiSearchModal } from './components/AiSearchModal.tsx';
+import { HeroSection } from './components/HeroSection.tsx';
+import { CustomVideoPlayer } from './components/CustomVideoPlayer.tsx';
 
 
 type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'people' | 'studios' | 'brands' | 'streaming' | 'networks' | 'game';
@@ -61,6 +66,8 @@ const App: React.FC = () => {
   
   const [homeSections, setHomeSections] = useState<{title: string, items: MediaDetails[], type: 'movie' | 'tv' | 'mixed'}[]>([]);
   const [isHomeLoading, setIsHomeLoading] = useState<boolean>(true);
+  const [heroItem, setHeroItem] = useState<MediaDetails | null>(null);
+  const [heroTrailerId, setHeroTrailerId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
   const [isVpnBlocked, setIsVpnBlocked] = useState<boolean | null>(null); // null: checking, false: ok, true: blocked
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
@@ -68,6 +75,7 @@ const App: React.FC = () => {
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [theme, setTheme] = useState<AppTheme>('dark');
+  const [isAiSearchOpen, setIsAiSearchOpen] = useState(false);
 
   // State for Streaming hubs
   const [availableProviders, setAvailableProviders] = useState<StreamingProviderInfo[]>([]);
@@ -250,10 +258,16 @@ const App: React.FC = () => {
             if (isVpnBlocked === false) {
                 setIsHomeLoading(true);
                 setError(null);
+                setHeroItem(null);
                 try {
                   const [trending, popularMovies, popularTv, nowPlayingMovies, topRatedMovies, topRatedTv] = await Promise.all([
                     getTrending(), getPopularMovies(), getPopularTv(), getNowPlayingMovies(), getTopRatedMovies(), getTopRatedTv(),
                   ]);
+
+                  if (trending.length > 0) {
+                      setHeroItem(trending[0]);
+                  }
+                  
                   const sections = [
                     { title: 'Trending This Week', items: trending, type: 'mixed' as const },
                     { title: 'Popular Movies', items: popularMovies, type: 'movie' as const },
@@ -328,6 +342,7 @@ const App: React.FC = () => {
     setIsLoading(true);
     setError(null);
     setRecommendations([]);
+    setHeroItem(null); // Clear hero item on search
 
     try {
       const searchResults = await searchMedia(query);
@@ -368,6 +383,22 @@ const App: React.FC = () => {
   const navigateToMedia = (media: MediaDetails) => {
     window.location.hash = `#/media/${media.type}/${media.id}`;
   };
+
+  const handlePlayHeroTrailer = useCallback(async (item: MediaDetails) => {
+    try {
+      const details = await fetchApi<any>(`/${item.type}/${item.id}?append_to_response=videos`);
+      const trailer = findBestTrailer(details.videos?.results);
+      if (trailer?.key) {
+        setHeroTrailerId(trailer.key);
+      } else {
+        // If no trailer, just go to the details page as a fallback.
+        navigateToMedia(item);
+      }
+    } catch (err) {
+      console.error("Failed to fetch trailer for hero item:", err);
+      navigateToMedia(item); // Fallback on error
+    }
+  }, []);
   
   const handleSelectCollection = useCallback(async (id: number) => {
     setSelectedItem({ id, name: 'Loading...', posterUrl: '', backdropUrl: '', overview: '', parts: [] });
@@ -549,13 +580,15 @@ const App: React.FC = () => {
   }, []);
 
   const renderHomePageContent = () => {
-    if (isLoading && !selectedStudio && !selectedBrand && !selectedProvider && !selectedNetwork && !selectedPerson) return <LoadingSpinner />;
+    if (isLoading && !selectedStudio && !selectedBrand && !selectedProvider && !selectedNetwork && !selectedPerson && !heroItem) {
+        return <div className="flex justify-center mt-10"><LoadingSpinner /></div>;
+    }
     if (error && recommendations.length === 0 && !selectedStudio && !selectedBrand && !selectedProvider && !selectedNetwork && !selectedPerson) {
-        return <div className="text-red-400 glass-panel p-4 rounded-2xl">{error}</div>;
+        return <div className="text-red-400 glass-panel p-4 rounded-2xl container mx-auto">{error}</div>;
     }
     
     if (recommendations.length > 0) {
-      return <RecommendationGrid recommendations={recommendations} onSelect={navigateToMedia} />;
+      return <div className="container mx-auto px-4 sm:px-6 lg:px-8"><RecommendationGrid recommendations={recommendations} onSelect={navigateToMedia} /></div>;
     }
 
     if (selectedStudio) {
@@ -644,7 +677,7 @@ const App: React.FC = () => {
       case 'home':
       case 'movies':
       case 'tv': {
-        if (isHomeLoading) return <LoadingSpinner />;
+        if (isHomeLoading) return <div className="flex justify-center mt-10"><LoadingSpinner /></div>;
         
         let filteredSections = homeSections;
         if (activeTab === 'movies') {
@@ -654,16 +687,25 @@ const App: React.FC = () => {
         }
 
         return (
-          <div className="w-full max-w-screen-2xl flex flex-col gap-8 md:gap-12">
-            {filteredSections.map((section, index) => (
-                <MediaRow 
-                    key={section.title} 
-                    title={section.title} 
-                    items={section.items} 
-                    onSelect={navigateToMedia}
-                    animationDelay={`${index * 150}ms`}
-                />
-            ))}
+          <div className="w-full flex flex-col items-center">
+            {activeTab === 'home' && heroItem && (
+                 <HeroSection 
+                    item={heroItem}
+                    onPlay={handlePlayHeroTrailer}
+                    onMoreInfo={navigateToMedia}
+                 />
+            )}
+            <div className="w-full max-w-screen-2xl flex flex-col gap-8 md:gap-12 relative z-10 -mt-24 md:-mt-36">
+              {filteredSections.map((section, index) => (
+                  <MediaRow 
+                      key={section.title} 
+                      title={section.title} 
+                      items={section.items} 
+                      onSelect={navigateToMedia}
+                      animationDelay={`${index * 150}ms`}
+                  />
+              ))}
+            </div>
           </div>
         );
       }
@@ -753,63 +795,77 @@ const App: React.FC = () => {
                     />
                 </main>
             ) : (
-                <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <header className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-                        <a href="#/home" className="flex items-center gap-3 group">
-                            <svg viewBox="0 0 144 85" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 transition-all duration-300 group-hover:brightness-110 drop-shadow-[0_0_8px_rgba(45,139,186,0.5)]">
-                                <defs>
-                                    <linearGradient id="screen-gradient" x1="72" y1="12" x2="72" y2="60" gradientUnits="userSpaceOnUse">
-                                        <stop stopColor="#2D8BBA"/>
-                                        <stop offset="1" stopColor="#005A9C"/>
-                                    </linearGradient>
-                                    <filter id="logo-glow" x="-10" y="-10" width="164" height="105" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
-                                        <feFlood floodOpacity="0" result="BackgroundImageFix"/>
-                                        <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
-                                        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-                                        <feOffset dy="1"/>
-                                        <feGaussianBlur stdDeviation="3"/>
-                                        <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
-                                        <feColorMatrix type="matrix" values="0 0 0 0 0.05 0 0 0 0 0.3 0 0 0 0 0.8 0 0 0 0.3 0"/>
-                                        <feBlend mode="normal" in2="shape" result="effect1_innerShadow"/>
-                                    </filter>
-                                </defs>
-                                <g filter="url(#logo-glow)">
-                                    <path d="M4 64C32.8333 82.1667 111.1 82.1667 140 64C122.5 68.5 21.5 68.5 4 64Z" fill="#003D6B"/>
-                                    <g>
-                                        <rect x="12" y="24" width="28" height="40" rx="4" fill="url(#screen-gradient)"/>
-                                        <rect x="104" y="24" width="28" height="40" rx="4" fill="url(#screen-gradient)"/>
-                                        <rect x="40" y="12" width="64" height="48" rx="8" fill="url(#screen-gradient)"/>
-                                        <rect x="12.5" y="24.5" width="27" height="39" rx="3.5" stroke="#002D4F" strokeOpacity="0.8"/>
-                                        <rect x="104.5" y="24.5" width="27" height="39" rx="3.5" stroke="#002D4F" strokeOpacity="0.8"/>
-                                        <rect x="40.5" y="12.5" width="63" height="47" rx="7.5" stroke="#002D4F" strokeOpacity="0.8"/>
+                <main className="pb-8">
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+                        <header className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+                            <a href="#/home" className="flex items-center gap-3 group">
+                                <svg viewBox="0 0 144 85" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 transition-all duration-300 group-hover:brightness-110 drop-shadow-[0_0_8px_rgba(45,139,186,0.5)]">
+                                    <defs>
+                                        <linearGradient id="screen-gradient" x1="72" y1="12" x2="72" y2="60" gradientUnits="userSpaceOnUse">
+                                            <stop stopColor="#2D8BBA"/>
+                                            <stop offset="1" stopColor="#005A9C"/>
+                                        </linearGradient>
+                                        <filter id="logo-glow" x="-10" y="-10" width="164" height="105" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                                            <feFlood floodOpacity="0" result="BackgroundImageFix"/>
+                                            <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+                                            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                                            <feOffset dy="1"/>
+                                            <feGaussianBlur stdDeviation="3"/>
+                                            <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+                                            <feColorMatrix type="matrix" values="0 0 0 0 0.05 0 0 0 0 0.3 0 0 0 0 0.8 0 0 0 0.3 0"/>
+                                            <feBlend mode="normal" in2="shape" result="effect1_innerShadow"/>
+                                        </filter>
+                                    </defs>
+                                    <g filter="url(#logo-glow)">
+                                        <path d="M4 64C32.8333 82.1667 111.1 82.1667 140 64C122.5 68.5 21.5 68.5 4 64Z" fill="#003D6B"/>
+                                        <g>
+                                            <rect x="12" y="24" width="28" height="40" rx="4" fill="url(#screen-gradient)"/>
+                                            <rect x="104" y="24" width="28" height="40" rx="4" fill="url(#screen-gradient)"/>
+                                            <rect x="40" y="12" width="64" height="48" rx="8" fill="url(#screen-gradient)"/>
+                                            <rect x="12.5" y="24.5" width="27" height="39" rx="3.5" stroke="#002D4F" strokeOpacity="0.8"/>
+                                            <rect x="104.5" y="24.5" width="27" height="39" rx="3.5" stroke="#002D4F" strokeOpacity="0.8"/>
+                                            <rect x="40.5" y="12.5" width="63" height="47" rx="7.5" stroke="#002D4F" strokeOpacity="0.8"/>
+                                        </g>
+                                        <path d="M69 33.5L83 41L69 48.5V33.5Z" fill="#002D4F" fillOpacity="0.6"/>
                                     </g>
-                                    <path d="M69 33.5L83 41L69 48.5V33.5Z" fill="#002D4F" fillOpacity="0.6"/>
-                                </g>
-                            </svg>
-                            <span className={`text-2xl sm:text-3xl font-bold tracking-tight transition-all duration-300 group-hover:brightness-110 ${headerTitleClass}`}>ScreenScape</span>
-                        </a>
-                        <div className="flex items-center gap-3">
-                            <a 
-                                href="https://github.com/TheJaySmith-Dev/WatchNow" 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className={githubButtonClass}
-                                aria-label="View source code on GitHub"
-                            >
-                                <GitHubIcon className="w-6 h-6" />
+                                </svg>
+                                <span className={`text-2xl sm:text-3xl font-bold tracking-tight transition-all duration-300 group-hover:brightness-110 ${headerTitleClass}`}>ScreenScape</span>
                             </a>
-                            <AccountButton 
-                                onSignInClick={() => setIsAuthModalOpen(true)} 
-                                userLocation={userLocation}
-                                theme={theme}
-                            />
+                            <div className="flex items-center gap-3">
+                                <a 
+                                    href="https://github.com/TheJaySmith-Dev/WatchNow" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className={githubButtonClass}
+                                    aria-label="View source code on GitHub"
+                                >
+                                    <GitHubIcon className="w-6 h-6" />
+                                </a>
+                                <AccountButton 
+                                    onSignInClick={() => setIsAuthModalOpen(true)} 
+                                    userLocation={userLocation}
+                                    theme={theme}
+                                />
+                            </div>
+                        </header>
+                        <div className="mb-8 flex justify-center items-center gap-3">
+                            <SearchBar onSearch={handleSearch} isLoading={isLoading} theme={theme} />
+                            <button
+                                onClick={() => setIsAiSearchOpen(true)}
+                                className={`p-4 rounded-2xl shrink-0 transition-colors group ${
+                                theme === 'light'
+                                    ? 'bg-gray-200/80 text-black hover:bg-gray-300/80'
+                                    : 'glass-panel text-white hover:bg-white/5'
+                                }`}
+                                aria-label="Open AI Search"
+                                title="Open AI Search"
+                            >
+                                <SparklesIcon className="w-6 h-6 text-indigo-400" />
+                            </button>
                         </div>
-                    </header>
-                    <div className="mb-8 flex justify-center">
-                        <SearchBar onSearch={handleSearch} isLoading={isLoading} theme={theme} />
-                    </div>
-                    <div className="sticky top-4 z-50 mb-8 flex justify-center">
-                        <Navigation activeTab={activeTab} theme={theme} />
+                        <div className="sticky top-4 z-50 mb-8 flex justify-center">
+                            <Navigation activeTab={activeTab} theme={theme} />
+                        </div>
                     </div>
                     
                     <div className="flex justify-center">
@@ -823,6 +879,22 @@ const App: React.FC = () => {
       )}
 
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+       {isAiSearchOpen && (
+        <AiSearchModal
+          isOpen={isAiSearchOpen}
+          onClose={() => setIsAiSearchOpen(false)}
+          onSelectMedia={(media) => {
+            setIsAiSearchOpen(false);
+            navigateToMedia(media);
+          }}
+        />
+      )}
+      {heroTrailerId && (
+        <CustomVideoPlayer 
+          videoId={heroTrailerId}
+          onClose={() => setHeroTrailerId(null)}
+        />
+      )}
     </div>
   );
 };

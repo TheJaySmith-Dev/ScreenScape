@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { ActorDetails, MediaDetails } from '../types.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
-import { CakeIcon, LocationMarkerIcon } from './icons.tsx';
+import { CakeIcon, LocationMarkerIcon, HomeIcon } from './icons.tsx';
 
 interface ActorPageProps {
   actor: ActorDetails;
@@ -39,8 +39,12 @@ export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMed
 
   return (
     <div className="w-full max-w-7xl fade-in">
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex items-center gap-3 mb-6">
         <button onClick={onBack} className="px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">&larr; Back</button>
+        <a href="#/home" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">
+            <HomeIcon className="w-4 h-4" />
+            <span>Home</span>
+        </a>
       </div>
 
       <div className="flex flex-col md:flex-row gap-8 mb-12">

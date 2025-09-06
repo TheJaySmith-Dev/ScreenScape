@@ -1,12 +1,14 @@
 
-import type { MediaDetails, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor } from '../types.ts';
+
+import type { MediaDetails, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor, AiSearchParams } from '../types.ts';
 import { supportedProviders } from './streamingService.ts';
 import { getApiKey } from './apiService.ts';
 import { fetchBoxOffice } from './omdbService.ts';
 
 const API_BASE_URL = 'https://api.themoviedb.org/3';
+const entityCache = new Map<string, number>();
 
-const fetchFromApi = async <T,>(endpoint: string): Promise<T> => {
+export const fetchApi = async <T,>(endpoint: string): Promise<T> => {
     const apiKey = getApiKey();
     if (!apiKey) {
         throw new Error("TMDb API key is not set. Please add it via the UI.");
@@ -23,7 +25,7 @@ const fetchFromApi = async <T,>(endpoint: string): Promise<T> => {
     return response.json();
 };
 
-const findBestTrailer = (videos: any[]): any | null => {
+export const findBestTrailer = (videos: any[]): any | null => {
     if (!videos || videos.length === 0) return null;
 
     const candidates = videos.filter(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
@@ -108,7 +110,7 @@ const formatMediaListItem = (item: any, typeOverride?: 'movie' | 'tv', subType?:
 
 const fetchList = async (endpoint: string, typeOverride?: 'movie' | 'tv', subType?: 'short'): Promise<MediaDetails[]> => {
     try {
-        const data = await fetchFromApi<{ results: any[] }>(endpoint);
+        const data = await fetchApi<{ results: any[] }>(endpoint);
         return data.results
             .map(item => formatMediaListItem(item, typeOverride, subType))
             .filter((item): item is MediaDetails => item !== null);
@@ -163,7 +165,7 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
       try {
           const appendToResponse = 'videos,credits,recommendations,images,watch/providers,external_ids' + (type === 'movie' ? ',release_dates' : ',content_ratings');
           const endpoint = `/${type}/${id}?append_to_response=${appendToResponse}&include_image_language=en,null`;
-          const details = await fetchFromApi<any>(endpoint);
+          const details = await fetchApi<any>(endpoint);
           
           const baseDetails = formatMediaDetailsFromApiResponse(details, type);
           const textlessPoster = findBestTextlessPoster(details.images);
@@ -216,6 +218,106 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
       }
 };
 
+const getEntityId = async (name: string, type: 'genre' | 'company' | 'person' | 'keyword'): Promise<number | null> => {
+    const cacheKey = `${type}:${name.toLowerCase()}`;
+    if (entityCache.has(cacheKey)) {
+        return entityCache.get(cacheKey) ?? null;
+    }
+
+    let endpoint = '';
+    switch (type) {
+        case 'genre':
+            const genreMap: { [key: string]: number } = {
+                "action": 28, "adventure": 12, "animation": 16, "comedy": 35, "crime": 80,
+                "documentary": 99, "drama": 18, "family": 10751, "fantasy": 14, "history": 36,
+                "horror": 27, "music": 10402, "mystery": 9648, "romance": 10749,
+                "science fiction": 878, "tv movie": 10770, "thriller": 53, "war": 10752, "western": 37
+            };
+            const genreId = genreMap[name.toLowerCase()];
+            if (genreId) {
+                entityCache.set(cacheKey, genreId);
+                return genreId;
+            }
+            return null;
+        case 'company':
+        case 'person':
+        case 'keyword':
+            endpoint = `/search/${type}?query=${encodeURIComponent(name)}`;
+            break;
+        default:
+            return null;
+    }
+
+    try {
+        const data = await fetchApi<{ results: { id: number }[] }>(endpoint);
+        if (data.results && data.results.length > 0) {
+            const id = data.results[0].id;
+            entityCache.set(cacheKey, id);
+            return id;
+        }
+    } catch (error) {
+        console.error(`Could not find ID for ${type}: ${name}`, error);
+    }
+    return null;
+};
+
+export const discoverMediaFromAi = async (params: AiSearchParams): Promise<MediaDetails[]> => {
+    const { keywords, genres, actors, directors, companies, year_from, year_to, sort_by } = params;
+    
+    const with_genres = genres ? (await Promise.all(genres.map(g => getEntityId(g, 'genre')))).filter(Boolean).join(',') : '';
+    const with_companies = companies ? (await Promise.all(companies.map(c => getEntityId(c, 'company')))).filter(Boolean).join(',') : '';
+    const with_cast = actors ? (await Promise.all(actors.map(a => getEntityId(a, 'person')))).filter(Boolean).join(',') : '';
+    const with_crew = directors ? (await Promise.all(directors.map(d => getEntityId(d, 'person')))).filter(Boolean).join(',') : '';
+    const with_keywords = keywords ? (await Promise.all(keywords.map(k => getEntityId(k, 'keyword')))).filter(Boolean).join(',') : '';
+    
+    const queryParams = new URLSearchParams();
+    if (with_genres) queryParams.append('with_genres', with_genres);
+    if (with_companies) queryParams.append('with_companies', with_companies);
+    if (with_cast) queryParams.append('with_cast', with_cast);
+    if (with_crew) queryParams.append('with_crew', with_crew);
+    if (with_keywords) queryParams.append('with_keywords', with_keywords);
+    if (year_from) queryParams.append('primary_release_date.gte', `${year_from}-01-01`);
+    if (year_to) queryParams.append('primary_release_date.lte', `${year_to}-12-31`);
+    queryParams.append('sort_by', sort_by || 'popularity.desc');
+    queryParams.append('vote_count.gte', '100');
+
+    const queryString = queryParams.toString();
+    
+    const movieEndpoint = `/discover/movie?${queryString}`;
+    const tvEndpoint = `/discover/tv?${queryString.replace(/primary_release_date/g, 'first_air_date')}`;
+
+    try {
+        const [movies, tvShows] = await Promise.all([
+            fetchList(movieEndpoint, 'movie'),
+            fetchList(tvEndpoint, 'tv')
+        ]);
+        
+        const combined = [];
+        const seenIds = new Set();
+        const maxLength = Math.max(movies.length, tvShows.length);
+        for (let i = 0; i < maxLength; i++) {
+            if (movies[i] && !seenIds.has(movies[i].id)) {
+                combined.push(movies[i]);
+                seenIds.add(movies[i].id);
+            }
+            if (tvShows[i] && !seenIds.has(tvShows[i].id)) {
+                combined.push(tvShows[i]);
+                seenIds.add(tvShows[i].id);
+            }
+        }
+        
+        if (combined.length === 0 && params.original_query) {
+           return searchMedia(params.original_query);
+        }
+
+        return combined;
+
+    } catch (error) {
+        console.error("Failed to discover media from AI params:", error);
+        return [];
+    }
+};
+
 export const searchMedia = async (query: string): Promise<MediaDetails[]> => {
     const endpoint = `/search/multi?query=${encodeURIComponent(query)}`;
     return fetchList(endpoint);
@@ -259,7 +361,7 @@ export const getComingSoonMedia = async (): Promise<MediaDetails[]> => {
 };
 
 export const fetchCollectionDetails = async (id: number): Promise<CollectionDetails> => {
-    const details = await fetchFromApi<any>(`/collection/${id}`);
+    const details = await fetchApi<any>(`/collection/${id}`);
     return {
         id: details.id,
         name: details.name,
@@ -351,7 +453,7 @@ export const getMediaByStreamingProvider = async (providerKey: StreamingProvider
 
 export const fetchMediaByIds = async (mediaToFetch: { id: number; type: 'movie' | 'tv' }[]): Promise<MediaDetails[]> => {
     const promises = mediaToFetch.map(item =>
-        fetchFromApi<any>(`/${item.type}/${item.id}`)
+        fetchApi<any>(`/${item.type}/${item.id}`)
             .then(details => formatMediaDetailsFromApiResponse(details, item.type))
             .catch(err => {
                 console.error(`Failed to fetch details for ${item.type} ID ${item.id}:`, err);
@@ -381,7 +483,7 @@ export const fetchMediaByCollectionIds = async (collectionIds: number[]): Promis
 export const getMediaByPerson = async (personId: number, role: 'director' | 'actor'): Promise<MediaDetails[]> => {
     const endpoint = `/person/${personId}/combined_credits`;
     try {
-        const data = await fetchFromApi<{ cast: any[], crew: any[] }>(endpoint);
+        const data = await fetchApi<{ cast: any[], crew: any[] }>(endpoint);
         let mediaList: any[] = [];
         
         if (role === 'actor') {
@@ -413,8 +515,8 @@ export const getMediaByPerson = async (personId: number, role: 'director' | 'act
 
 export const fetchActorDetails = async (actorId: number): Promise<ActorDetails> => {
     try {
-        const detailsPromise = fetchFromApi<any>(`/person/${actorId}`);
-        const creditsPromise = fetchFromApi<any>(`/person/${actorId}/combined_credits`);
+        const detailsPromise = fetchApi<any>(`/person/${actorId}`);
+        const creditsPromise = fetchApi<any>(`/person/${actorId}/combined_credits`);
         const [details, credits] = await Promise.all([detailsPromise, creditsPromise]);
 
         const filmography = credits.cast
@@ -444,10 +546,10 @@ export const fetchMoviesForGame = async (page: number = 1): Promise<GameMovie[]>
     const endpoint = `/discover/movie?sort_by=revenue.desc&page=${page}&include_adult=false&vote_count.gte=500&primary_release_date.lte=${new Date().toISOString().split('T')[0]}`;
     
     try {
-        const listData = await fetchFromApi<{ results: any[] }>(endpoint);
+        const listData = await fetchApi<{ results: any[] }>(endpoint);
         
         const detailPromises = listData.results.slice(0, 10).map(m => 
-            fetchFromApi<any>(`/movie/${m.id}`).catch(() => null)
+            fetchApi<any>(`/movie/${m.id}`).catch(() => null)
         );
         const moviesWithDetails = (await Promise.all(detailPromises)).filter(Boolean);
 
@@ -484,8 +586,8 @@ export const fetchMediaForPopularityGame = async (page: number = 1): Promise<Gam
     
     try {
         const [movieData, tvData] = await Promise.all([
-            fetchFromApi<{ results: any[] }>(movieEndpoint),
-            fetchFromApi<{ results: any[] }>(tvEndpoint)
+            fetchApi<{ results: any[] }>(movieEndpoint),
+            fetchApi<{ results: any[] }>(tvEndpoint)
         ]);
         
         const movies: GameMedia[] = movieData.results
@@ -520,10 +622,10 @@ export const fetchMediaForPopularityGame = async (page: number = 1): Promise<Gam
 export const fetchActorsForAgeGame = async (page: number = 1): Promise<GameActor[]> => {
     const popularActorsEndpoint = `/person/popular?page=${page}`;
     try {
-        const data = await fetchFromApi<{ results: any[] }>(popularActorsEndpoint);
+        const data = await fetchApi<{ results: any[] }>(popularActorsEndpoint);
         
         const actorDetailsPromises = data.results.slice(0, 10).map(person => 
-            fetchFromApi<any>(`/person/${person.id}`).catch(() => null)
+            fetchApi<any>(`/person/${person.id}`).catch(() => null)
         );
 
         const actorDetails = (await Promise.all(actorDetailsPromises)).filter(Boolean);

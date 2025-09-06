@@ -224,3 +224,20 @@ export interface GameActor {
   profileUrl: string;
   birthday: string; // 'YYYY-MM-DD'
 }
+
+export interface AiSearchParams {
+  keywords?: string[];
+  genres?: string[];
+  actors?: string[];
+  directors?: string[];
+  companies?: string[];
+  year_from?: number;
+  year_to?: number;
+  sort_by?: 'popularity.desc' | 'release_date.desc' | 'vote_average.desc';
+  original_query?: string;
+}
+
+export interface FunFact {
+  category: string;
+  fact: string;
+}

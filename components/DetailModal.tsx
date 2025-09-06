@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders } from '../types.ts';
-import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon } from './icons.tsx';
+import React, { useState, useEffect } from 'react';
+import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders, FunFact } from '../types.ts';
+import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, SparklesIcon, HomeIcon } from './icons.tsx';
 import { RecommendationCard } from './RecommendationCard.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
 import { usePreferences } from '../hooks/usePreferences.ts';
 import { Providers } from './Providers.tsx';
 import { CinemaAvailability } from './CinemaAvailability.tsx';
+import { getFunFactsForMedia, getAiDescriptionForMedia } from '../services/aiService.ts';
+import { AiDescriptionModal } from './AiDescriptionModal.tsx';
 
 interface DetailModalProps {
   item: MediaDetails | CollectionDetails;
@@ -72,7 +74,15 @@ const providersExist = (providers: WatchProviders) => {
 export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, onSelectActor, userLocation }) => {
     const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
     const { likeItem, dislikeItem, unlistItem, isLiked, isDisliked } = usePreferences();
-    
+    const [funFacts, setFunFacts] = useState<FunFact[] | null>(null);
+    const [isFunFactsLoading, setIsFunFactsLoading] = useState(false);
+    const [funFactsError, setFunFactsError] = useState<string | null>(null);
+
+    const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+    const [aiDescription, setAiDescription] = useState<string | null>(null);
+    const [isAiDescriptionLoading, setIsAiDescriptionLoading] = useState(false);
+    const [aiDescriptionError, setAiDescriptionError] = useState<string | null>(null);
+
     // Effect for keyboard shortcuts and scrolling to top
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
@@ -88,6 +98,57 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         document.querySelector('#root')?.scrollTo(0, 0); // Scroll page view to top on mount
         return () => window.removeEventListener('keydown', handleEsc);
     }, [onClose, trailerVideoId]);
+
+    // Effect to reset AI states when item changes
+    useEffect(() => {
+        setFunFacts(null);
+        setFunFactsError(null);
+        setIsFunFactsLoading(false);
+        setIsAiModalOpen(false);
+        setAiDescription(null);
+        setAiDescriptionError(null);
+    }, [item.id]);
+
+    const handleFetchFunFacts = async () => {
+        if (!isMediaDetails(item)) return;
+        if (funFacts || isFunFactsLoading) return;
+
+        setIsFunFactsLoading(true);
+        setFunFactsError(null);
+        try {
+            const response = await getFunFactsForMedia(item.title, item.releaseYear, item.type);
+            if (response.facts && response.facts.length > 0) {
+                setFunFacts(response.facts);
+            } else {
+                setFunFactsError("Couldn't find any interesting facts for this title.");
+            }
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            setFunFactsError(errorMessage);
+            console.error("Failed to fetch fun facts:", error);
+        } finally {
+            setIsFunFactsLoading(false);
+        }
+    };
+    
+    const handleFetchAiDescription = async () => {
+        if (!isMediaDetails(item)) return;
+        setIsAiModalOpen(true);
+        if (aiDescription) return;
+
+        setIsAiDescriptionLoading(true);
+        setAiDescriptionError(null);
+        try {
+            const response = await getAiDescriptionForMedia(item.title, item.releaseYear, item.type, item.overview);
+            setAiDescription(response);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+            setAiDescriptionError(errorMessage);
+            console.error("Failed to fetch AI description:", error);
+        } finally {
+            setIsAiDescriptionLoading(false);
+        }
+    };
 
     const handleWatchTrailer = () => {
         if (isMediaDetails(item) && item.trailerUrl) {
@@ -118,6 +179,71 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             dislikeItem(item);
         }
     };
+    
+    const categoryColors: { [key: string]: string } = {
+        CASTING: '#3498db', // Blue
+        PRODUCTION: '#9b59b6', // Purple
+        'BOX OFFICE': '#2ecc71', // Green
+        RECEPTION: '#f1c40f', // Yellow
+        LEGACY: '#e67e22', // Orange
+        'PRE-PRODUCTION': '#1abc9c' // Turquoise
+    };
+
+    const FunFactsSection: React.FC<{
+        facts: FunFact[] | null;
+        isLoading: boolean;
+        error: string | null;
+        onFetch: () => void;
+    }> = ({ facts, isLoading: factsLoading, error, onFetch }) => {
+        if (factsLoading) {
+            return (
+                <div className="flex items-center justify-center h-24">
+                    <LoadingSpinner />
+                </div>
+            );
+        }
+
+        if (error) {
+            return <p className="text-red-400 text-center">{error}</p>;
+        }
+        
+        if (facts) {
+            return (
+                <div className="fun-facts-container fade-in">
+                    <div className="space-y-4">
+                        {facts.map((fact, index) => (
+                            <div 
+                                key={index} 
+                                className="fun-fact-card fade-in" 
+                                style={{ 
+                                    borderColor: categoryColors[fact.category.toUpperCase()] || '#7f8c8d',
+                                    animationDelay: `${index * 100}ms`
+                                }}
+                            >
+                                <p className="fun-fact-category" style={{ color: categoryColors[fact.category.toUpperCase()] || '#7f8c8d' }}>
+                                    {fact.category}
+                                </p>
+                                <p className="text-gray-200 mt-1">{fact.fact}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className="text-center">
+                <button
+                    onClick={onFetch}
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/10 hover:scale-105"
+                >
+                    <SparklesIcon className="w-5 h-5 text-indigo-400" />
+                    <span>Show Fun Facts</span>
+                </button>
+            </div>
+        );
+    };
+
 
   const renderMediaContent = (media: MediaDetails) => (
     <>
@@ -131,6 +257,14 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                     <span>Watch Trailer</span>
                 </button>
             )}
+             <button
+                onClick={handleFetchAiDescription}
+                className="flex items-center justify-center gap-2 px-6 py-3 glass-panel rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/5 hover:scale-105"
+                aria-label="Get AI-powered information"
+            >
+                <SparklesIcon className="w-6 h-6 text-indigo-400" />
+                <span>More Info • AI</span>
+            </button>
             <div className="flex items-center gap-2">
                 <button
                     onClick={handleLike}
@@ -158,6 +292,15 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         </div>
         
         {isLoading && !media.cast && <div className="mt-6 flex justify-center"><LoadingSpinner /></div>}
+
+        <ModalSection title="Fun Facts">
+            <FunFactsSection
+                facts={funFacts}
+                isLoading={isFunFactsLoading}
+                error={funFactsError}
+                onFetch={handleFetchFunFacts}
+            />
+        </ModalSection>
 
         {!isLoading && (
             <ModalSection title="Where to Watch">
@@ -245,8 +388,12 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
   return (
     <>
       <div className="w-full max-w-6xl mx-auto fade-in">
-        <div className="my-6">
+        <div className="my-6 flex items-center gap-3">
             <button onClick={onClose} className="px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">&larr; Back</button>
+            <a href="#/home" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">
+                <HomeIcon className="w-4 h-4" />
+                <span>Home</span>
+            </a>
         </div>
 
         {/* Hero Section */}
@@ -319,6 +466,17 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         <CustomVideoPlayer 
           videoId={trailerVideoId}
           onClose={() => setTrailerVideoId(null)}
+        />
+      )}
+
+      {isMediaDetails(item) && (
+        <AiDescriptionModal
+            isOpen={isAiModalOpen}
+            onClose={() => setIsAiModalOpen(false)}
+            isLoading={isAiDescriptionLoading}
+            title={item.title}
+            description={aiDescription}
+            error={aiDescriptionError}
         />
       )}
     </>
