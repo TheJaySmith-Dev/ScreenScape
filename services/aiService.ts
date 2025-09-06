@@ -92,7 +92,7 @@ Rules:
 - Put moods or vibes (e.g., "happy") in the 'keywords' array.
 - Create a natural sentence for "response_title".
 - **IMPORTANT FRANCHISE RULE**: When a user mentions a major franchise like "Marvel", they almost always mean the Marvel Cinematic Universe (MCU). To handle this, set the 'companies' parameter to "Marvel Studios". This is critical to exclude older, non-MCU films. For example, if the query is "Marvel movie starring Chris Evans", the company should be "Marvel Studios" and the actor should be "Chris Evans".
-- **FULL NAME RULE**: When a user provides a full name for an actor or director (e.g., 'Tom Holland', 'Christopher Nolan'), you MUST use the full name in the corresponding array ('actors' or 'directors'). Do not shorten or split names. This is crucial for accuracy.
+- **FULL NAME RULE**: When a user provides a full name for an actor or director (e.g., 'Tom Holland', 'Christopher Nolan'), you MUST use the full name in the corresponding array ('actors' or 'directors'). Do not shorten or split names. This is crucial for accuracy. For example, if the query is "movies with Tom Holland", the 'actors' array must be ["Tom Holland"], NOT ["Tom"].
 - If a user is specific, like "Sam Raimi Spider-Man", then correctly identify the director.
 
 Always respond with ONLY the JSON object.`,
