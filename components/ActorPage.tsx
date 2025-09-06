@@ -47,12 +47,12 @@ export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMed
         </a>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8 mb-12">
+      <div className="flex flex-col md:flex-row gap-12 mb-16">
         <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0">
           <img src={actor.profilePath} alt={actor.name} className="w-full rounded-2xl aspect-[2/3] object-cover" />
         </div>
         <div className="w-full">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-white">{actor.name}</h1>
+          <h1 className="text-4xl sm:text-5xl font-bold mb-6 text-white">{actor.name}</h1>
           <div className="flex flex-wrap gap-x-8 gap-y-4 mb-6">
             <ActorInfo icon={<CakeIcon className="w-5 h-5" />} label="Birthday" value={formatDate(actor.birthday)} />
             <ActorInfo icon={<LocationMarkerIcon className="w-5 h-5" />} label="Place of Birth" value={actor.placeOfBirth} />

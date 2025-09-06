@@ -210,7 +210,7 @@ const App: React.FC = () => {
                 return (
                     <>
                         {trending[0] && <HeroSection item={trending[0]} onPlay={() => {}} onMoreInfo={handleSelectMedia} />}
-                        <div className="space-y-12 mt-8">
+                        <div className="space-y-16 mt-8">
                             <MediaRow title="Trending This Week" items={trending} onSelect={handleSelectMedia} />
                             <MediaRow title="Now Playing in Theaters" items={nowPlaying} onSelect={handleSelectMedia} animationDelay="100ms" />
                             <MediaRow title="Popular Movies" items={popularMovies} onSelect={handleSelectMedia} animationDelay="200ms" />
@@ -313,7 +313,7 @@ const App: React.FC = () => {
               </div>
             </div>
           </header>
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-36 pb-24">
             {renderPage()}
           </div>
         </main>

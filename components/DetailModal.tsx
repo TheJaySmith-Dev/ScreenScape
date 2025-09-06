@@ -46,7 +46,7 @@ const getTvDateRange = (firstAirDate: string | undefined, lastAirDate: string | 
 
 
 const ModalSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-    <div className="mt-8">
+    <div className="mt-12">
       <h3 className="text-xl font-semibold text-white mb-4">{title}</h3>
       {children}
     </div>
@@ -433,7 +433,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
   return (
     <>
       <div className="w-full max-w-6xl mx-auto fade-in">
-        <div className="my-6 flex items-center gap-3">
+        <div className="my-12 flex items-center gap-3">
             <button onClick={onClose} className="px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">&larr; Back</button>
             <a href="#/home" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">
                 <HomeIcon className="w-4 h-4" />
@@ -449,8 +449,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                  <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
             </div>
 
-            <div className="relative p-6 md:p-10 flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-8 w-full">
-                <img src={mainPosterUrl} alt={isMedia ? item.title : item.name} className="w-40 md:w-52 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] aspect-[2/3] object-cover flex-shrink-0" />
+            <div className="relative p-8 md:p-12 flex flex-col md:flex-row items-center md:items-end gap-8 md:gap-12 w-full">
+                <img src={mainPosterUrl} alt={isMedia ? item.title : item.name} className="w-48 md:w-60 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] aspect-[2/3] object-cover flex-shrink-0" />
                 <div className="flex-grow text-center md:text-left">
                     <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.7)] mb-4">
                         {isMediaDetails(item) ? item.title : item.name}
@@ -501,7 +501,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         </div>
         
         {/* Main Content Below Hero */}
-        <div className="px-4 md:px-10 pb-12">
+        <div className="px-6 md:px-12 pb-16">
             <p className="text-gray-300 text-base leading-relaxed mb-6">{item.overview}</p>
             {isMediaDetails(item) ? renderMediaContent(item) : renderCollectionContent(item)}
         </div>
