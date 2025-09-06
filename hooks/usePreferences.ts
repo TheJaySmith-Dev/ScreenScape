@@ -35,7 +35,7 @@ export const usePreferences = () => {
     const savePreferences = useCallback(async (newLikes: LikedItem[], newDislikes: DislikedItem[]) => {
         if (currentUser) {
             try {
-                await api.savePreferences(currentUser.email, newLikes, newDislikes);
+                await api.savePreferences(currentUser.email, { likes: newLikes, dislikes: newDislikes });
             } catch (error) {
                 console.error("Failed to save preferences:", error);
             }

@@ -1,0 +1,144 @@
+import React, { useState, useEffect, useRef } from 'react';
+import type { MediaDetails, ChatMessage } from '../types.ts';
+import { CloseIcon, SparklesIcon } from './icons.tsx';
+import { LoadingSpinner } from './LoadingSpinner.tsx';
+import { startChatForMedia } from '../services/aiService.ts';
+import { RateLimitMessage } from './RateLimitMessage.tsx';
+import type { Chat } from '@google/genai';
+import { useSettings } from '../hooks/useSettings.ts';
+
+interface ChatModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  media: MediaDetails;
+}
+
+export const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, media }) => {
+    const [chatSession, setChatSession] = useState<Chat | null>(null);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [userInput, setUserInput] = useState('');
+    const { aiClient, canMakeRequest, incrementRequestCount } = useSettings();
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (isOpen && aiClient) {
+            const session = startChatForMedia(media, aiClient);
+            setChatSession(session);
+            setMessages([{ role: 'model', content: `Hi! I'm an expert on "${media.title}" (${media.releaseYear}). Feel free to ask me anything about it!` }]);
+        }
+    }, [isOpen, media, aiClient]);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    useEffect(() => {
+        const handleEsc = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') onClose();
+        };
+        if (isOpen) {
+            window.addEventListener('keydown', handleEsc);
+        }
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [isOpen, onClose]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!userInput.trim() || !chatSession || isLoading) return;
+
+        const { canRequest } = canMakeRequest();
+        if (!canRequest) return;
+
+        const newMessages: ChatMessage[] = [...messages, { role: 'user', content: userInput }];
+        setMessages(newMessages);
+        setUserInput('');
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const response = await chatSession.sendMessage({ message: userInput });
+            incrementRequestCount();
+            setMessages([...newMessages, { role: 'model', content: response.text }]);
+        } catch (err: any) {
+            const errorMessage = err.message || "Sorry, I couldn't get a response. Please try again.";
+            setError(errorMessage);
+            // Re-add the user's message to the new list, but not the failed model response
+            setMessages(newMessages);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    if (!isOpen) return null;
+    
+    const { canRequest, resetTime } = canMakeRequest();
+
+    return (
+        <div 
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 chat-modal-bg fade-in" 
+            style={{ animationDuration: '300ms' }}
+            onClick={onClose}
+        >
+            <div 
+                className="w-full max-w-lg h-[85vh] max-h-[600px] chat-modal-content rounded-3xl overflow-hidden flex flex-col fade-in-modal"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex-shrink-0 p-4 flex items-center justify-between border-b border-white/10">
+                    <div className="flex items-center gap-2">
+                         <SparklesIcon className="w-5 h-5 text-indigo-400" />
+                         <h1 className="font-semibold text-white">Ask about {media.title}</h1>
+                    </div>
+                    <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 transition-colors" aria-label="Close chat">
+                        <CloseIcon className="w-5 h-5 text-gray-300" />
+                    </button>
+                </div>
+
+                <div className="flex-grow overflow-y-auto p-4 chat-messages">
+                    {messages.map((msg, index) => (
+                        <div key={index} className={`chat-bubble ${msg.role}`}>
+                            {msg.content}
+                        </div>
+                    ))}
+                    {isLoading && (
+                        <div className="chat-bubble model">
+                            <LoadingSpinner className="w-5 h-5" />
+                        </div>
+                    )}
+                    {error && (
+                        <div className="p-2 text-sm text-red-400 bg-red-500/10 rounded-lg">
+                           {error}
+                        </div>
+                    )}
+                    <div ref={messagesEndRef} />
+                </div>
+                
+                <div className="flex-shrink-0 p-4 border-t border-white/10">
+                    { !canRequest && resetTime ? (
+                        <RateLimitMessage resetTime={resetTime} featureName="AI Chat" />
+                    ) : (
+                        <form onSubmit={handleSubmit}>
+                            <div className="relative w-full rounded-full chat-input-wrapper">
+                                <input
+                                    type="text"
+                                    value={userInput}
+                                    onChange={(e) => setUserInput(e.target.value)}
+                                    placeholder="Ask a question..."
+                                    className="w-full pl-4 pr-12 py-3 bg-transparent text-white rounded-full focus:outline-none"
+                                    disabled={isLoading}
+                                    autoFocus
+                                />
+                                <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 p-2" aria-label="Send message" disabled={isLoading || !userInput.trim()}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6 text-white">
+                                      <path d="M3.105 3.105a.75.75 0 0 1 .813-.292l13.58 4.527a.75.75 0 0 1 0 1.32l-13.58 4.527a.75.75 0 0 1-1.05-.813l2.25-6.75L3.105 3.105Z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </form>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};

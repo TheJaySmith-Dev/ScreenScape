@@ -4,13 +4,12 @@ import { UserIcon, GlobeIcon } from './icons.tsx';
 import type { UserLocation } from '../types.ts';
 
 interface AccountButtonProps {
-    onSignInClick: () => void;
     userLocation: UserLocation | null;
     theme?: 'dark' | 'light';
 }
 
-export const AccountButton: React.FC<AccountButtonProps> = ({ onSignInClick, userLocation, theme = 'dark' }) => {
-    const { currentUser, logout } = useAuth();
+export const AccountButton: React.FC<AccountButtonProps> = ({ userLocation, theme = 'dark' }) => {
+    const { currentUser, login, logout, loading } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -44,11 +43,16 @@ export const AccountButton: React.FC<AccountButtonProps> = ({ onSignInClick, use
     const textSecondaryClass = theme === 'light' ? 'text-gray-600' : 'text-gray-400';
     const borderClass = theme === 'light' ? 'border-black/10' : 'border-white/10';
 
+    if (loading) {
+        return (
+             <div className="w-9 h-9 bg-gray-700/50 rounded-full animate-pulse"></div>
+        )
+    }
 
     if (!currentUser) {
         return (
             <button
-                onClick={onSignInClick}
+                onClick={() => login()}
                 className={buttonClass}
             >
                 <UserIcon className="w-5 h-5" />

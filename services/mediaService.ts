@@ -260,7 +260,7 @@ const getEntityId = async (name: string, type: 'genre' | 'company' | 'person' | 
 };
 
 export const discoverMediaFromAi = async (params: AiSearchParams): Promise<MediaDetails[]> => {
-    const { keywords, genres, actors, directors, companies, characters, year_from, year_to, sort_by } = params;
+    const { keywords, genres, actors, directors, companies, characters, year_from, year_to, sort_by, media_type } = params;
     
     // If the search is for a specific character, a standard text search is often more effective than discovery.
     if (characters && characters.length > 0) {
@@ -282,39 +282,57 @@ export const discoverMediaFromAi = async (params: AiSearchParams): Promise<Media
     const with_crew = directors ? (await Promise.all(directors.map(d => getEntityId(d, 'person')))).filter(Boolean).join(',') : '';
     const with_keywords = keywords ? (await Promise.all(keywords.map(k => getEntityId(k, 'keyword')))).filter(Boolean).join(',') : '';
     
-    const queryParams = new URLSearchParams();
-    if (with_genres) queryParams.append('with_genres', with_genres);
-    if (with_companies) queryParams.append('with_companies', with_companies);
-    if (with_cast) queryParams.append('with_cast', with_cast);
-    if (with_crew) queryParams.append('with_crew', with_crew);
-    if (with_keywords) queryParams.append('with_keywords', with_keywords);
-    if (year_from) queryParams.append('primary_release_date.gte', `${year_from}-01-01`);
-    if (year_to) queryParams.append('primary_release_date.lte', `${year_to}-12-31`);
-    queryParams.append('sort_by', sort_by || 'popularity.desc');
-    queryParams.append('vote_count.gte', '100');
+    const buildQueryString = (type: 'movie' | 'tv'): string => {
+        const queryParams = new URLSearchParams();
+        if (with_genres) queryParams.append('with_genres', with_genres);
+        if (with_companies) queryParams.append('with_companies', with_companies);
+        if (with_cast) queryParams.append('with_cast', with_cast);
+        if (with_crew) queryParams.append('with_crew', with_crew);
+        if (with_keywords) queryParams.append('with_keywords', with_keywords);
+        
+        const datePrefix = type === 'movie' ? 'primary_release_date' : 'first_air_date';
+        if (year_from) queryParams.append(`${datePrefix}.gte`, `${year_from}-01-01`);
+        if (year_to) queryParams.append(`${datePrefix}.lte`, `${year_to}-12-31`);
 
-    const queryString = queryParams.toString();
-    
-    const movieEndpoint = `/discover/movie?${queryString}`;
-    const tvEndpoint = `/discover/tv?${queryString.replace(/primary_release_date/g, 'first_air_date')}`;
+        queryParams.append('sort_by', sort_by || 'popularity.desc');
+        queryParams.append('vote_count.gte', '100');
+        return queryParams.toString();
+    }
 
     try {
-        const [movies, tvShows] = await Promise.all([
-            fetchList(movieEndpoint, 'movie'),
-            fetchList(tvEndpoint, 'tv')
-        ]);
+        let movies: MediaDetails[] = [];
+        let tvShows: MediaDetails[] = [];
+
+        if (media_type === 'movie' || media_type === 'all' || !media_type) {
+            const movieEndpoint = `/discover/movie?${buildQueryString('movie')}`;
+            movies = await fetchList(movieEndpoint, 'movie');
+        }
         
-        const combined = [];
-        const seenIds = new Set();
-        const maxLength = Math.max(movies.length, tvShows.length);
-        for (let i = 0; i < maxLength; i++) {
-            if (movies[i] && !seenIds.has(movies[i].id)) {
-                combined.push(movies[i]);
-                seenIds.add(movies[i].id);
-            }
-            if (tvShows[i] && !seenIds.has(tvShows[i].id)) {
-                combined.push(tvShows[i]);
-                seenIds.add(tvShows[i].id);
+        if (media_type === 'tv' || media_type === 'all' || !media_type) {
+            const tvEndpoint = `/discover/tv?${buildQueryString('tv')}`;
+            tvShows = await fetchList(tvEndpoint, 'tv');
+        }
+
+        let combined: MediaDetails[];
+
+        if (media_type === 'movie') {
+            combined = movies;
+        } else if (media_type === 'tv') {
+            combined = tvShows;
+        } else {
+            // Default to 'all', interleave the results for variety
+            combined = [];
+            const seenIds = new Set();
+            const maxLength = Math.max(movies.length, tvShows.length);
+            for (let i = 0; i < maxLength; i++) {
+                if (movies[i] && !seenIds.has(movies[i].id)) {
+                    combined.push(movies[i]);
+                    seenIds.add(movies[i].id);
+                }
+                if (tvShows[i] && !seenIds.has(tvShows[i].id)) {
+                    combined.push(tvShows[i]);
+                    seenIds.add(tvShows[i].id);
+                }
             }
         }
         

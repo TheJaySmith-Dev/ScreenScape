@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders, OmdbDetails, FunFact } from '../types.ts';
-import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, HomeIcon, SparklesIcon, InfoIcon } from './icons.tsx';
+import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, HomeIcon, SparklesIcon, InfoIcon, ChatBubbleIcon } from './icons.tsx';
 import { RecommendationCard } from './RecommendationCard.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
@@ -9,8 +9,9 @@ import { Providers } from './Providers.tsx';
 import { CinemaAvailability } from './CinemaAvailability.tsx';
 import { fetchOmdbDetails } from '../services/omdbService.ts';
 import { getFunFactsForMedia } from '../services/aiService.ts';
-import { getRateLimitState } from '../services/apiService.ts';
 import { RateLimitMessage } from './RateLimitMessage.tsx';
+import { ChatModal } from './ChatModal.tsx';
+import { useSettings } from '../hooks/useSettings.ts';
 
 interface DetailModalProps {
   item: MediaDetails | CollectionDetails;
@@ -79,20 +80,24 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
     const [omdbDetails, setOmdbDetails] = useState<OmdbDetails | null>(null);
     const [isOmdbLoading, setIsOmdbLoading] = useState(false);
     const [isDetailsVisible, setIsDetailsVisible] = useState(false);
+    const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+    const { aiClient, canMakeRequest, incrementRequestCount } = useSettings();
 
     // State for AI-generated Fun Facts
     const [funFacts, setFunFacts] = useState<FunFact[] | null>(null);
     const [isFactsLoading, setIsFactsLoading] = useState(false);
     const [factsError, setFactsError] = useState<string | null>(null);
-    const [rateLimit, setRateLimit] = useState<{ canRequest: boolean; resetTime: number | null }>({ canRequest: true, resetTime: null });
 
     // Effect for keyboard shortcuts and scrolling to top
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
                 if (trailerVideoId) {
-                    setTrailerVideoId(null); // Close trailer first if open
-                } else {
+                    setTrailerVideoId(null);
+                } else if (isChatModalOpen) {
+                    setIsChatModalOpen(false);
+                }
+                 else {
                     onClose();
                 }
             }
@@ -100,16 +105,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         window.addEventListener('keydown', handleEsc);
         document.querySelector('#root')?.scrollTo(0, 0); // Scroll page view to top on mount
         return () => window.removeEventListener('keydown', handleEsc);
-    }, [onClose, trailerVideoId]);
-
-    // Check rate limit status when details section is opened
-    useEffect(() => {
-        if (isDetailsVisible) {
-            const state = getRateLimitState();
-            setRateLimit({ canRequest: state.canRequest, resetTime: state.resetTime });
-        }
-    }, [isDetailsVisible]);
-
+    }, [onClose, trailerVideoId, isChatModalOpen]);
 
     // Effect to fetch OMDb data
     useEffect(() => {
@@ -163,21 +159,24 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
     };
 
     const handleGenerateFacts = async () => {
-        if (!isMediaDetails(item)) return;
+        if (!isMediaDetails(item) || !aiClient) return;
+
+        const { canRequest } = canMakeRequest();
+        if (!canRequest) {
+            // The UI will update automatically from the context, but we prevent the request.
+            return;
+        }
 
         setIsFactsLoading(true);
         setFactsError(null);
         setFunFacts(null);
         try {
-            const facts = await getFunFactsForMedia(item.title, item.releaseYear);
+            const facts = await getFunFactsForMedia(item.title, item.releaseYear, aiClient);
+            incrementRequestCount();
             setFunFacts(facts);
         } catch (e: any) {
-            if (e.resetTime) {
-                setRateLimit({ canRequest: false, resetTime: e.resetTime });
-            } else {
-                const errorMessage = e instanceof Error ? e.message : "An unknown error occurred.";
-                setFactsError(errorMessage);
-            }
+            const errorMessage = e instanceof Error ? e.message : "An unknown error occurred generating facts.";
+            setFactsError(errorMessage);
         } finally {
             setIsFactsLoading(false);
         }
@@ -226,6 +225,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
     };
 
     const OmdbDetailsSection: React.FC = () => {
+        const { canRequest: canMakeAiRequest, resetTime } = canMakeRequest();
+
         if (isOmdbLoading) {
             return (
                 <div className="flex items-center justify-center h-24">
@@ -264,12 +265,13 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
 
                  <div className="mt-6 pt-6 border-t border-white/10">
                     { !funFacts && !isFactsLoading && !factsError && (
-                        !rateLimit.canRequest && rateLimit.resetTime ? (
-                            <RateLimitMessage resetTime={rateLimit.resetTime} featureName="AI Facts" />
+                        !canMakeAiRequest && resetTime ? (
+                            <RateLimitMessage resetTime={resetTime} featureName="AI Facts" />
                         ) : (
                          <button
                             onClick={handleGenerateFacts}
                             className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/30 rounded-xl text-white font-semibold transition-all duration-300"
+                            disabled={!aiClient}
                          >
                             <SparklesIcon className="w-6 h-6 text-indigo-400" />
                             <span>Generate Behind-the-Scenes Facts</span>
@@ -303,6 +305,14 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                     <span>{isDetailsVisible ? 'Hide Info' : 'More Info & Synopsis'}</span>
                 </button>
             )}
+             <button
+                onClick={() => setIsChatModalOpen(true)}
+                className="flex items-center justify-center gap-2 px-6 py-3 glass-panel rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/5 hover:scale-105"
+                disabled={!aiClient}
+            >
+                <ChatBubbleIcon className="w-6 h-6" />
+                <span>Ask</span>
+            </button>
             <div className="flex items-center gap-2">
                 <button
                     onClick={handleLike}
@@ -501,6 +511,13 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         <CustomVideoPlayer 
           videoId={trailerVideoId}
           onClose={() => setTrailerVideoId(null)}
+        />
+      )}
+      {isMediaDetails(item) && (
+        <ChatModal 
+            isOpen={isChatModalOpen}
+            onClose={() => setIsChatModalOpen(false)}
+            media={item}
         />
       )}
     </>

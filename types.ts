@@ -1,3 +1,4 @@
+import { GoogleGenAI } from '@google/genai';
 
 export type MediaTypeFilter = 'all' | 'movie' | 'show' | 'short';
 export type SortBy = 'trending' | 'newest' | 'timeline';
@@ -144,8 +145,9 @@ export interface User {
 export interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
-  login: (email: string) => void;
-  logout: () => void;
+  // FIX: Update login and logout to return Promises as they are async functions.
+  login: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 // User preferences
@@ -237,6 +239,7 @@ export interface AiSearchParams {
   year_to?: number;
   sort_by?: 'popularity.desc' | 'release_date.desc' | 'vote_average.desc';
   original_query?: string;
+  media_type?: 'movie' | 'tv' | 'all';
 }
 
 export interface ViewingGuideStep {
@@ -283,4 +286,26 @@ export interface OmdbDetails {
 export interface FunFact {
   category: string; // e.g., 'Casting', 'Production', 'Trivia'
   fact: string;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'model';
+  content: string;
+}
+
+export interface RateLimitState {
+  count: number;
+  resetTime: number; // Timestamp
+}
+
+export interface SettingsContextType {
+  tmdbApiKey: string | null;
+  geminiApiKey: string | null;
+  aiClient: GoogleGenAI | null;
+  rateLimit: RateLimitState;
+  isInitialized: boolean;
+  canMakeRequest: () => { canRequest: boolean; resetTime: number | null };
+  incrementRequestCount: () => void;
+  saveApiKeys: (keys: { tmdbKey: string; geminiKey: string }) => void;
+  clearAllSettings: () => void;
 }

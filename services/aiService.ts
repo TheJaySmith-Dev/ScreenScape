@@ -1,33 +1,8 @@
-import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
+import type { GoogleGenAI } from "@google/genai";
+import { Type, GenerateContentResponse, Chat } from "@google/genai";
 import type { AiSearchParams, MediaDetails, ViewingGuide, FunFact } from '../types.ts';
-import { getGeminiApiKey, getRateLimitState, incrementRequestCount } from './apiService.ts';
 
 const model = 'gemini-2.5-flash';
-
-/**
- * Creates and returns an initialized GoogleGenAI client.
- * @throws {Error} if the Gemini API key is not set.
- */
-const getAiClient = (): GoogleGenAI => {
-    const apiKey = getGeminiApiKey();
-    if (!apiKey) {
-        throw new Error("Gemini API key is not set. Please add it via the settings.");
-    }
-    return new GoogleGenAI({ apiKey });
-};
-
-/**
- * Checks if the user can make an AI request based on the daily limit.
- * @throws {Error} with a `resetTime` property if the rate limit is exceeded.
- */
-const checkRateLimit = () => {
-    const { canRequest, resetTime } = getRateLimitState();
-    if (!canRequest) {
-        const error = new Error(`You have exceeded the daily limit of 500 requests. Please try again later.`);
-        (error as any).resetTime = resetTime;
-        throw error;
-    }
-};
 
 // This is a list of common genres from TMDb to help the AI.
 const TMDb_GENRES = "Action, Adventure, Animation, Comedy, Crime, Documentary, Drama, Family, Fantasy, History, Horror, Music, Mystery, Romance, Science Fiction, TV Movie, Thriller, War, Western";
@@ -48,6 +23,7 @@ const getSearchParamsSchema = {
                 year_from: { type: Type.INTEGER },
                 year_to: { type: Type.INTEGER },
                 sort_by: { type: Type.STRING },
+                media_type: { type: Type.STRING, description: "The type of media to search for. Can be 'movie', 'tv', or 'all'." },
             },
         },
         response_title: {
@@ -61,39 +37,45 @@ const getSearchParamsSchema = {
 /**
  * Uses Gemini to parse a natural language query into structured search parameters.
  */
-export const getSearchParamsFromQuery = async (query: string): Promise<{ search_params: AiSearchParams; response_title: string; }> => {
-    checkRateLimit();
-    const ai = getAiClient();
+export const getSearchParamsFromQuery = async (query: string, aiClient: GoogleGenAI): Promise<{ search_params: AiSearchParams; response_title: string; }> => {
     try {
-        const response: GenerateContentResponse = await ai.models.generateContent({
+        const response: GenerateContentResponse = await aiClient.models.generateContent({
             model,
             contents: `User Query: "${query}"`,
             config: {
-                systemInstruction: `You are an expert movie and TV show recommendation assistant. Your task is to interpret a user's natural language query and convert it into a structured JSON object.
+                systemInstruction: `You are a highly precise API endpoint that converts natural language queries about movies and TV shows into a JSON object for the TMDb API. Adhere to the following rules with ZERO DEVIATION.
+
+**RULE 1: ABSOLUTE NAME MATCHING**
+- When a person's full name is in the query, you MUST use their FULL NAME.
+- Example: If query is "movies with Tom Holland", 'actors' MUST be ["Tom Holland"].
+- INCORRECT: ["Tom"], ["Tom Hardy"]. This is a critical failure.
+
+**RULE 2: ABSOLUTE MEDIA TYPE**
+- If the query contains "movies" or "films", 'media_type' MUST be "movie".
+- If the query contains "TV shows", "series", or "show", 'media_type' MUST be "tv".
+- If no media type is specified, 'media_type' MUST be "all".
+- Example: "Tom Holland movies" -> 'media_type': "movie".
+- Example: "shows by Marvel" -> 'media_type': "tv".
+- It is a critical failure to return TV shows when the user asks for movies.
+
+**RULE 3: FRANCHISE SPECIFICITY**
+- For "Marvel", use company "Marvel Studios".
 
 The JSON object must have two top-level keys: "search_params" and "response_title".
 
-1. "search_params": An object containing search parameters. It can have the following keys:
-    - keywords: An array of strings for general search terms, vibes, or plot elements.
-    - characters: An array of strings for specific character names mentioned (e.g., "Tony Stark").
-    - genres: An array of strings from the provided list.
-    - actors: An array of strings with actor names.
-    - directors: An array of strings with director names.
-    - companies: An array of strings with production company names (e.g., "A24", "Marvel Studios").
-    - year_from: A number for the starting year.
-    - year_to: A number for the ending year.
-    - sort_by: A string, one of 'popularity.desc', 'release_date.desc', or 'vote_average.desc'.
+1. "search_params": An object containing search parameters.
+    - media_type: (string) 'movie', 'tv', or 'all'. Follow RULE 2.
+    - keywords: (array of strings) For general search terms, vibes, or plot elements.
+    - characters: (array of strings) For specific character names.
+    - genres: (array of strings) ONLY from this list: ${TMDb_GENRES}.
+    - actors: (array of strings) Actor names. Follow RULE 1.
+    - directors: (array of strings) Director names. Follow RULE 1.
+    - companies: (array of strings) Production company names.
+    - year_from: (number) Starting year.
+    - year_to: (number) Ending year.
+    - sort_by: (string) 'popularity.desc', 'release_date.desc', or 'vote_average.desc'.
 
 2. "response_title": A short, friendly, conversational title for the search results page that summarizes the user's request.
-
-Rules:
-- For genres, ONLY use values from this list: ${TMDb_GENRES}.
-- Put character names (e.g., "Thor", "Batman") in the 'characters' array.
-- Put moods or vibes (e.g., "happy") in the 'keywords' array.
-- Create a natural sentence for "response_title".
-- **IMPORTANT FRANCHISE RULE**: When a user mentions a major franchise like "Marvel", they almost always mean the Marvel Cinematic Universe (MCU). To handle this, set the 'companies' parameter to "Marvel Studios". This is critical to exclude older, non-MCU films. For example, if the query is "Marvel movie starring Chris Evans", the company should be "Marvel Studios" and the actor should be "Chris Evans".
-- **FULL NAME RULE**: When a user provides a full name for an actor or director (e.g., 'Tom Holland', 'Christopher Nolan'), you MUST use the full name in the corresponding array ('actors' or 'directors'). Do not shorten or split names. This is crucial for accuracy. For example, if the query is "movies with Tom Holland", the 'actors' array must be ["Tom Holland"], NOT ["Tom"].
-- If a user is specific, like "Sam Raimi Spider-Man", then correctly identify the director.
 
 Always respond with ONLY the JSON object.`,
                 responseMimeType: "application/json",
@@ -101,7 +83,6 @@ Always respond with ONLY the JSON object.`,
             }
         });
         
-        incrementRequestCount();
         const result = JSON.parse(response.text);
         result.search_params.original_query = query;
         return result;
@@ -149,12 +130,10 @@ const viewingGuideSchema = {
 /**
  * Generates curated viewing guides for a franchise.
  */
-export const getViewingGuidesForBrand = async (brandName: string, mediaList: MediaDetails[]): Promise<{ guides: ViewingGuide[] }> => {
-    checkRateLimit();
-    const ai = getAiClient();
+export const getViewingGuidesForBrand = async (brandName: string, mediaList: MediaDetails[], aiClient: GoogleGenAI): Promise<{ guides: ViewingGuide[] }> => {
     const mediaString = mediaList.map(m => `${m.type.toUpperCase()}:${m.id} - ${m.title} (${m.releaseYear})`).join('\n');
     try {
-        const response: GenerateContentResponse = await ai.models.generateContent({
+        const response: GenerateContentResponse = await aiClient.models.generateContent({
             model,
             contents: `Create 3 distinct viewing guides for the "${brandName}" franchise.
 Base your guides ONLY on the media provided below.
@@ -175,7 +154,6 @@ The output MUST be a JSON object with a single top-level key "guides".`,
             }
         });
 
-        incrementRequestCount();
         const result = JSON.parse(response.text);
         if (result && result.guides) {
             return result;
@@ -218,11 +196,9 @@ const funFactsSchema = {
 /**
  * Generates fun facts for a given media title.
  */
-export const getFunFactsForMedia = async (title: string, year: string): Promise<FunFact[]> => {
-    checkRateLimit();
-    const ai = getAiClient();
+export const getFunFactsForMedia = async (title: string, year: string, aiClient: GoogleGenAI): Promise<FunFact[]> => {
     try {
-        const response: GenerateContentResponse = await ai.models.generateContent({
+        const response: GenerateContentResponse = await aiClient.models.generateContent({
             model,
             contents: `Generate 3-5 interesting, little-known, behind-the-scenes fun facts for the movie titled "${title}" released around ${year}.`,
             config: {
@@ -232,7 +208,6 @@ export const getFunFactsForMedia = async (title: string, year: string): Promise<
             }
         });
         
-        incrementRequestCount();
         const result = JSON.parse(response.text);
         if (result && result.facts) {
             return result.facts;
@@ -244,4 +219,21 @@ export const getFunFactsForMedia = async (title: string, year: string): Promise<
         console.error(`Error getting fun facts for ${title}:`, error);
         throw error;
     }
+};
+
+/**
+ * Initializes a new conversational chat session for a specific media item.
+ * @param media The media item to chat about.
+ * @returns An initialized `Chat` object from the Gemini SDK.
+ */
+export const startChatForMedia = (media: MediaDetails, aiClient: GoogleGenAI): Chat => {
+    const chat = aiClient.chats.create({
+        model,
+        config: {
+            systemInstruction: `You are a friendly, conversational expert on movies and TV shows. The user is asking you questions about "${media.title}" (${media.releaseYear}).
+            Here's a summary: "${media.overview}".
+            Use this information and your own vast knowledge to answer their questions. Keep your answers concise and engaging. Do not answer questions that are not related to this specific movie/show or the film industry in general.`
+        }
+    });
+    return chat;
 };

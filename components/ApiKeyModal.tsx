@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
+import { useSettings } from '../hooks/useSettings.ts';
 
 interface ApiKeyModalProps {
     onSave: (keys: { tmdbKey: string; geminiKey: string; }) => void;
+    onClose: () => void;
 }
 
-export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onSave }) => {
-    const [tmdbKey, setTmdbKey] = useState('');
-    const [geminiKey, setGeminiKey] = useState('');
+export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onSave, onClose }) => {
+    const { tmdbApiKey, geminiApiKey } = useSettings();
+    const [tmdbKey, setTmdbKey] = useState(tmdbApiKey || '');
+    const [geminiKey, setGeminiKey] = useState(geminiApiKey || '');
     const [error, setError] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
