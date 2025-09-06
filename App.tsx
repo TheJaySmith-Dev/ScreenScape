@@ -39,6 +39,13 @@ import { useSettings } from './hooks/useSettings.ts';
 const getHashRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
 
 const App: React.FC = () => {
+    // Intercept the Logto callback route before rendering the main app layout.
+    // This allows the app to handle the OIDC redirect and then proceed with its
+    // normal hash-based routing for all other pages.
+    if (window.location.pathname === '/callback') {
+      return <Callback />;
+    }
+
     const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient } = useSettings();
     const [route, setRoute] = useState<string[]>(getHashRoute());
     const [isLoading, setIsLoading] = useState(true);
@@ -199,9 +206,6 @@ const App: React.FC = () => {
 
         if (!isInitialized) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
         
-        // Handle callback route separately before API key check
-        if (page === 'callback') return <Callback />;
-
         if (!tmdbApiKey || !geminiApiKey) return <ApiKeyModal onSave={saveApiKeys} onClose={() => {}} />;
         if (isLoading) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
 

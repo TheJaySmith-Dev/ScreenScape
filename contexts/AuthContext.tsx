@@ -49,7 +49,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = useCallback(async () => {
     if (typeof signIn === 'function') {
-      await signIn(`${window.location.origin}/#/callback`);
+      // Use a path-based redirect URI without a fragment (#) as required by Logto.
+      await signIn(`${window.location.origin}/callback`);
     }
   }, [signIn]);
 
