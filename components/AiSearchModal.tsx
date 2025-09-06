@@ -101,6 +101,11 @@ export const AiSearchModal: React.FC<AiSearchModalProps> = ({ isOpen, onClose, o
         setTimeout(() => inputRef.current?.focus(), 100);
     };
 
+    const handleSelectAndClose = (media: MediaDetails) => {
+        onSelectMedia(media);
+        onClose();
+    };
+
     if (!isOpen) return null;
 
     const renderContent = () => {
@@ -126,7 +131,7 @@ export const AiSearchModal: React.FC<AiSearchModalProps> = ({ isOpen, onClose, o
                                     <p className="text-red-400">{errorMessage}</p>
                                 </div>
                             ) : (
-                                <RecommendationGrid recommendations={results} onSelect={onSelectMedia} />
+                                <RecommendationGrid recommendations={results} onSelect={handleSelectAndClose} />
                             )}
                         </div>
 

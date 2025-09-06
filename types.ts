@@ -243,3 +243,16 @@ export interface FunFact {
   category: string;
   fact: string;
 }
+
+export interface ViewingGuideStep {
+  mediaId: number;
+  mediaType: 'movie' | 'tv';
+  title: string;
+  reasoning: string;
+}
+
+export interface ViewingGuide {
+  title: string;
+  description: string;
+  steps: ViewingGuideStep[];
+}
