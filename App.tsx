@@ -21,7 +21,7 @@ import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { SearchModal } from './components/SearchModal.tsx';
 import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
 import { BrowseMenuModal } from './components/MobileMenuModal.tsx';
-import { SparklesIcon, UserIcon, SearchIcon, GridIcon } from './components/icons.tsx';
+import { UserIcon, SearchIcon, GridIcon } from './components/icons.tsx';
 
 import * as mediaService from './services/mediaService.ts';
 import { popularStudios } from './services/studioService.ts';
@@ -354,9 +354,9 @@ const App: React.FC = () => {
                     <button onClick={() => setIsSearchOpen(true)} className="p-2.5 rounded-full hover:bg-white/5 transition-colors" aria-label="Open Search">
                         <SearchIcon className="w-5 h-5" />
                     </button>
-                    <button onClick={() => setIsAiSearchOpen(true)} className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-semibold text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-full transition-colors" aria-label="Open AI Search">
-                        <SparklesIcon className="w-5 h-5" />
-                        <span>AI Search</span>
+                    <button onClick={() => setIsAiSearchOpen(true)} className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-semibold text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-full transition-colors" aria-label="Open ScapeAI Search">
+                        <img src="https://img.icons8.com/?size=100&id=eoxMN35Z6JKg&format=png&color=FFFFFF" alt="ScapeAI logo" className="w-5 h-5" />
+                        <span>ScapeAI</span>
                     </button>
                      <button onClick={() => setIsBrowseMenuOpen(true)} className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-semibold text-gray-300 hover:bg-white/5 rounded-full transition-colors" aria-label="Open Browse Menu">
                         <GridIcon className="w-5 h-5" />

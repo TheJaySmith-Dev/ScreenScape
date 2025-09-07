@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import type { MediaDetails, ChatMessage } from '../types.ts';
 import { CloseIcon } from './icons.tsx';
@@ -87,6 +88,7 @@ export const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, media }) 
             >
                 <div className="flex-shrink-0 p-4 flex items-center justify-between border-b border-white/10">
                     <div className="flex items-center gap-2">
+                         <img src="https://img.icons8.com/?size=100&id=eoxMN35Z6JKg&format=png&color=FFFFFF" alt="ScapeAI logo" className="w-6 h-6" />
                          <h1 className="font-bold text-lg text-white">ScapeAI</h1>
                          <div className="flex items-center gap-1 text-xs text-gray-400">
                             <span>•</span>

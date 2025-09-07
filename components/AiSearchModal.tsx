@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, FormEvent, useRef } from 'react';
 import type { MediaDetails } from '../types.ts';
 import { getAiRecommendations } from '../services/aiService.ts';
@@ -192,7 +193,7 @@ export const AiSearchModal: React.FC<AiSearchModalProps> = ({ isOpen, onClose, o
                 return (
                     <div className="flex flex-col h-full">
                         <div className="p-6 text-center">
-                            <h2 className="text-2xl font-bold">Ask for vibes, themes, titles — <br/> whatever you're craving!</h2>
+                            <h2 className="text-2xl font-bold">Ask ScapeAI for vibes, themes, titles — <br/> whatever you're craving!</h2>
                             <button onClick={onClose} className="text-sm text-gray-400 hover:text-white transition-colors mt-2">Switch to Standard Search</button>
                         </div>
                         <div className="p-6 flex-grow flex items-center justify-center">
@@ -239,8 +240,8 @@ export const AiSearchModal: React.FC<AiSearchModalProps> = ({ isOpen, onClose, o
             >
                 <div className="flex-shrink-0 p-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                         <span className="px-2 py-0.5 text-xs font-bold bg-pink-400/20 text-pink-300 border border-pink-400/30 rounded-md">BETA</span>
-                         <h1 className="font-semibold">Search</h1>
+                         <img src="https://img.icons8.com/?size=100&id=eoxMN35Z6JKg&format=png&color=FFFFFF" alt="ScapeAI logo" className="w-6 h-6" />
+                         <h1 className="font-bold text-lg">ScapeAI</h1>
                     </div>
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 transition-colors" aria-label="Close search">
                         <CloseIcon className="w-5 h-5" />

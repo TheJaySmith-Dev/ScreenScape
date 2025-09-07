@@ -313,8 +313,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                 className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 glass-panel rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/5 hover:scale-105 text-sm sm:text-base"
                 disabled={!aiClient}
             >
-                <ChatBubbleIcon className="w-5 h-5 sm:w-6 sm:h-6" />
-                <span>Ask</span>
+                <ChatBubbleIcon className="w-5 h-5 sm:w-6 sm-h-6" />
+                <span>Ask ScapeAI</span>
             </button>
             <div className="flex items-center gap-2">
                 <button
