@@ -1,6 +1,9 @@
+
+
 import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import * as api from '../services/apiService.ts';
+import { setLocalTmdbApiKey } from '../services/apiService.ts';
 import { useAuth } from '../hooks/useAuth.ts';
 import type { SettingsContextType, RateLimitState } from '../types.ts';
 
@@ -34,19 +37,31 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     const [rateLimit, setRateLimit] = useState<RateLimitState>(getInitialRateLimit());
     const [isInitialized, setIsInitialized] = useState(false);
 
+    useEffect(() => {
+        // Keep the module-level variable in apiService in sync with the context state.
+        // This provides access to the key for services outside of React's context,
+        // ensuring the correct key is used whether the user is logged in or not.
+        setLocalTmdbApiKey(tmdbApiKey);
+    }, [tmdbApiKey]);
+
     const syncWithPreferences = useCallback(async (uid: string) => {
         const prefs = await api.getPreferences(uid);
         setTmdbApiKey(prefs.tmdbApiKey || null);
         setGeminiApiKey(prefs.geminiApiKey || null);
-        if (prefs.rateLimitState) {
-            if (new Date().getTime() > prefs.rateLimitState.resetTime) {
-                setRateLimit({ count: 0, resetTime: new Date().getTime() + 24 * 60 * 60 * 1000 });
-            } else {
-                setRateLimit(prefs.rateLimitState);
-            }
-        } else {
-            setRateLimit({ count: 0, resetTime: new Date().getTime() + 24 * 60 * 60 * 1000 });
+        
+        const now = new Date().getTime();
+        let currentRateLimit = prefs.rateLimitState!; // Assured to exist by getPreferences
+
+        // Check if the rate limit timer has expired.
+        if (now > currentRateLimit.resetTime) {
+            // If it expired, create a new state with the count reset to 0.
+            currentRateLimit = { count: 0, resetTime: now + 24 * 60 * 60 * 1000 };
+            // Persist this reset state back to the database for the next session.
+            api.savePreferences(uid, { rateLimitState: currentRateLimit });
         }
+        
+        // Set the context state with either the loaded value or the newly reset value.
+        setRateLimit(currentRateLimit);
         setIsInitialized(true);
     }, []);
 
