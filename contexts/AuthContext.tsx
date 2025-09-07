@@ -1,5 +1,7 @@
 import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { onAuthStateChanged, signInWithPopup, signOut, User as FirebaseUser } from 'firebase/auth';
+// FIX: Using Firebase v8 compat syntax.
+import firebase from 'firebase/app';
+import 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase.ts';
 import type { User, AuthContextType } from '../types.ts';
 
@@ -14,7 +16,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+    // FIX: Using Firebase v8 onAuthStateChanged method from the auth service instance.
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser: firebase.User | null) => {
       if (firebaseUser) {
         setCurrentUser({
           uid: firebaseUser.uid,
@@ -33,7 +36,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = useCallback(async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      // FIX: Using Firebase v8 signInWithPopup method from the auth service instance.
+      await auth.signInWithPopup(googleProvider);
     } catch (error) {
       console.error("Firebase sign-in error:", error);
     }
@@ -41,7 +45,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = useCallback(async () => {
     try {
-      await signOut(auth);
+      // FIX: Using Firebase v8 signOut method from the auth service instance.
+      await auth.signOut();
     } catch (error) {
       console.error("Firebase sign-out error:", error);
     }

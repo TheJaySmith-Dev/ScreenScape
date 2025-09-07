@@ -1,14 +1,7 @@
-import type { User, LikedItem, DislikedItem, RateLimitState } from '../types.ts';
-
-// Authentication is now handled by Logto. The mock API functions are no longer needed.
-// For this example, we'll continue to use localStorage for preferences,
-// keyed by the user's email from Logto.
-
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+import { db } from './firebase.ts';
+import type { LikedItem, DislikedItem, RateLimitState } from '../types.ts';
 
 // --- Preferences API ---
-
-const getPreferencesStorageKey = (uid: string) => `screenscape_prefs_${uid}`;
 
 export interface Preferences {
     likes: LikedItem[];
@@ -19,44 +12,54 @@ export interface Preferences {
 }
 
 // FIX: Add getTmdbApiKey to read from local storage for use in service files.
+// This is now more of a legacy function; the primary key management is through context.
+// However, it can be useful for services that don't have access to React hooks.
+// A better long-term solution would be to pass the key explicitly or use a singleton service.
+let localTmdbApiKey: string | null = null;
 export const getTmdbApiKey = (): string | null => {
-    try {
-        // Since we can't use Logto hooks here, we'll fall back to a local key
-        // if the user isn't logged in. This isn't perfect but allows services to work.
-        const localKey = localStorage.getItem('screenscape_tmdb_api_key');
-        // A more robust solution might involve passing the key from context to each service call.
-        return localKey;
-    } catch (error) {
-        console.error("Failed to get TMDb API key from local storage", error);
-    }
-    return null;
+    // This function will rely on the key being set in the context first.
+    // The context will update this local variable.
+    return localTmdbApiKey;
 };
 
 export const getPreferences = async (uid: string): Promise<Preferences> => {
-    // In a real app, this would fetch from a backend database.
-    await delay(200);
-    const key = getPreferencesStorageKey(uid);
     try {
-        const stored = localStorage.getItem(key);
-        if (stored) {
-            return JSON.parse(stored);
+        // FIX: Using Firebase v8 syntax for Firestore.
+        const docRef = db.collection('users').doc(uid);
+        const docSnap = await docRef.get();
+
+        // FIX: In Firebase v8, `exists` is a property, not a method.
+        if (docSnap.exists) {
+            const data = docSnap.data() as Preferences;
+            // Update the local variable for legacy services
+            if (data.tmdbApiKey) {
+                localTmdbApiKey = data.tmdbApiKey;
+            }
+            return data;
+        } else {
+            // No document found, return default.
+            return { likes: [], dislikes: [] };
         }
     } catch (error) {
-        console.error("Failed to parse preferences from local storage", error);
+        console.error("Error fetching preferences from Firestore:", error);
+        // Fallback to a default structure on error.
+        return { likes: [], dislikes: [] };
     }
-    return { likes: [], dislikes: [] };
 };
 
 export const savePreferences = async (uid: string, prefs: Partial<Preferences>): Promise<void> => {
-    // In a real app, this would save to a backend database.
-    await delay(100); 
-    const key = getPreferencesStorageKey(uid);
     try {
-        const existingPrefs = await getPreferences(uid);
-        const newPrefs = { ...existingPrefs, ...prefs };
-        localStorage.setItem(key, JSON.stringify(newPrefs));
+        // FIX: Using Firebase v8 syntax for Firestore.
+        const docRef = db.collection('users').doc(uid);
+        // Use setDoc with merge: true to update fields without overwriting the entire document
+        await docRef.set(prefs, { merge: true });
+        
+        // Update the local variable if the key is being saved
+        if (prefs.tmdbApiKey) {
+            localTmdbApiKey = prefs.tmdbApiKey;
+        }
     } catch (error) {
-        console.error("Failed to save preferences to local storage", error);
+        console.error("Error saving preferences to Firestore:", error);
         throw new Error("Failed to save preferences");
     }
 };
