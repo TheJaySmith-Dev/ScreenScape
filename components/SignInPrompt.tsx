@@ -9,7 +9,7 @@ export const SignInPrompt: React.FC = () => {
                     Sign in to discover personalized movie and TV show recommendations, create your watchlist, and explore a universe of entertainment.
                 </p>
                 <p className="text-gray-400">
-                    Please use the "Sign In" button in the top-right corner to begin.
+                    Please use the sign-in icon in the top-right corner to begin.
                 </p>
             </div>
         </div>

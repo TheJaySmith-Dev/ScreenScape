@@ -24,7 +24,7 @@ import { ApiKeyModal } from './components/ApiKeyModal.tsx';
 import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
 import { GuideModal } from './components/GuideModal.tsx';
-import { QuestionMarkCircleIcon } from './components/icons.tsx';
+import { QuestionMarkCircleIcon, SparklesIcon } from './components/icons.tsx';
 import { MobileNavigation } from './components/MobileNavigation.tsx';
 import { MobileMenuModal } from './components/MobileMenuModal.tsx';
 
@@ -317,7 +317,7 @@ const App: React.FC = () => {
               <div className="flex justify-end items-center gap-2 sm:gap-4">
                   <SearchBar onSearch={handleSearch} isLoading={isLoading} />
                    <button onClick={() => setIsAiSearchOpen(true)} className="p-2 glass-panel rounded-full hover:bg-white/5 transition-colors" aria-label="AI Search">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-indigo-400"><path d="M10 3.5a1.5 1.5 0 0 1 3 0V5h-3V3.5ZM10 5.5a1.5 1.5 0 0 1 3 0V7h-3V5.5ZM10 7.5a1.5 1.5 0 0 1 3 0V9h-3V7.5ZM10 9.5a1.5 1.5 0 0 1 3 0v.5h-3v-.5ZM13.5 10a1.5 1.5 0 0 0 0 3h.5v-3h-.5ZM11.5 10a1.5 1.5 0 0 0 0 3h.5v-3h-.5ZM9.5 10a1.5 1.5 0 0 0 0 3h.5v-3h-.5ZM7.5 10a1.5 1.5 0 0 0 0 3h.5v-3h-.5ZM10 13.5a1.5 1.5 0 0 1-3 0V12h3v1.5ZM10 14.5a1.5 1.5 0 0 1-3 0V13h3v1.5ZM10 16.5a1.5 1.5 0 0 1-3 0V15h3v1.5ZM10 17.5a1.5 1.5 0 0 1-3 0v-.5h3v.5ZM6.5 10a1.5 1.5 0 0 0 0-3h-.5v3h.5ZM8.5 10a1.5 1.5 0 0 0 0-3h-.5v3h.5Z" /><path fillRule="evenodd" d="M5 10a5 5 0 1 1 10 0 5 5 0 0 1-10 0Zm5-7a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z" clipRule="evenodd" /></svg>
+                        <SparklesIcon className="w-5 h-5 text-indigo-400" />
                   </button>
                   <button onClick={() => setIsAppGuideOpen(true)} className="p-2 glass-panel rounded-full hover:bg-white/5 transition-colors" aria-label="Open App Guide">
                         <QuestionMarkCircleIcon className="w-6 h-6 text-gray-300" />

@@ -1,7 +1,7 @@
 
 
 import React from 'react';
-import { HomeIcon, UserIcon, SearchIcon, SparklesIcon, GridIcon } from './icons.tsx';
+import { HomeIcon, UserIcon, SparklesIcon, GridIcon, ThumbsUpIcon } from './icons.tsx';
 
 type ActiveTab = 'home' | 'foryou' | 'myscape' | 'game';
 
@@ -28,11 +28,11 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({ activeTab, o
     <nav className="md:hidden fixed bottom-0 left-0 right-0 h-20 bg-black/50 backdrop-blur-lg border-t border-white/10 z-50">
       <div className="w-full h-full grid grid-cols-5">
         <NavItem href="#/home" icon={<HomeIcon className="w-6 h-6" />} label="Home" isActive={activeTab === 'home'} />
-        <NavItem href="#/foryou" icon={<SparklesIcon className="w-6 h-6" />} label="For You" isActive={activeTab === 'foryou'} />
+        <NavItem href="#/foryou" icon={<ThumbsUpIcon className="w-6 h-6" />} label="For You" isActive={activeTab === 'foryou'} />
         <NavItem href="#/myscape" icon={<UserIcon className="w-6 h-6" />} label="MyScape" isActive={activeTab === 'myscape'} />
         <button onClick={onSearchClick} className="flex flex-col items-center justify-center gap-1 w-full h-full text-gray-400 hover:text-white">
-          <SearchIcon className="w-6 h-6" />
-          <span className="text-xs font-medium">Search</span>
+          <SparklesIcon className="w-6 h-6" />
+          <span className="text-xs font-medium">AI Search</span>
         </button>
         <button onClick={onMoreClick} className="flex flex-col items-center justify-center gap-1 w-full h-full text-gray-400 hover:text-white">
           <GridIcon className="w-6 h-6" />

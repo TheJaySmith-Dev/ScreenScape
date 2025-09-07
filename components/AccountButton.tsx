@@ -32,10 +32,6 @@ export const AccountButton: React.FC<AccountButtonProps> = ({ userLocation, them
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
-
-    const buttonClass = theme === 'light'
-        ? 'flex items-center gap-2 px-4 py-2 bg-gray-200/80 text-black rounded-full font-semibold transition-all duration-300 hover:bg-gray-300/80 hover:scale-105'
-        : 'flex items-center gap-2 px-4 py-2 glass-panel rounded-full font-semibold text-white transition-all duration-300 hover:bg-white/5 hover:scale-105';
     
     const dropdownClass = theme === 'light'
         ? 'absolute top-full right-0 mt-2 w-64 bg-gray-200/80 border border-black/10 backdrop-blur-md rounded-2xl shadow-lg z-50 fade-in'
@@ -55,10 +51,10 @@ export const AccountButton: React.FC<AccountButtonProps> = ({ userLocation, them
         return (
             <button
                 onClick={() => login()}
-                className={buttonClass}
+                className="p-2 glass-panel rounded-full hover:bg-white/5 transition-colors"
+                aria-label="Sign In"
             >
-                <UserIcon className="w-5 h-5" />
-                <span>Sign In</span>
+                <UserIcon className="w-5 h-5 text-white" />
             </button>
         );
     }
