@@ -260,22 +260,8 @@ const getEntityId = async (name: string, type: 'genre' | 'company' | 'person' | 
 };
 
 export const discoverMediaFromAi = async (params: AiSearchParams): Promise<MediaDetails[]> => {
-    const { keywords, genres, actors, directors, companies, characters, year_from, year_to, sort_by, media_type } = params;
+    const { keywords, genres, actors, directors, companies, year_from, year_to, sort_by, media_type } = params;
     
-    // If the search is for a specific character, a standard text search is often more effective than discovery.
-    if (characters && characters.length > 0) {
-        const searchQuery = [
-            ...(companies || []),
-            ...(characters || []),
-            ...(keywords || []),
-            ...(genres || []), // Genres as keywords might help
-        ].join(' ');
-        
-        if (searchQuery.trim()) {
-            return searchMedia(searchQuery);
-        }
-    }
-
     const with_genres = genres ? (await Promise.all(genres.map(g => getEntityId(g, 'genre')))).filter(Boolean).join(',') : '';
     const with_companies = companies ? (await Promise.all(companies.map(c => getEntityId(c, 'company')))).filter(Boolean).join(',') : '';
     const with_cast = actors ? (await Promise.all(actors.map(a => getEntityId(a, 'person')))).filter(Boolean).join(',') : '';
@@ -336,8 +322,6 @@ export const discoverMediaFromAi = async (params: AiSearchParams): Promise<Media
             }
         }
         
-        // If the precise search yields no results, return an empty array.
-        // This is more accurate than falling back to a broad search that might include irrelevant items.
         return combined;
 
     } catch (error) {

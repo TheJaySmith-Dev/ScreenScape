@@ -5,12 +5,16 @@ import { searchMedia, discoverMediaFromAi } from './mediaService.ts';
 
 const model = 'gemini-2.5-flash';
 
-const aiSearchParamsSchema = {
+const aiResponseSchema = {
     type: Type.OBJECT,
     properties: {
+        intent: {
+            type: Type.STRING,
+            description: "Classification of the user's intent. Must be 'direct_search', 'discover', or 'vague'."
+        },
         title: {
             type: Type.STRING,
-            description: "A creative and relevant title for the list of recommendations that accurately reflects ALL conditions from the user's query. For example, if the user asks for 'Marvel movies with Chris Evans', a good title would be 'Marvel Movies Starring Chris Evans'."
+            description: "A creative and relevant title for the list of recommendations that accurately reflects the user's query."
         },
         search_params: {
             type: Type.OBJECT,
@@ -29,7 +33,7 @@ const aiSearchParamsSchema = {
             },
         }
     },
-    required: ['title', 'search_params']
+    required: ['intent', 'title', 'search_params']
 };
 
 /**
@@ -40,45 +44,67 @@ export const getAiRecommendations = async (query: string, aiClient: GoogleGenAI)
     try {
         const response = await aiClient.models.generateContent({
             model,
-            contents: `Parse the following user request into a structured JSON object for searching a movie/TV show database.
+            contents: `Analyze and parse the following user request into a structured JSON object for searching a movie/TV show database.
             User Request: "${query}"`,
             config: {
-                systemInstruction: `You are a highly precise API query generator. Your sole purpose is to convert a user's natural language request into a strict set of JSON parameters. Every condition specified by the user MUST be treated as a mandatory 'AND' requirement. For example, if the user asks for 'Marvel movies starring Chris Evans', your parameters must ensure the movie is from 'Marvel Studios' AND stars 'Chris Evans'. If a user asks for 'A24 horror movies', the company must be 'A24' AND the genre must be 'Horror'. Do not broaden the search. Your entire response must be ONLY the raw JSON object matching the provided schema, without any markdown formatting, comments, or extra text. If a parameter is not mentioned, omit the key from the 'search_params' object. For 'companies', use specific names like 'Marvel Studios' for Marvel, or 'Walt Disney Pictures' for Disney.`,
+                systemInstruction: `You are a movie search query analyzer. Your job is to classify the user's request and extract parameters into a strict JSON format.
+
+1.  **Analyze Intent:**
+    *   \`direct_search\`: If the user is asking for a specific, known movie or TV show title (e.g., "Back to the Future", "The Office", "The Avengers from 1961").
+    *   \`discover\`: If the user is asking for recommendations using multiple filters (e.g., "Marvel movies starring Chris Evans", "horror movies from the 80s", "A24 comedies").
+    *   \`vague\`: If the query is based on a mood, vibe, or concept that doesn't map to concrete database fields (e.g., "sad movies", "something to watch on a rainy day").
+
+2.  **Populate Parameters:**
+    *   For \`direct_search\` or \`vague\` intents, populate \`search_params.keywords\` with the key terms from the user's query. Leave other \`search_params\` fields empty.
+    *   For \`discover\` intent, extract all specific criteria into their respective fields in \`search_params\`. Treat every condition as a mandatory 'AND' requirement. Be precise with company names (e.g., 'Marvel Studios' for Marvel, 'Walt Disney Pictures' for Disney). If you identify an actor, movie title, or brand, add them to the keywords as well for a hybrid search.
+
+3.  **Generate Title:**
+    *   Always create a descriptive \`title\` for the results page that reflects the query.
+
+4.  **Output:**
+    *   Respond with ONLY the raw JSON object matching the provided schema. Do not include markdown formatting.`,
                 responseMimeType: "application/json",
-                responseSchema: aiSearchParamsSchema,
+                responseSchema: aiResponseSchema,
             }
         });
 
         const responseText = response.text.trim();
         const aiResult = JSON.parse(responseText);
         
-        const searchParamsObject = aiResult.search_params;
+        const { intent, search_params, title } = aiResult;
         
-        if (!searchParamsObject || Object.keys(searchParamsObject).length === 0) {
-            // AI couldn't extract any specific parameters. This query might be too vague for a structured search.
-            // Fall back to a general text search in this specific case.
-            console.log("AI could not parse specific params, falling back to text search for vague query.");
-            const fallbackResults = await searchMedia(query);
-            return { results: fallbackResults, title: `Results for "${query}"` };
-        }
+        // Use discover only if the intent is 'discover' and there are specific filterable parameters.
+        const hasSpecificFilters = search_params && (
+            search_params.genres?.length ||
+            search_params.actors?.length ||
+            search_params.directors?.length ||
+            search_params.companies?.length ||
+            search_params.year_from ||
+            search_params.year_to
+        );
 
-        const searchParams: AiSearchParams = { ...searchParamsObject, original_query: query };
-        const mediaResults = await discoverMediaFromAi(searchParams);
-        
-        if (mediaResults.length === 0) {
-            // The specific, structured search yielded no results. This is an accurate outcome.
-            return { results: [], title: `No results found matching all criteria for "${query}"` };
+        if (intent === 'discover' && hasSpecificFilters) {
+            console.log("AI intent is 'discover', using precise filtering.");
+            const mediaResults = await discoverMediaFromAi(search_params);
+             if (mediaResults.length === 0) {
+                return { results: [], title: `No results found matching all criteria for "${query}"` };
+            }
+            return { results: mediaResults, title: title };
+        } else {
+            // For 'direct_search', 'vague', or 'discover' with only keywords, use a standard text search.
+            console.log(`AI intent is '${intent}', using standard text search.`);
+            const searchQuery = search_params?.keywords?.join(' ') || query;
+            const mediaResults = await searchMedia(searchQuery);
+            return { results: mediaResults, title: title || `Results for "${searchQuery}"` };
         }
-        
-        return { results: mediaResults, title: aiResult.title };
 
     } catch (error) {
-        console.error('Error processing AI recommendations. The structured search failed.', error);
-        // If the high-precision path fails due to an error (e.g., malformed AI response),
-        // it's better to inform the user than to return inaccurate results from a broad fallback.
+        console.error('Error processing AI recommendations. Falling back to simple search.', error);
+        // If the AI parsing fails for any reason, fall back to a simple, reliable text search.
+        const fallbackResults = await searchMedia(query);
         return { 
-            results: [], 
-            title: `Could not process the request: "${query}". Please try rephrasing.` 
+            results: fallbackResults, 
+            title: `Results for "${query}"` 
         };
     }
 };
