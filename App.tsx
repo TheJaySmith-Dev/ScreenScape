@@ -1,3 +1,4 @@
+
 // FIX: Correctly import React hooks (useState, useEffect, useCallback) to resolve 'Cannot find name' errors.
 import React, { useState, useEffect, useCallback } from 'react';
 import { HeroSection } from './components/HeroSection.tsx';
@@ -335,7 +336,7 @@ const App: React.FC = () => {
         // For all other pages, wrap content in a container to maintain a centered, readable layout.
         if (pageContent) {
             return (
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28">
                     {pageContent}
                 </div>
             );
@@ -377,7 +378,7 @@ const App: React.FC = () => {
               </div>
           </header>
           
-          <main className="pt-24 sm:pt-28 pb-24 md:pb-0">
+          <main className="pb-24 md:pb-0">
               {renderPage()}
           </main>
           

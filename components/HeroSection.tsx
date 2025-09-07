@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import type { MediaDetails } from '../types.ts';
 import { PlaySolidIcon, InfoIcon } from './icons.tsx';
@@ -19,7 +18,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ item, onPlay, onMoreIn
     <section className="hero-section sm:-mb-20 md:-mb-28">
       <img src={item.backdropUrl} alt="" className="hero-backdrop" />
       <div className="hero-gradient" />
-      <div className="hero-content container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="hero-content container mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28">
         <div className="max-w-md lg:max-w-lg">
             <h1 className="text-4xl sm:text-5xl font-bold drop-shadow-xl mb-4 fade-in" style={{ animationDelay: '200ms' }}>
                 {item.title}
