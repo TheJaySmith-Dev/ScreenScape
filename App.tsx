@@ -270,60 +270,78 @@ const App: React.FC = () => {
         
         if (isLoading) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
 
-        switch(page) {
-            case 'home':
-                return (
-                    <>
-                        {trending[0] && <HeroSection item={trending[0]} onPlay={() => {}} onMoreInfo={handleSelectMedia} />}
-                        <div className="space-y-12 md:space-y-16 mt-8">
-                            <MediaRow title="Trending This Week" items={trending} onSelect={handleSelectMedia} />
-                            <MediaRow title="Now Playing in Theaters" items={nowPlaying} onSelect={handleSelectMedia} animationDelay="100ms" />
-                            <MediaRow title="Popular Movies" items={popularMovies} onSelect={handleSelectMedia} animationDelay="200ms" />
-                            <MediaRow title="Popular TV Shows" items={popularTv} onSelect={handleSelectMedia} animationDelay="300ms" />
-                        </div>
-                    </>
-                );
-            case 'foryou': return <ForYouPage onSelectMedia={handleSelectMedia} />;
-            case 'myscape': return <MyScapePage onSelectMedia={handleSelectMedia} />;
-            case 'movies': return <RecommendationGrid recommendations={moviesContent} onSelect={handleSelectMedia} />;
-            case 'tv': return <RecommendationGrid recommendations={tvContent} onSelect={handleSelectMedia} />;
-            case 'collections': return <ComingSoonPage media={comingSoonContent} onSelectMedia={handleSelectMedia} />;
-            case 'studios': return <StudioGrid studios={popularStudios} onSelect={handleSelectStudio} />;
-            case 'brands':
-                return <BrandGrid brands={brands} onSelect={openBrandDetail} />;
-            case 'streaming':
-                if (id) {
-                    return <RecommendationGrid recommendations={streamingContent} onSelect={handleSelectMedia} />;
-                } else {
-                    return <StreamingGrid providers={supportedProviders} onSelect={handleSelectStreamingProvider} />;
-                }
-            case 'networks':
-                return <NetworkGrid networks={popularNetworks} onSelect={handleSelectNetwork} />;
-            case 'people':
-                return <PersonGrid people={people} onSelect={handleSelectPerson} />;
-            case 'search':
-                return <RecommendationGrid recommendations={searchResults} onSelect={handleSelectMedia} />;
-            case 'brand':
-                if (selectedBrand) {
-                    return <BrandDetail brand={selectedBrand} media={brandContent} onBack={() => window.location.hash = '/brands'} onSelectMedia={handleSelectMedia} onSelectCollection={handleSelectCollection} mediaTypeFilter={mediaTypeFilter} setMediaTypeFilter={setMediaTypeFilter} sortBy={sortBy} setSortBy={setSortBy} />;
-                }
-                return <div className="text-center">Loading brand...</div>;
-            case 'actor':
-                if (selectedActor) {
-                    return <ActorPage actor={selectedActor} onBack={handleCloseModal} onSelectMedia={handleSelectMedia} />;
-                }
-                return <div className="text-center">Loading actor...</div>;
+        const pageContent = (() => {
+            switch(page) {
+                case 'home':
+                    return (
+                        <>
+                            {trending[0] && <HeroSection item={trending[0]} onPlay={() => {}} onMoreInfo={handleSelectMedia} />}
+                            <div className="space-y-12 md:space-y-16 mt-8">
+                                <MediaRow title="Trending This Week" items={trending} onSelect={handleSelectMedia} />
+                                <MediaRow title="Now Playing in Theaters" items={nowPlaying} onSelect={handleSelectMedia} animationDelay="100ms" />
+                                <MediaRow title="Popular Movies" items={popularMovies} onSelect={handleSelectMedia} animationDelay="200ms" />
+                                <MediaRow title="Popular TV Shows" items={popularTv} onSelect={handleSelectMedia} animationDelay="300ms" />
+                            </div>
+                        </>
+                    );
+                case 'foryou': return <ForYouPage onSelectMedia={handleSelectMedia} />;
+                case 'myscape': return <MyScapePage onSelectMedia={handleSelectMedia} />;
+                case 'movies': return <RecommendationGrid recommendations={moviesContent} onSelect={handleSelectMedia} />;
+                case 'tv': return <RecommendationGrid recommendations={tvContent} onSelect={handleSelectMedia} />;
+                case 'collections': return <ComingSoonPage media={comingSoonContent} onSelectMedia={handleSelectMedia} />;
+                case 'studios': return <StudioGrid studios={popularStudios} onSelect={handleSelectStudio} />;
+                case 'brands':
+                    return <BrandGrid brands={brands} onSelect={openBrandDetail} />;
+                case 'streaming':
+                    if (id) {
+                        return <RecommendationGrid recommendations={streamingContent} onSelect={handleSelectMedia} />;
+                    } else {
+                        return <StreamingGrid providers={supportedProviders} onSelect={handleSelectStreamingProvider} />;
+                    }
+                case 'networks':
+                    return <NetworkGrid networks={popularNetworks} onSelect={handleSelectNetwork} />;
+                case 'people':
+                    return <PersonGrid people={people} onSelect={handleSelectPerson} />;
+                case 'search':
+                    return <RecommendationGrid recommendations={searchResults} onSelect={handleSelectMedia} />;
+                case 'brand':
+                    if (selectedBrand) {
+                        return <BrandDetail brand={selectedBrand} media={brandContent} onBack={() => window.location.hash = '/brands'} onSelectMedia={handleSelectMedia} onSelectCollection={handleSelectCollection} mediaTypeFilter={mediaTypeFilter} setMediaTypeFilter={setMediaTypeFilter} sortBy={sortBy} setSortBy={setSortBy} />;
+                    }
+                    return <div className="text-center">Loading brand...</div>;
+                case 'actor':
+                    if (selectedActor) {
+                        return <ActorPage actor={selectedActor} onBack={handleCloseModal} onSelectMedia={handleSelectMedia} />;
+                    }
+                    return <div className="text-center">Loading actor...</div>;
 
-            case 'studio':
-                return <RecommendationGrid recommendations={studioContent} onSelect={handleSelectMedia} />;
-            case 'network':
-                return <RecommendationGrid recommendations={networkContent} onSelect={handleSelectMedia} />;
-            case 'person':
-                return <RecommendationGrid recommendations={personContent} onSelect={handleSelectMedia} />;
-            default:
-                 window.location.hash = '/home';
-                 return null;
+                case 'studio':
+                    return <RecommendationGrid recommendations={studioContent} onSelect={handleSelectMedia} />;
+                case 'network':
+                    return <RecommendationGrid recommendations={networkContent} onSelect={handleSelectMedia} />;
+                case 'person':
+                    return <RecommendationGrid recommendations={personContent} onSelect={handleSelectMedia} />;
+                default:
+                     window.location.hash = '/home';
+                     return null;
+            }
+        })();
+        
+        // Render the home page with a full-width layout for an immersive feel.
+        if (page === 'home') {
+            return pageContent;
         }
+
+        // For all other pages, wrap content in a container to maintain a centered, readable layout.
+        if (pageContent) {
+            return (
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    {pageContent}
+                </div>
+            );
+        }
+
+        return null;
     };
     
     const PillNavigation: React.FC = () => {
@@ -359,7 +377,7 @@ const App: React.FC = () => {
               </div>
           </header>
           
-          <main className="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28">
+          <main className="pt-24 sm:pt-28 pb-24 md:pb-0">
               {renderPage()}
           </main>
           
