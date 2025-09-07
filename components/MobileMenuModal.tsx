@@ -1,7 +1,8 @@
+
 import React, { useEffect } from 'react';
 import { CloseIcon } from './icons.tsx';
 
-interface MobileMenuModalProps {
+interface BrowseMenuModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
@@ -16,7 +17,7 @@ const MenuLink: React.FC<{ href: string; label: string; onClick: () => void; }> 
     </a>
 );
 
-export const MobileMenuModal: React.FC<MobileMenuModalProps> = ({ isOpen, onClose }) => {
+export const BrowseMenuModal: React.FC<BrowseMenuModalProps> = ({ isOpen, onClose }) => {
     useEffect(() => {
         if (isOpen) {
           document.body.classList.add('modal-open');
@@ -50,7 +51,6 @@ export const MobileMenuModal: React.FC<MobileMenuModalProps> = ({ isOpen, onClos
                     <MenuLink href="#/tv" label="TV Shows" onClick={onClose} />
                     <MenuLink href="#/collections" label="Coming Soon" onClick={onClose} />
                     <MenuLink href="#/people" label="Talent" onClick={onClose} />
-                    <MenuLink href="#/game" label="CineQuiz" onClick={onClose} />
                     <MenuLink href="#/studios" label="Studios" onClick={onClose} />
                     <MenuLink href="#/brands" label="Brands" onClick={onClose} />
                     <MenuLink href="#/streaming" label="Streaming" onClick={onClose} />

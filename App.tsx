@@ -1,13 +1,10 @@
-
-
+// FIX: Correctly import React hooks (useState, useEffect, useCallback) to resolve 'Cannot find name' errors.
 import React, { useState, useEffect, useCallback } from 'react';
-import { SearchBar } from './components/SearchBar.tsx';
 import { HeroSection } from './components/HeroSection.tsx';
 import { MediaRow } from './components/MediaRow.tsx';
 import { DetailModal } from './components/DetailModal.tsx';
 import { ForYouPage } from './components/ForYouPage.tsx';
 import { MyScapePage } from './components/MyScapePage.tsx';
-import { GamePage } from './components/GamePage.tsx';
 import { LoadingSpinner } from './components/LoadingSpinner.tsx';
 import { StudioGrid } from './components/StudioGrid.tsx';
 import { BrandGrid } from './components/BrandGrid.tsx';
@@ -22,9 +19,8 @@ import { ApiKeyModal } from './components/ApiKeyModal.tsx';
 import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { SearchModal } from './components/SearchModal.tsx';
 import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
-import { SparklesIcon, UserIcon, SearchIcon } from './components/icons.tsx';
-import { MobileNavigation } from './components/MobileNavigation.tsx';
-import { MobileMenuModal } from './components/MobileMenuModal.tsx';
+import { BrowseMenuModal } from './components/MobileMenuModal.tsx';
+import { SparklesIcon, UserIcon, SearchIcon, GridIcon } from './components/icons.tsx';
 
 import * as mediaService from './services/mediaService.ts';
 import { popularStudios } from './services/studioService.ts';
@@ -38,19 +34,6 @@ import { getViewingGuidesForBrand } from './services/aiService.ts';
 import { useSettings } from './hooks/useSettings.ts';
 
 const getHashRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
-
-const NavLink: React.FC<{ href: string; label: string; isActive: boolean; }> = ({ href, label, isActive }) => (
-    <a
-        href={href}
-        className={`px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${
-            isActive
-                ? 'bg-white/10 text-white'
-                : 'text-gray-300 hover:bg-white/5 hover:text-white'
-        }`}
-    >
-        {label}
-    </a>
-);
 
 const App: React.FC = () => {
     const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient } = useSettings();
@@ -80,7 +63,7 @@ const App: React.FC = () => {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isAiSearchOpen, setIsAiSearchOpen] = useState(false);
     const [isViewingGuideModalOpen, setIsViewingGuideModalOpen] = useState(false);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isBrowseMenuOpen, setIsBrowseMenuOpen] = useState(false);
     const [brandGuides, setBrandGuides] = useState<ViewingGuide[]>([]);
     const [isGuideLoading, setIsGuideLoading] = useState(false);
     const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
@@ -305,7 +288,6 @@ const App: React.FC = () => {
             case 'movies': return <RecommendationGrid recommendations={moviesContent} onSelect={handleSelectMedia} />;
             case 'tv': return <RecommendationGrid recommendations={tvContent} onSelect={handleSelectMedia} />;
             case 'collections': return <ComingSoonPage media={comingSoonContent} onSelectMedia={handleSelectMedia} />;
-            case 'game': return <GamePage />;
             case 'studios': return <StudioGrid studios={popularStudios} onSelect={handleSelectStudio} />;
             case 'brands':
                 return <BrandGrid brands={brands} onSelect={openBrandDetail} />;
@@ -339,55 +321,41 @@ const App: React.FC = () => {
             case 'person':
                 return <RecommendationGrid recommendations={personContent} onSelect={handleSelectMedia} />;
             default:
-                return <div>Page not found</div>;
+                 window.location.hash = '/home';
+                 return null;
         }
     };
-
-    const activeRoute = route[0] || 'home';
+    
+    const PillNavigation: React.FC = () => {
+       const activeRoute = route[0] || 'home';
+       return (
+            <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center gap-1 p-1.5 glass-panel rounded-full">
+                    <a href="#/home" className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${activeRoute === 'home' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}>Home</a>
+                    <button onClick={() => setIsSearchOpen(true)} className="p-2.5 rounded-full hover:bg-white/5 transition-colors" aria-label="Open Search">
+                        <SearchIcon className="w-5 h-5" />
+                    </button>
+                    <button onClick={() => setIsAiSearchOpen(true)} className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-semibold text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-full transition-colors" aria-label="Open AI Search">
+                        <SparklesIcon className="w-5 h-5" />
+                        <span>AI Search</span>
+                    </button>
+                     <button onClick={() => setIsBrowseMenuOpen(true)} className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-semibold text-gray-300 hover:bg-white/5 rounded-full transition-colors" aria-label="Open Browse Menu">
+                        <GridIcon className="w-5 h-5" />
+                        <span>Browse</span>
+                    </button>
+                </div>
+                <a href="#/myscape" className={`p-2.5 rounded-full glass-panel transition-colors ${activeRoute === 'myscape' ? 'bg-white/10' : 'hover:bg-white/5'}`} aria-label="MyScape">
+                    <UserIcon className="w-6 h-6" />
+                </a>
+            </div>
+       );
+    };
 
     return (
       <div className="min-h-screen">
-          <header className="fixed top-0 left-0 right-0 z-40 p-4">
-              {/* Desktop Header */}
-              <div className="container mx-auto hidden md:flex items-center justify-between gap-4">
-                  <div className="flex items-center justify-start gap-1 w-[450px]">
-                      <NavLink href="#/home" label="Home" isActive={activeRoute === 'home'} />
-                      <NavLink href="#/movies" label="Movies" isActive={activeRoute === 'movies'} />
-                      <NavLink href="#/tv" label="TV" isActive={activeRoute === 'tv'} />
-                      <NavLink href="#/collections" label="Soon" isActive={activeRoute === 'collections'} />
-                      <NavLink href="#/people" label="Talent" isActive={activeRoute === 'people'} />
-                  </div>
-                  
-                  <div className="flex flex-row items-center justify-center gap-2">
-                      <button onClick={() => setIsSearchOpen(true)} className="p-2.5 glass-panel rounded-full hover:bg-white/5 transition-colors" aria-label="Open Search">
-                          <SearchIcon className="w-5 h-5" />
-                      </button>
-                      <button onClick={() => setIsAiSearchOpen(true)} className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-semibold text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-full transition-colors" aria-label="Open AI Search">
-                          <SparklesIcon className="w-5 h-5" />
-                          <span>AI Search</span>
-                      </button>
-                  </div>
-
-                  <div className="flex items-center justify-end gap-1 w-[450px]">
-                      <NavLink href="#/game" label="CineQuiz" isActive={activeRoute === 'game'} />
-                      <NavLink href="#/studios" label="Studios" isActive={activeRoute === 'studios'} />
-                      <NavLink href="#/brands" label="Brands" isActive={activeRoute === 'brands'} />
-                      <NavLink href="#/streaming" label="Streaming" isActive={activeRoute === 'streaming'} />
-                      <NavLink href="#/networks" label="Networks" isActive={activeRoute === 'networks'} />
-                      <a href="#/myscape" className={`ml-4 p-2 rounded-full transition-colors ${activeRoute === 'myscape' ? 'bg-white/10' : 'bg-black/20 hover:bg-white/5'}`} aria-label="MyScape">
-                          <UserIcon className="w-6 h-6" />
-                      </a>
-                  </div>
-              </div>
-
-              {/* Mobile Header */}
-              <div className="container mx-auto flex md:hidden items-center justify-end gap-3">
-                  <button onClick={() => setIsSearchOpen(true)} className="p-2 glass-panel rounded-full hover:bg-white/5 transition-colors" aria-label="Open Search">
-                      <SearchIcon className="w-6 h-6 text-white" />
-                  </button>
-                  <button onClick={() => setIsAiSearchOpen(true)} className="p-2 glass-panel rounded-full hover:bg-white/5 transition-colors" aria-label="Open AI Search">
-                      <SparklesIcon className="w-6 h-6 text-indigo-400" />
-                  </button>
+          <header className="fixed top-0 left-0 right-0 z-40 p-4 hidden md:block">
+              <div className="container mx-auto flex items-center justify-center">
+                  <PillNavigation />
               </div>
           </header>
           
@@ -422,14 +390,13 @@ const App: React.FC = () => {
             onSelectMedia={handleSelectMedia}
           />
 
-          <MobileNavigation 
-            activeTab={route[0] || 'home'}
-            onSearchClick={() => setIsAiSearchOpen(true)}
-            onMoreClick={() => setIsMobileMenuOpen(true)}
-          />
-          <MobileMenuModal
-            isOpen={isMobileMenuOpen}
-            onClose={() => setIsMobileMenuOpen(false)}
+          <nav className="md:hidden fixed bottom-0 left-0 right-0 h-20 bg-black/50 backdrop-blur-lg border-t border-white/10 z-50 flex items-center justify-center">
+              <PillNavigation />
+          </nav>
+
+          <BrowseMenuModal
+            isOpen={isBrowseMenuOpen}
+            onClose={() => setIsBrowseMenuOpen(false)}
           />
       </div>
     );
