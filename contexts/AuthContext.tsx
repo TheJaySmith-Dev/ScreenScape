@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
-// FIX: Using Firebase v8 compat syntax.
-import firebase from 'firebase/app';
-import 'firebase/auth';
+// FIX: Using Firebase v9 compat syntax.
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
 import { auth, googleProvider } from '../services/firebase.ts';
 import type { User, AuthContextType } from '../types.ts';
 
