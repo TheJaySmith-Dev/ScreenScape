@@ -1,28 +1,23 @@
 import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth.ts';
 import { useSettings } from '../hooks/useSettings.ts';
 import { usePreferences } from '../hooks/usePreferences.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { ApiKeyModal } from './ApiKeyModal.tsx';
-import { SparklesIcon, ArrowRightOnRectangleIcon, Cog6ToothIcon, ThumbsUpIcon } from './icons.tsx';
+import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon } from './icons.tsx';
 import type { MediaDetails } from '../types.ts';
+import { LoadingSpinner } from './LoadingSpinner.tsx';
 
 interface MyScapePageProps {
   onSelectMedia: (media: MediaDetails) => void;
 }
 
 export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
-    const { currentUser, logout } = useAuth();
-    const { rateLimit, tmdbApiKey, geminiApiKey, saveApiKeys } = useSettings();
-    const { likes } = usePreferences();
+    const { rateLimit, tmdbApiKey, geminiApiKey, saveApiKeys, clearAllSettings } = useSettings();
+    const { likes, isLoading: preferencesLoading } = usePreferences();
     const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
 
-    if (!currentUser) {
-        return (
-            <div className="text-center text-gray-300">
-                <p>Please sign in to view your scape.</p>
-            </div>
-        );
+    if (preferencesLoading) {
+        return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
     }
 
     const watchlistItems: MediaDetails[] = likes.map(item => ({
@@ -32,21 +27,16 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
         rating: 0,
         trailerUrl: null,
     }));
-    
-    const photoURL = currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName || 'User')}&background=4b5563&color=e5e7eb&rounded=true&size=128`;
 
     return (
         <>
             <div className="w-full max-w-7xl fade-in">
-                <header className="flex flex-col md:flex-row items-center gap-6 md:gap-8 mb-12">
-                    <img src={photoURL} alt="User" className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white/10 shadow-lg" />
-                    <div className="text-center md:text-left">
-                        <h1 className="text-4xl font-bold text-white">{currentUser.displayName || 'Welcome'}</h1>
-                        <p className="text-lg text-gray-400">{currentUser.email}</p>
-                    </div>
+                <header className="text-center md:text-left mb-12">
+                    <h1 className="text-4xl font-bold text-white">MyScape</h1>
+                    <p className="text-lg text-gray-400">Your local hub for settings and liked items.</p>
                 </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
                     {/* Settings */}
                     <div className="glass-panel p-6 rounded-2xl">
                         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><Cog6ToothIcon className="w-6 h-6"/> Settings</h2>
@@ -62,6 +52,9 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                             <button onClick={() => setIsApiKeyModalOpen(true)} className="w-full mt-2 px-4 py-2 text-sm text-center bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
                                 Manage API Keys
                             </button>
+                             <button onClick={clearAllSettings} className="w-full mt-2 px-4 py-2 text-sm text-center text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors">
+                                Clear All Local Data
+                            </button>
                         </div>
                     </div>
                     {/* Usage */}
@@ -72,27 +65,19 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                             <p className="text-sm text-gray-400 mt-2">requests used today</p>
                         </div>
                     </div>
-                    {/* Logout */}
-                     <div className="glass-panel p-6 rounded-2xl flex flex-col justify-center items-center">
-                        <h2 className="text-xl font-semibold mb-4">Account</h2>
-                        <button onClick={logout} className="w-full flex items-center justify-center gap-2 px-4 py-3 text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors font-semibold">
-                            <ArrowRightOnRectangleIcon className="w-6 h-6"/>
-                            <span>Logout</span>
-                        </button>
-                    </div>
                 </div>
 
                 {/* Watchlist Section */}
                 <div>
                     <h2 className="text-3xl font-bold mb-6 text-white flex items-center gap-3">
                         <ThumbsUpIcon className="w-8 h-8 text-green-400"/>
-                        My Watchlist
+                        My Liked Items
                     </h2>
                     {watchlistItems.length > 0 ? (
                         <RecommendationGrid recommendations={watchlistItems} onSelect={onSelectMedia} />
                     ) : (
                         <div className="text-center py-12 glass-panel rounded-2xl">
-                            <p className="text-gray-300">Your watchlist is empty.</p>
+                            <p className="text-gray-300">Your liked list is empty.</p>
                             <p className="text-sm text-gray-400 mt-2">Like movies and shows to add them here.</p>
                         </div>
                     )}

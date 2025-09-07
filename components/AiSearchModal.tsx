@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, FormEvent, useRef } from 'react';
 import type { MediaDetails } from '../types.ts';
-import { getSearchParamsFromQuery } from '../services/aiService.ts';
-import { discoverMediaFromAi } from '../services/mediaService.ts';
+import { getAiRecommendations } from '../services/aiService.ts';
 import { CloseIcon, SearchIcon } from './icons.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
@@ -62,16 +61,25 @@ export const AiSearchModal: React.FC<AiSearchModalProps> = ({ isOpen, onClose, o
         const { canRequest } = canMakeRequest();
         if (!canRequest) return;
 
+        const cacheKey = `ai-search-cache-${searchQuery.toLowerCase().trim()}`;
+        try {
+            const cachedResults = localStorage.getItem(cacheKey);
+            if (cachedResults) {
+                const parsed = JSON.parse(cachedResults);
+                setResults(parsed.results);
+                setResultsTitle(parsed.title);
+                setSearchState('results');
+                return;
+            }
+        } catch (e) { console.error("Cache read failed", e); }
+
         setSearchState('loading');
         setErrorMessage('');
         
         try {
-            setLoadingMessage('Understanding your request...');
-            const { search_params, response_title } = await getSearchParamsFromQuery(searchQuery, aiClient);
-            incrementRequestCount(); // Count this as one request
-
-            setLoadingMessage('Finding matching titles...');
-            const mediaResults = await discoverMediaFromAi(search_params);
+            setLoadingMessage('Thinking with Google Search...');
+            const { results: mediaResults, title: response_title } = await getAiRecommendations(searchQuery, aiClient);
+            incrementRequestCount();
 
             if (mediaResults.length === 0) {
                 setResultsTitle(`Results for "${searchQuery}"`);
@@ -81,6 +89,12 @@ export const AiSearchModal: React.FC<AiSearchModalProps> = ({ isOpen, onClose, o
                 setResults(mediaResults);
                 setResultsTitle(response_title);
                 setSearchState('results');
+
+                try {
+                     localStorage.setItem(cacheKey, JSON.stringify({ results: mediaResults, title: response_title }));
+                } catch(e) { 
+                    console.error("Cache write failed", e);
+                }
             }
         } catch (error: any) {
             console.error("AI Search failed:", error);

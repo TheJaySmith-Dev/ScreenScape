@@ -1,16 +1,5 @@
-
-import { db } from './firebase.ts';
-import type { LikedItem, DislikedItem, RateLimitState } from '../types.ts';
-
-// --- Preferences API ---
-
-export interface Preferences {
-    likes: LikedItem[];
-    dislikes: DislikedItem[];
-    tmdbApiKey?: string;
-    geminiApiKey?: string;
-    rateLimitState?: RateLimitState;
-}
+// Preferences are now handled by local storage. This service is only for providing
+// the TMDb API key to other services outside the React tree.
 
 // This module-level variable holds the current TMDb API key for services
 // that are outside the React component tree (e.g., mediaService).
@@ -23,53 +12,4 @@ export const getTmdbApiKey = (): string | null => {
 
 export const setLocalTmdbApiKey = (key: string | null): void => {
     localTmdbApiKey = key;
-};
-
-export const getPreferences = async (uid: string): Promise<Preferences> => {
-    try {
-        const docRef = db.collection('users').doc(uid);
-        const docSnap = await docRef.get();
-
-        const defaultRateLimit = { count: 0, resetTime: new Date().getTime() + 24 * 60 * 60 * 1000 };
-
-        if (docSnap.exists) {
-            const data = docSnap.data() as Partial<Preferences>;
-
-            // Return a complete object, ensuring all required fields have defaults.
-            return {
-                likes: data.likes || [],
-                dislikes: data.dislikes || [],
-                tmdbApiKey: data.tmdbApiKey,
-                geminiApiKey: data.geminiApiKey,
-                rateLimitState: data.rateLimitState || defaultRateLimit,
-            };
-        } else {
-            // No document exists, return a default structure.
-            return {
-                likes: [],
-                dislikes: [],
-                rateLimitState: defaultRateLimit,
-            };
-        }
-    } catch (error) {
-        console.error("Error fetching preferences from Firestore:", error);
-        // Fallback to a default structure on error.
-        return {
-            likes: [],
-            dislikes: [],
-            rateLimitState: { count: 0, resetTime: new Date().getTime() + 24 * 60 * 60 * 1000 },
-        };
-    }
-};
-
-export const savePreferences = async (uid: string, prefs: Partial<Preferences>): Promise<void> => {
-    try {
-        // FIX: Using Firebase v8 syntax for Firestore.
-        const docRef = db.collection('users').doc(uid);
-        // Use setDoc with merge: true to update fields without overwriting the entire document
-        await docRef.set(prefs, { merge: true });
-    } catch (error) {
-        console.error("Error saving preferences to Firestore:", error);
-        throw new Error("Failed to save preferences");
-    }
 };

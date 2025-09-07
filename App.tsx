@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navigation } from './components/Navigation.tsx';
 import { SearchBar } from './components/SearchBar.tsx';
-import { AccountButton } from './components/AccountButton.tsx';
 import { HeroSection } from './components/HeroSection.tsx';
 import { MediaRow } from './components/MediaRow.tsx';
 import { DetailModal } from './components/DetailModal.tsx';
@@ -37,14 +36,11 @@ import { people } from './services/peopleService.ts';
 import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Person, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy } from './types.ts';
 import { getViewingGuidesForBrand } from './services/aiService.ts';
 import { useSettings } from './hooks/useSettings.ts';
-import { useAuth } from './hooks/useAuth.ts';
-import { SignInPrompt } from './components/SignInPrompt.tsx';
 
 const getHashRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
 
 const App: React.FC = () => {
     const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient } = useSettings();
-    const { currentUser, loading: authLoading } = useAuth();
     const [route, setRoute] = useState<string[]>(getHashRoute());
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -113,7 +109,7 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (isInitialized && tmdbApiKey && (currentUser || !authLoading)) {
+        if (isInitialized && tmdbApiKey) {
             fetchInitialData();
              // Fetch user location
             fetch('https://ipinfo.io/json?token=a0c105b32a98f7')
@@ -121,7 +117,7 @@ const App: React.FC = () => {
                 .then(data => setUserLocation({ name: data.country, code: data.country }))
                 .catch(() => setUserLocation({ name: 'United States', code: 'US' })); // Fallback
         }
-    }, [isInitialized, tmdbApiKey, fetchInitialData, currentUser, authLoading]);
+    }, [isInitialized, tmdbApiKey, fetchInitialData]);
 
     const handleSelectMedia = useCallback(async (media: MediaDetails) => {
         setIsDetailLoading(true);
@@ -267,12 +263,8 @@ const App: React.FC = () => {
         const page = route[0] || 'home';
         const id = route[1];
 
-        if (authLoading || !isInitialized) {
+        if (!isInitialized) {
             return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
-        }
-
-        if (!currentUser) {
-            return <SignInPrompt />;
         }
         
         if (!tmdbApiKey || !geminiApiKey) {
@@ -356,7 +348,6 @@ const App: React.FC = () => {
                           <SparklesIcon className="w-6 h-6 text-indigo-400" />
                       </button>
                       <SearchBar onSearch={handleSearch} isLoading={isLoading} />
-                      <AccountButton userLocation={userLocation} />
                   </div>
               </div>
           </header>

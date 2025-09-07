@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
-import { AuthProvider } from './contexts/AuthContext.tsx';
 import { SettingsProvider } from './contexts/SettingsContext.tsx';
 
 const rootElement = document.getElementById('root');
@@ -12,10 +11,8 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <AuthProvider>
-      <SettingsProvider>
-        <App />
-      </SettingsProvider>
-    </AuthProvider>
+    <SettingsProvider>
+      <App />
+    </SettingsProvider>
   </React.StrictMode>
 );

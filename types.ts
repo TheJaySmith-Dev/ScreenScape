@@ -135,22 +135,6 @@ export interface ActorDetails extends Actor {
   filmography: MediaDetails[];
 }
 
-// New/Modified types for local auth
-export interface User {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL?: string | null;
-}
-
-export interface AuthContextType {
-  currentUser: User | null;
-  loading: boolean;
-  // FIX: Update login and logout to return Promises as they are async functions.
-  login: () => Promise<void>;
-  logout: () => Promise<void>;
-}
-
 // User preferences
 export interface LikedItem {
   id: number;

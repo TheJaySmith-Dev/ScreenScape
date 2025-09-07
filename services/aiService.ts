@@ -1,95 +1,61 @@
 import type { GoogleGenAI } from "@google/genai";
 import { Type, GenerateContentResponse, Chat } from "@google/genai";
-import type { AiSearchParams, MediaDetails, ViewingGuide, FunFact } from '../types.ts';
+import type { MediaDetails, ViewingGuide, FunFact } from '../types.ts';
+import { searchMedia } from './mediaService.ts';
 
 const model = 'gemini-2.5-flash';
 
-// This is a list of common genres from TMDb to help the AI.
-const TMDb_GENRES = "Action, Adventure, Animation, Comedy, Crime, Documentary, Drama, Family, Fantasy, History, Horror, Music, Mystery, Romance, Science Fiction, TV Movie, Thriller, War, Western";
-
-const getSearchParamsSchema = {
-    type: Type.OBJECT,
-    properties: {
-        search_params: {
-            type: Type.OBJECT,
-            description: "An object containing search parameters for TMDb.",
-            properties: {
-                keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
-                characters: { type: Type.ARRAY, items: { type: Type.STRING } },
-                genres: { type: Type.ARRAY, items: { type: Type.STRING } },
-                actors: { type: Type.ARRAY, items: { type: Type.STRING } },
-                directors: { type: Type.ARRAY, items: { type: Type.STRING } },
-                companies: { type: Type.ARRAY, items: { type: Type.STRING } },
-                year_from: { type: Type.INTEGER },
-                year_to: { type: Type.INTEGER },
-                sort_by: { type: Type.STRING },
-                media_type: { type: Type.STRING, description: "The type of media to search for. Can be 'movie', 'tv', or 'all'." },
-            },
-        },
-        response_title: {
-            type: Type.STRING,
-            description: "A short, friendly, conversational title for the search results page."
-        }
-    },
-    required: ['search_params', 'response_title']
-};
-
 /**
- * Uses Gemini to parse a natural language query into structured search parameters.
+ * Uses Gemini with Google Search grounding to provide movie and TV show recommendations
+ * based on a natural language query. It returns a list of media details from TMDb.
  */
-export const getSearchParamsFromQuery = async (query: string, aiClient: GoogleGenAI): Promise<{ search_params: AiSearchParams; response_title: string; }> => {
+export const getAiRecommendations = async (query: string, aiClient: GoogleGenAI): Promise<{ results: MediaDetails[], title: string }> => {
     try {
-        const response: GenerateContentResponse = await aiClient.models.generateContent({
+        const response = await aiClient.models.generateContent({
             model,
-            contents: `User Query: "${query}"`,
+            contents: `Based on the following user request, find relevant movies and TV shows using your search tool and provide a list of their titles.
+            User Request: "${query}"`,
             config: {
-                systemInstruction: `You are a highly precise API endpoint that converts natural language queries about movies and TV shows into a JSON object for the TMDb API. Adhere to the following rules with ZERO DEVIATION.
-
-**RULE 1: ABSOLUTE NAME MATCHING**
-- When a person's full name is in the query, you MUST use their FULL NAME.
-- Example: If query is "movies with Tom Holland", 'actors' MUST be ["Tom Holland"].
-- INCORRECT: ["Tom"], ["Tom Hardy"]. This is a critical failure.
-
-**RULE 2: ABSOLUTE MEDIA TYPE**
-- If the query contains "movies" or "films", 'media_type' MUST be "movie".
-- If the query contains "TV shows", "series", or "show", 'media_type' MUST be "tv".
-- If no media type is specified, 'media_type' MUST be "all".
-- Example: "Tom Holland movies" -> 'media_type': "movie".
-- Example: "shows by Marvel" -> 'media_type': "tv".
-- It is a critical failure to return TV shows when the user asks for movies.
-
-**RULE 3: FRANCHISE SPECIFICITY**
-- For "Marvel", use company "Marvel Studios".
-
-The JSON object must have two top-level keys: "search_params" and "response_title".
-
-1. "search_params": An object containing search parameters.
-    - media_type: (string) 'movie', 'tv', or 'all'. Follow RULE 2.
-    - keywords: (array of strings) For general search terms, vibes, or plot elements.
-    - characters: (array of strings) For specific character names.
-    - genres: (array of strings) ONLY from this list: ${TMDb_GENRES}.
-    - actors: (array of strings) Actor names. Follow RULE 1.
-    - directors: (array of strings) Director names. Follow RULE 1.
-    - companies: (array of strings) Production company names.
-    - year_from: (number) Starting year.
-    - year_to: (number) Ending year.
-    - sort_by: (string) 'popularity.desc', 'release_date.desc', or 'vote_average.desc'.
-
-2. "response_title": A short, friendly, conversational title for the search results page that summarizes the user's request.
-
-Always respond with ONLY the JSON object.`,
+                systemInstruction: `You are a movie and TV show recommendation expert. When a user asks for recommendations, you MUST use the provided search tool to find current and relevant titles.
+                After finding titles, generate a creative and relevant title for the recommendation list.
+                Finally, respond with a JSON object containing two keys: "title" (the creative list title) and "media_titles" (a string array of the movie/TV show titles you found).
+                Example response:
+                {
+                  "title": "Thrilling Heist Movies",
+                  "media_titles": ["Ocean's Eleven", "Inception", "The Italian Job", "Heat"]
+                }
+                ONLY respond with the JSON object.`,
+                tools: [{googleSearch: {}}],
                 responseMimeType: "application/json",
-                responseSchema: getSearchParamsSchema,
+                responseSchema: {
+                    type: Type.OBJECT,
+                    properties: {
+                        title: { type: Type.STRING },
+                        media_titles: { type: Type.ARRAY, items: { type: Type.STRING } }
+                    },
+                    required: ["title", "media_titles"]
+                }
             }
         });
+
+        const aiResult = JSON.parse(response.text);
         
-        const result = JSON.parse(response.text);
-        result.search_params.original_query = query;
-        return result;
+        if (!aiResult.media_titles || aiResult.media_titles.length === 0) {
+            return { results: [], title: `No direct matches for "${query}"` };
+        }
+
+        // Take the first 5 titles and search TMDb to get rich data
+        const searchPromises = aiResult.media_titles.slice(0, 5).map((title: string) => searchMedia(title));
+        const searchResults = await Promise.all(searchPromises);
+        
+        // Flatten and deduplicate results
+        const allMedia = searchResults.flat();
+        const uniqueMedia = Array.from(new Map(allMedia.map(item => [item.id, item])).values());
+        
+        return { results: uniqueMedia, title: aiResult.title };
 
     } catch (error) {
-        console.error('Error getting search params from AI:', error);
-        // Propagate the error to be handled by the UI
+        console.error('Error getting AI recommendations:', error);
         throw error;
     }
 };
@@ -194,9 +160,20 @@ const funFactsSchema = {
 
 
 /**
- * Generates fun facts for a given media title.
+ * Generates fun facts for a given media title. Caches results in local storage.
  */
 export const getFunFactsForMedia = async (title: string, year: string, aiClient: GoogleGenAI): Promise<FunFact[]> => {
+    const cacheKey = `funfacts-cache-${title.toLowerCase().replace(/\s/g, '-')}-${year}`;
+    
+    try {
+        const cachedFacts = localStorage.getItem(cacheKey);
+        if (cachedFacts) {
+            return JSON.parse(cachedFacts);
+        }
+    } catch (e) {
+        console.error("Failed to read from cache", e);
+    }
+
     try {
         const response: GenerateContentResponse = await aiClient.models.generateContent({
             model,
@@ -210,6 +187,11 @@ export const getFunFactsForMedia = async (title: string, year: string, aiClient:
         
         const result = JSON.parse(response.text);
         if (result && result.facts) {
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify(result.facts));
+            } catch (e) {
+                console.error("Failed to write to cache", e);
+            }
             return result.facts;
         } else {
             throw new Error("AI response did not contain 'facts' array.");
