@@ -72,7 +72,7 @@ export const InfoIcon: React.FC<IconProps> = ({ className }) => (
 
 export const ChatBubbleIcon: React.FC<IconProps> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Z" clipRule="evenodd" />
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM7.5 13.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5 4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5-4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
     </svg>
 );
 
@@ -143,7 +143,7 @@ export const RottenTomatometerIcon: React.FC<IconProps> = ({ className }) => (
 export const CakeIcon: React.FC<IconProps> = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M21 15.75a.75.75 0 0 1-.75.75H3.75a.75.75 0 0 1-.75-.75V13.5a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 .75.75v2.25Z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8.25a.75.75 0 0 0 0 1.5h.008a.75.75 0 0 0 0-1.5H12Zm-2.25-.75a.75.75 0 0 1 .75.75v.008c0 .414-.336.75-.75.75H9.75a.75.75 0 0 1-.75-.75v-.008c0-.414.336.75.75-.75h.008Zm4.5 0a.75.75 0 0 1 .75.75v.008c0 .414-.336.75-.75.75h-.008a.75.75 0 0 1-.75-.75v-.008c0-.414.336-.75.75-.75h.008Z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8.25a.75.75 0 0 0 0 1.5h.008a.75.75 0 0 0 0-1.5H12Zm-2.25-.75a.75.75 0 0 1 .75.75v.008c0 .414-.336.75-.75.75H9.75a.75.75 0 0 1-.75-.75v-.008c0-.414.336.75.75-.75h.008Zm4.5 0a.75.75 0 0 1 .75.75v.008c0 .414-.336.75-.75.75h-.008a.75.75 0 0 1-.75-.75v-.008c0-.414.336.75.75-.75h.008Z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a8.25 8.25 0 0 0 8.25-8.25v-2.25a.75.75 0 0 0-.75-.75H4.5a.75.75 0 0 0-.75.75v2.25A8.25 8.25 0 0 0 12 21Z" />
     </svg>
 );
