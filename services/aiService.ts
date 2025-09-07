@@ -1,64 +1,81 @@
 import type { GoogleGenAI } from "@google/genai";
 import { Type, GenerateContentResponse, Chat } from "@google/genai";
-import type { MediaDetails, ViewingGuide, FunFact } from '../types.ts';
-import { searchMedia } from './mediaService.ts';
+import type { MediaDetails, ViewingGuide, FunFact, AiSearchParams } from '../types.ts';
+import { searchMedia, discoverMediaFromAi } from './mediaService.ts';
 
 const model = 'gemini-2.5-flash';
 
+const aiSearchParamsSchema = {
+    type: Type.OBJECT,
+    properties: {
+        title: {
+            type: Type.STRING,
+            description: "A creative and relevant title for the list of recommendations based on the user's query. For example, if the user asks for 'Marvel movies with Chris Evans', a good title would be 'Marvel Movies Starring Chris Evans'."
+        },
+        search_params: {
+            type: Type.OBJECT,
+            description: "Structured search parameters extracted from the user's query.",
+            properties: {
+                keywords: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Keywords from the query." },
+                genres: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Genres mentioned." },
+                actors: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Actor names mentioned." },
+                directors: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Director names mentioned." },
+                companies: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Production companies or studios mentioned (e.g., 'Marvel', 'A24')." },
+                characters: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Character names mentioned." },
+                year_from: { type: Type.INTEGER, description: "The starting year for a date range." },
+                year_to: { type: Type.INTEGER, description: "The ending year for a date range." },
+                sort_by: { type: Type.STRING, description: "A sort order. Can be 'popularity.desc', 'release_date.desc', or 'vote_average.desc'." },
+                media_type: { type: Type.STRING, description: "The type of media. Can be 'movie', 'tv', or 'all'." },
+            },
+        }
+    },
+    required: ['title', 'search_params']
+};
+
 /**
- * Uses Gemini with Google Search grounding to provide movie and TV show recommendations
- * based on a natural language query. It returns a list of media details from TMDb.
+ * Uses Gemini to parse a natural language query into structured search parameters,
+ * then uses TMDb's discovery endpoint for more accurate recommendations.
  */
 export const getAiRecommendations = async (query: string, aiClient: GoogleGenAI): Promise<{ results: MediaDetails[], title: string }> => {
     try {
         const response = await aiClient.models.generateContent({
             model,
-            contents: `Based on the following user request, find relevant movies and TV shows using your search tool and provide a list of their titles.
+            contents: `Parse the following user request into a structured JSON object for searching a movie/TV show database.
             User Request: "${query}"`,
             config: {
-                systemInstruction: `You are a movie and TV show recommendation expert. When a user asks for recommendations, you MUST use the provided search tool to find current and relevant titles.
-                After finding titles, generate a creative and relevant title for the recommendation list.
-                Finally, respond with a JSON object containing two keys: "title" (the creative list title) and "media_titles" (a string array of the movie/TV show titles you found).
-                Example response:
-                {
-                  "title": "Thrilling Heist Movies",
-                  "media_titles": ["Ocean's Eleven", "Inception", "The Italian Job", "Heat"]
-                }
-                Your entire response must be ONLY the raw JSON object, without any markdown formatting, comments, or extra text.`,
-                tools: [{googleSearch: {}}],
+                systemInstruction: `You are an expert at parsing natural language queries into structured search parameters for a movie database.
+                Your task is to analyze the user's request and extract key information like genres, actors, directors, production companies (e.g., Marvel, A24, Disney), keywords, date ranges, and media type (movie, tv, or all).
+                You must also create a concise, descriptive title for the search results.
+                Your entire response must be ONLY the raw JSON object matching the provided schema, without any markdown formatting, comments, or extra text.
+                If a parameter is not mentioned, omit the key from the 'search_params' object.
+                For 'companies', be specific. If a user asks for 'Marvel movies', the company is 'Marvel Studios'. If they ask for 'Disney', it is 'Walt Disney Pictures'.
+                For 'media_type', infer if the user is asking for movies, TV shows, or either. Default to 'all' if unsure.`,
+                responseMimeType: "application/json",
+                responseSchema: aiSearchParamsSchema,
             }
         });
 
         const responseText = response.text.trim();
-        // More robustly find the JSON part of the response, as the model might include extra text.
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            throw new Error("The AI response did not contain a valid JSON object.");
-        }
+        const aiResult = JSON.parse(responseText);
         
-        const jsonString = jsonMatch[0];
-        const aiResult = JSON.parse(jsonString);
-        
-        if (!aiResult.media_titles || !Array.isArray(aiResult.media_titles) || aiResult.media_titles.length === 0) {
-            return { results: [], title: `No direct matches for "${query}"` };
+        if (!aiResult.search_params) {
+            throw new Error("AI response did not contain search_params.");
         }
 
-        // Take the first 5 titles and search TMDb to get rich data
-        const searchPromises = aiResult.media_titles.slice(0, 5).map((title: string) => searchMedia(title));
-        const searchResults = await Promise.all(searchPromises);
+        const searchParams: AiSearchParams = { ...aiResult.search_params, original_query: query };
+        const mediaResults = await discoverMediaFromAi(searchParams);
         
-        // Flatten and deduplicate results
-        const allMedia = searchResults.flat();
-        const uniqueMedia = Array.from(new Map(allMedia.map(item => [item.id, item])).values());
+        // discoverMediaFromAi has its own fallback, so we trust its result.
+        // We only override the title if no results were found.
+        const resultTitle = mediaResults.length > 0 ? aiResult.title : `No results found for "${query}"`;
         
-        return { results: uniqueMedia, title: aiResult.title };
+        return { results: mediaResults, title: resultTitle };
 
     } catch (error) {
         console.error('Error getting AI recommendations:', error);
-         if (error instanceof SyntaxError) {
-             throw new Error("The AI returned a response that wasn't in the correct JSON format. Please try again.");
-        }
-        throw error;
+        // If any part of the structured search fails, fall back to a simple text search.
+        const fallbackResults = await searchMedia(query);
+        return { results: fallbackResults, title: `Results for "${query}"` };
     }
 };
 
