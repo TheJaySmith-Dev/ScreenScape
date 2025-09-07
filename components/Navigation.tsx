@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'people' | 'studios' | 'brands' | 'streaming' | 'networks' | 'game';
+type ActiveTab = 'home' | 'foryou' | 'myscape' | 'movies' | 'tv' | 'collections' | 'people' | 'studios' | 'brands' | 'streaming' | 'networks' | 'game';
 type NavTheme = 'dark' | 'light';
 
 interface NavigationProps {
@@ -49,7 +49,7 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, theme = 'dark
       <div className="flex items-center justify-center flex-wrap gap-2">
         <NavLink label="Home" href="#/home" isActive={activeTab === 'home'} theme={theme} />
         <NavLink label="For You" href="#/foryou" isActive={activeTab === 'foryou'} theme={theme} />
-        <NavLink label="Watchlist" href="#/watchlist" isActive={activeTab === 'watchlist'} theme={theme} />
+        <NavLink label="MyScape" href="#/myscape" isActive={activeTab === 'myscape'} theme={theme} />
         <NavLink label="Movies" href="#/movies" isActive={activeTab === 'movies'} theme={theme} />
         <NavLink label="TV" href="#/tv" isActive={activeTab === 'tv'} theme={theme} />
         <NavLink label="Coming Soon" href="#/collections" isActive={activeTab === 'collections'} theme={theme} />

@@ -8,7 +8,7 @@ import { HeroSection } from './components/HeroSection.tsx';
 import { MediaRow } from './components/MediaRow.tsx';
 import { DetailModal } from './components/DetailModal.tsx';
 import { ForYouPage } from './components/ForYouPage.tsx';
-import { WatchlistPage } from './components/WatchlistPage.tsx';
+import { MyScapePage } from './components/MyScapePage.tsx';
 import { GamePage } from './components/GamePage.tsx';
 import { LoadingSpinner } from './components/LoadingSpinner.tsx';
 import { StudioGrid } from './components/StudioGrid.tsx';
@@ -26,6 +26,7 @@ import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
 import { GuideModal } from './components/GuideModal.tsx';
 import { QuestionMarkCircleIcon } from './components/icons.tsx';
 import { MobileNavigation } from './components/MobileNavigation.tsx';
+import { MobileMenuModal } from './components/MobileMenuModal.tsx';
 
 import * as mediaService from './services/mediaService.ts';
 import { popularStudios } from './services/studioService.ts';
@@ -71,6 +72,7 @@ const App: React.FC = () => {
     const [isAiSearchOpen, setIsAiSearchOpen] = useState(false);
     const [isViewingGuideModalOpen, setIsViewingGuideModalOpen] = useState(false);
     const [isAppGuideOpen, setIsAppGuideOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [brandGuides, setBrandGuides] = useState<ViewingGuide[]>([]);
     const [isGuideLoading, setIsGuideLoading] = useState(false);
     const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
@@ -230,7 +232,7 @@ const App: React.FC = () => {
                     </>
                 );
             case 'foryou': return <ForYouPage onSelectMedia={handleSelectMedia} />;
-            case 'watchlist': return <WatchlistPage onSelectMedia={handleSelectMedia} />;
+            case 'myscape': return <MyScapePage onSelectMedia={handleSelectMedia} />;
             case 'movies': return <RecommendationGrid recommendations={moviesContent} onSelect={handleSelectMedia} />;
             case 'tv': return <RecommendationGrid recommendations={tvContent} onSelect={handleSelectMedia} />;
             case 'collections': return <ComingSoonPage media={comingSoonContent} onSelectMedia={handleSelectMedia} />;
@@ -356,6 +358,8 @@ const App: React.FC = () => {
 
         <GuideModal isOpen={isAppGuideOpen} onClose={() => setIsAppGuideOpen(false)} />
 
+        <MobileMenuModal isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+
         {selectedBrand && (
             <ViewingGuideModal
                 isOpen={isViewingGuideModalOpen}
@@ -366,7 +370,7 @@ const App: React.FC = () => {
                 onSelectMedia={handleSelectMedia}
             />
         )}
-        <MobileNavigation activeTab={route[0] as any || 'home'} onSearchClick={() => setIsAiSearchOpen(true)} />
+        <MobileNavigation activeTab={route[0] as any || 'home'} onSearchClick={() => setIsAiSearchOpen(true)} onMoreClick={() => setIsMobileMenuOpen(true)} />
       </>
     );
 };
