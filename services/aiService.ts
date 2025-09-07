@@ -24,23 +24,22 @@ export const getAiRecommendations = async (query: string, aiClient: GoogleGenAI)
                   "title": "Thrilling Heist Movies",
                   "media_titles": ["Ocean's Eleven", "Inception", "The Italian Job", "Heat"]
                 }
-                ONLY respond with the JSON object.`,
+                Your entire response must be ONLY the raw JSON object, without any markdown formatting, comments, or extra text.`,
                 tools: [{googleSearch: {}}],
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        title: { type: Type.STRING },
-                        media_titles: { type: Type.ARRAY, items: { type: Type.STRING } }
-                    },
-                    required: ["title", "media_titles"]
-                }
             }
         });
 
-        const aiResult = JSON.parse(response.text);
+        const responseText = response.text.trim();
+        // More robustly find the JSON part of the response, as the model might include extra text.
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            throw new Error("The AI response did not contain a valid JSON object.");
+        }
         
-        if (!aiResult.media_titles || aiResult.media_titles.length === 0) {
+        const jsonString = jsonMatch[0];
+        const aiResult = JSON.parse(jsonString);
+        
+        if (!aiResult.media_titles || !Array.isArray(aiResult.media_titles) || aiResult.media_titles.length === 0) {
             return { results: [], title: `No direct matches for "${query}"` };
         }
 
@@ -56,6 +55,9 @@ export const getAiRecommendations = async (query: string, aiClient: GoogleGenAI)
 
     } catch (error) {
         console.error('Error getting AI recommendations:', error);
+         if (error instanceof SyntaxError) {
+             throw new Error("The AI returned a response that wasn't in the correct JSON format. Please try again.");
+        }
         throw error;
     }
 };
