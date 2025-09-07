@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { MediaDetails } from '../types.ts';
 import { PlaySolidIcon, InfoIcon } from './icons.tsx';
@@ -19,25 +20,25 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ item, onPlay, onMoreIn
       <div className="hero-gradient" />
       <div className="hero-content container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-md lg:max-w-lg">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold drop-shadow-xl mb-4 fade-in" style={{ animationDelay: '200ms' }}>
+            <h1 className="font-bold drop-shadow-xl mb-4 fade-in" style={{ animationDelay: '200ms' }}>
                 {item.title}
             </h1>
-            <p className="text-base md:text-lg text-gray-200 leading-relaxed drop-shadow-lg mb-6 fade-in" style={{ animationDelay: '400ms' }}>
+            <p className="text-sm md:text-base text-gray-200 leading-relaxed drop-shadow-lg mb-6 fade-in" style={{ animationDelay: '400ms' }}>
                 {truncatedOverview}
             </p>
-            <div className="flex items-center gap-4 fade-in" style={{ animationDelay: '600ms' }}>
+            <div className="flex items-center gap-3 sm:gap-4 fade-in" style={{ animationDelay: '600ms' }}>
                 <button
                     onClick={() => onPlay(item)}
-                    className="flex items-center justify-center gap-2 px-6 py-3 bg-white text-black rounded-lg font-semibold transition-transform hover:scale-105"
+                    className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-white text-black rounded-lg font-semibold transition-transform hover:scale-105 text-sm sm:text-base"
                 >
                     <PlaySolidIcon className="w-5 h-5" />
                     <span>Play</span>
                 </button>
                 <button
                     onClick={() => onMoreInfo(item)}
-                    className="flex items-center justify-center gap-2 px-6 py-3 bg-white/20 text-white rounded-lg font-semibold backdrop-blur-sm hover:bg-white/30 transition-all hover:scale-105"
+                    className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-white/20 text-white rounded-lg font-semibold backdrop-blur-sm hover:bg-white/30 transition-all hover:scale-105 text-sm sm:text-base"
                 >
-                    <InfoIcon className="w-6 h-6" />
+                    <InfoIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                     <span>More Info</span>
                 </button>
             </div>
@@ -46,3 +47,4 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ item, onPlay, onMoreIn
     </section>
   );
 };
+      

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { StudioCard } from './StudioCard.tsx';
 import type { Studio } from '../types.ts';
@@ -13,7 +14,7 @@ export const StudioGrid: React.FC<StudioGridProps> = ({ studios, onSelect }) => 
   }
 
   return (
-    <div className="w-full max-w-7xl grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 fade-in">
+    <div className="w-full max-w-7xl grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 fade-in">
       {studios.map((studio, index) => (
         <div 
           key={studio.id} 
@@ -26,3 +27,4 @@ export const StudioGrid: React.FC<StudioGridProps> = ({ studios, onSelect }) => 
     </div>
   );
 };
+      

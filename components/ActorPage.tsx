@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import type { ActorDetails, MediaDetails } from '../types.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
@@ -47,19 +48,19 @@ export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMed
         </a>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-12 mb-16">
-        <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0">
+      <div className="flex flex-col md:flex-row gap-8 md:gap-12 mb-12 md:mb-16">
+        <div className="w-full md:w-1/3 lg:w-1/4 flex-shrink-0 mx-auto max-w-xs">
           <img src={actor.profilePath} alt={actor.name} className="w-full rounded-2xl aspect-[2/3] object-cover" />
         </div>
         <div className="w-full">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-6 text-white">{actor.name}</h1>
-          <div className="flex flex-wrap gap-x-8 gap-y-4 mb-6">
+          <h1 className="text-4xl sm:text-5xl font-bold mb-6 text-white text-center md:text-left">{actor.name}</h1>
+          <div className="flex flex-wrap justify-center md:justify-start gap-x-8 gap-y-4 mb-6">
             <ActorInfo icon={<CakeIcon className="w-5 h-5" />} label="Birthday" value={formatDate(actor.birthday)} />
             <ActorInfo icon={<LocationMarkerIcon className="w-5 h-5" />} label="Place of Birth" value={actor.placeOfBirth} />
           </div>
           
           <h2 className="text-xl font-semibold mb-2 text-white">Biography</h2>
-          <p className="text-gray-300 leading-relaxed">
+          <p className="text-gray-300 leading-relaxed text-sm sm:text-base">
             {showFullBio ? actor.biography : truncatedBio}
           </p>
           {canTruncate && (
@@ -70,8 +71,9 @@ export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMed
         </div>
       </div>
 
-      <h2 className="text-3xl font-bold mb-6 text-white">Known For</h2>
+      <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">Known For</h2>
       <RecommendationGrid recommendations={actor.filmography} onSelect={onSelectMedia} />
     </div>
   );
 };
+      

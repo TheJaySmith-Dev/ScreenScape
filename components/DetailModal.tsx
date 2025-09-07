@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders, OmdbDetails, FunFact } from '../types.ts';
 import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, HomeIcon, SparklesIcon, InfoIcon, ChatBubbleIcon } from './icons.tsx';
@@ -290,51 +291,52 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             {!isLoading && media.trailerUrl && (
                 <button
                     onClick={handleWatchTrailer}
-                    className="flex items-center justify-center gap-2 px-6 py-3 glass-panel rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/5 hover:scale-105"
+                    className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 glass-panel rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/5 hover:scale-105 text-sm sm:text-base"
                 >
-                    <PlayIcon className="w-6 h-6" />
-                    <span>Watch Trailer</span>
+                    <PlayIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <span>Trailer</span>
                 </button>
             )}
             {!isLoading && media.imdbId && (
                 <button
                     onClick={() => setIsDetailsVisible(prev => !prev)}
-                    className="flex items-center justify-center gap-2 px-6 py-3 glass-panel rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/5 hover:scale-105"
+                    className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 glass-panel rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/5 hover:scale-105 text-sm sm:text-base"
                 >
-                    <InfoIcon className="w-6 h-6" />
-                    <span>{isDetailsVisible ? 'Hide Info' : 'More Info & Synopsis'}</span>
+                    <InfoIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <span className="hidden sm:inline">{isDetailsVisible ? 'Hide Info' : 'More Info'}</span>
+                    <span className="sm:hidden">Info</span>
                 </button>
             )}
              <button
                 onClick={() => setIsChatModalOpen(true)}
-                className="flex items-center justify-center gap-2 px-6 py-3 glass-panel rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/5 hover:scale-105"
+                className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 glass-panel rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/5 hover:scale-105 text-sm sm:text-base"
                 disabled={!aiClient}
             >
-                <ChatBubbleIcon className="w-6 h-6" />
+                <ChatBubbleIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                 <span>Ask</span>
             </button>
             <div className="flex items-center gap-2">
                 <button
                     onClick={handleLike}
                     aria-label={currentIsLiked ? "Unlike" : "Like"}
-                    className={`p-3 glass-panel rounded-full transition-all duration-300 hover:scale-110 ${
+                    className={`p-2 sm:p-3 glass-panel rounded-full transition-all duration-300 hover:scale-110 ${
                         currentIsLiked 
                         ? 'bg-green-500/20 !border-green-500 text-green-400'
                         : 'text-gray-300 hover:bg-white/5 hover:text-white'
                     }`}
                 >
-                    <ThumbsUpIcon className="w-6 h-6"/>
+                    <ThumbsUpIcon className="w-5 h-5 sm:w-6 sm:h-6"/>
                 </button>
                 <button
                     onClick={handleDislike}
                     aria-label={currentIsDisliked ? "Remove dislike" : "Dislike"}
-                    className={`p-3 glass-panel rounded-full transition-all duration-300 hover:scale-110 ${
+                    className={`p-2 sm:p-3 glass-panel rounded-full transition-all duration-300 hover:scale-110 ${
                         currentIsDisliked
                         ? 'bg-red-500/20 !border-red-500 text-red-400'
                         : 'text-gray-300 hover:bg-white/5 hover:text-white'
                     }`}
                 >
-                    <ThumbsDownIcon className="w-6 h-6"/>
+                    <ThumbsDownIcon className="w-5 h-5 sm:w-6 sm:h-6"/>
                 </button>
             </div>
         </div>
@@ -442,15 +444,15 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         </div>
 
         {/* Hero Section */}
-        <div className="relative glass-panel rounded-[28px] overflow-hidden mb-8 min-h-[400px] md:min-h-[450px] flex items-center">
+        <div className="relative glass-panel rounded-[28px] overflow-hidden mb-8 min-h-[400px] md:min-h-[450px] flex items-end">
             <div className="absolute inset-0">
                 <img src={backgroundImageUrl} alt="" className="w-full h-full object-cover opacity-10 blur-2xl scale-125" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-black/10 to-transparent" />
                  <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
             </div>
 
-            <div className="relative p-8 md:p-12 flex flex-col md:flex-row items-center md:items-end gap-8 md:gap-12 w-full">
-                <img src={mainPosterUrl} alt={isMedia ? item.title : item.name} className="w-48 md:w-60 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] aspect-[2/3] object-cover flex-shrink-0" />
+            <div className="relative p-6 md:p-12 flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-12 w-full">
+                <img src={mainPosterUrl} alt={isMedia ? item.title : item.name} className="w-40 md:w-60 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] aspect-[2/3] object-cover flex-shrink-0" />
                 <div className="flex-grow text-center md:text-left">
                     <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.7)] mb-4">
                         {isMediaDetails(item) ? item.title : item.name}
@@ -458,7 +460,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
 
                     {isMediaDetails(item) && (
                     <>
-                        <div className="flex items-center justify-center md:justify-start flex-wrap gap-x-4 gap-y-2 mb-4 text-gray-300 font-medium">
+                        <div className="flex items-center justify-center md:justify-start flex-wrap gap-x-4 gap-y-2 mb-4 text-gray-300 font-medium text-sm sm:text-base">
                             <div>
                                 {item.type === 'movie' ? item.releaseYear : getTvDateRange(item.releaseDate, item.lastAirDate, item.status) || item.releaseYear}
                             </div>
@@ -477,7 +479,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                             {item.rated && (
                                 <>
                                 <span className="text-gray-500">&bull;</span>
-                                <div className="uppercase text-sm px-2 py-0.5 border border-gray-500 rounded-md">
+                                <div className="uppercase text-xs sm:text-sm px-2 py-0.5 border border-gray-500 rounded-md">
                                     {item.rated}
                                 </div>
                                 </>
@@ -486,9 +488,9 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
 
                         <div className="flex flex-wrap items-start justify-center md:justify-start gap-3 mb-4">
                             <div className="flex items-center gap-2 glass-panel p-2 rounded-xl">
-                                <StarIcon className="w-8 h-8 text-yellow-400" />
+                                <StarIcon className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-400" />
                                 <div>
-                                    <span className="font-bold text-lg text-white">{item.rating}</span>
+                                    <span className="font-bold text-base sm:text-lg text-white">{item.rating}</span>
                                     <span className="text-sm text-white">/10</span>
                                     <p className="text-xs text-gray-400 -mt-1">TMDb</p>
                                 </div>
@@ -501,8 +503,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         </div>
         
         {/* Main Content Below Hero */}
-        <div className="px-6 md:px-12 pb-16">
-            <p className="text-gray-300 text-base leading-relaxed mb-6">{item.overview}</p>
+        <div className="px-2 sm:px-6 md:px-12 pb-16">
+            <p className="text-gray-300 text-sm sm:text-base leading-relaxed mb-6">{item.overview}</p>
             {isMediaDetails(item) ? renderMediaContent(item) : renderCollectionContent(item)}
         </div>
       </div>
@@ -523,3 +525,4 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
     </>
   );
 };
+      

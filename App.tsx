@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navigation } from './components/Navigation.tsx';
 import { SearchBar } from './components/SearchBar.tsx';
@@ -23,6 +24,7 @@ import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
 import { GuideModal } from './components/GuideModal.tsx';
 import { QuestionMarkCircleIcon } from './components/icons.tsx';
+import { MobileNavigation } from './components/MobileNavigation.tsx';
 
 import * as mediaService from './services/mediaService.ts';
 import { popularStudios } from './services/studioService.ts';
@@ -218,7 +220,7 @@ const App: React.FC = () => {
                 return (
                     <>
                         {trending[0] && <HeroSection item={trending[0]} onPlay={() => {}} onMoreInfo={handleSelectMedia} />}
-                        <div className="space-y-16 mt-8">
+                        <div className="space-y-12 md:space-y-16 mt-8">
                             <MediaRow title="Trending This Week" items={trending} onSelect={handleSelectMedia} />
                             <MediaRow title="Now Playing in Theaters" items={nowPlaying} onSelect={handleSelectMedia} animationDelay="100ms" />
                             <MediaRow title="Popular Movies" items={popularMovies} onSelect={handleSelectMedia} animationDelay="200ms" />
@@ -303,13 +305,13 @@ const App: React.FC = () => {
           <div className="absolute inset-0 -z-30 bg-[#0c0c0e]" />
           <header className="fixed top-0 left-0 right-0 z-50 p-4 transition-all duration-300">
             <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-4">
-              <div className="flex-1 flex justify-start">
+              <div className="flex items-center gap-4">
                  <h1 className="text-2xl font-bold">ScreenScape</h1>
               </div>
-              <div className="flex-1 flex justify-center">
+              <div className="hidden md:flex flex-1 justify-center">
                  <Navigation activeTab={route[0] as any || 'home'} />
               </div>
-              <div className="flex-1 flex justify-end items-center gap-4">
+              <div className="flex justify-end items-center gap-2 sm:gap-4">
                   <SearchBar onSearch={handleSearch} isLoading={isLoading} />
                    <button onClick={() => setIsAiSearchOpen(true)} className="p-2 glass-panel rounded-full hover:bg-white/5 transition-colors" aria-label="AI Search">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-indigo-400"><path d="M10 3.5a1.5 1.5 0 0 1 3 0V5h-3V3.5ZM10 5.5a1.5 1.5 0 0 1 3 0V7h-3V5.5ZM10 7.5a1.5 1.5 0 0 1 3 0V9h-3V7.5ZM10 9.5a1.5 1.5 0 0 1 3 0v.5h-3v-.5ZM13.5 10a1.5 1.5 0 0 0 0 3h.5v-3h-.5ZM11.5 10a1.5 1.5 0 0 0 0 3h.5v-3h-.5ZM9.5 10a1.5 1.5 0 0 0 0 3h.5v-3h-.5ZM7.5 10a1.5 1.5 0 0 0 0 3h.5v-3h-.5ZM10 13.5a1.5 1.5 0 0 1-3 0V12h3v1.5ZM10 14.5a1.5 1.5 0 0 1-3 0V13h3v1.5ZM10 16.5a1.5 1.5 0 0 1-3 0V15h3v1.5ZM10 17.5a1.5 1.5 0 0 1-3 0v-.5h3v.5ZM6.5 10a1.5 1.5 0 0 0 0-3h-.5v3h.5ZM8.5 10a1.5 1.5 0 0 0 0-3h-.5v3h.5Z" /><path fillRule="evenodd" d="M5 10a5 5 0 1 1 10 0 5 5 0 0 1-10 0Zm5-7a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z" clipRule="evenodd" /></svg>
@@ -321,7 +323,7 @@ const App: React.FC = () => {
               </div>
             </div>
           </header>
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-36 pb-24">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-28 md:pt-36 pb-24">
             {renderPage()}
           </div>
         </main>
@@ -363,8 +365,10 @@ const App: React.FC = () => {
                 onSelectMedia={handleSelectMedia}
             />
         )}
+        <MobileNavigation activeTab={route[0] as any || 'home'} onSearchClick={() => setIsAiSearchOpen(true)} />
       </>
     );
 };
 
 export default App;
+      

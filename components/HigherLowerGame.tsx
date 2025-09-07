@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { fetchMoviesForGame, fetchMediaForPopularityGame, fetchActorsForAgeGame } from '../services/mediaService.ts';
 import type { GameMovie, GameMedia, GameActor } from '../types.ts';
@@ -162,8 +163,8 @@ export const HigherLowerGame: React.FC<HigherLowerGameProps> = ({ mode, onExit }
                         )}
                         <p className="text-lg mb-8">High Score: <span className="font-bold text-yellow-400">{highScore}</span></p>
 
-                        <div className="flex gap-4 justify-center">
-                            <button onClick={onExit} className="px-6 py-3 text-lg font-bold bg-white/5 border-2 border-white/10 rounded-full hover:bg-white/10 transition-colors">Back to CineQuiz</button>
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <button onClick={onExit} className="px-6 py-3 text-lg font-bold bg-white/5 border-2 border-white/10 rounded-full hover:bg-white/10 transition-colors">Back</button>
                             <button
                                 onClick={startGame}
                                 className="px-8 py-3 text-lg font-bold bg-white/10 border-2 border-white/20 rounded-full hover:bg-white/20 transition-all duration-300"
@@ -187,7 +188,7 @@ export const HigherLowerGame: React.FC<HigherLowerGameProps> = ({ mode, onExit }
                         <div className="flex flex-col md:flex-row items-center justify-center gap-8 w-full">
                             <HigherLowerCard item={currentItem} mode={mode} showValue={true} />
                             
-                            <div className="text-4xl font-bold text-white/50 hidden md:block">VS</div>
+                            <div className="text-4xl font-bold text-white/50 rotate-90 md:rotate-0">VS</div>
 
                             <div className="flex flex-col items-center gap-4">
                                 <HigherLowerCard item={nextItem} mode={mode} showValue={gameState === 'revealing'} resultState={guessResult} />
@@ -210,3 +211,4 @@ export const HigherLowerGame: React.FC<HigherLowerGameProps> = ({ mode, onExit }
         </div>
     );
 };
+      
