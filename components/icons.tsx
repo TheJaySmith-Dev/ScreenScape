@@ -71,9 +71,11 @@ export const InfoIcon: React.FC<IconProps> = ({ className }) => (
 );
 
 export const ChatBubbleIcon: React.FC<IconProps> = ({ className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM7.5 13.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5 4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5-4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
-    </svg>
+  <img
+    src="https://img.icons8.com/?size=100&id=PfQnRGTIisIV&format=png&color=FFFFFF"
+    alt="Ask AI icon with a brain in a chat bubble"
+    className={className}
+  />
 );
 
 export const CloseIcon: React.FC<IconProps> = ({ className }) => (

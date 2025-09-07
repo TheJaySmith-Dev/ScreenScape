@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { MediaDetails, ChatMessage } from '../types.ts';
-import { CloseIcon, SparklesIcon } from './icons.tsx';
+import { CloseIcon } from './icons.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { startChatForMedia } from '../services/aiService.ts';
 import { RateLimitMessage } from './RateLimitMessage.tsx';
@@ -26,7 +26,7 @@ export const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, media }) 
         if (isOpen && aiClient) {
             const session = startChatForMedia(media, aiClient);
             setChatSession(session);
-            setMessages([{ role: 'model', content: `Hi! I'm an expert on "${media.title}" (${media.releaseYear}). Feel free to ask me anything about it!` }]);
+            setMessages([{ role: 'model', content: `Hi! I'm ScapeAI. I can answer any questions you have about "${media.title}" (${media.releaseYear}). What would you like to know?` }]);
         }
     }, [isOpen, media, aiClient]);
 
@@ -87,8 +87,12 @@ export const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, media }) 
             >
                 <div className="flex-shrink-0 p-4 flex items-center justify-between border-b border-white/10">
                     <div className="flex items-center gap-2">
-                         <SparklesIcon className="w-5 h-5 text-indigo-400" />
-                         <h1 className="font-semibold text-white">Ask about {media.title}</h1>
+                         <h1 className="font-bold text-lg text-white">ScapeAI</h1>
+                         <div className="flex items-center gap-1 text-xs text-gray-400">
+                            <span>•</span>
+                            <span>Powered by Gemini</span>
+                            <img src="https://img.icons8.com/?size=100&id=rnK88i9FvAFO&format=png&color=FFFFFF" alt="Gemini logo" className="w-4 h-4" />
+                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 transition-colors" aria-label="Close chat">
                         <CloseIcon className="w-5 h-5 text-gray-300" />
