@@ -53,54 +53,65 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         const syncSettings = async () => {
             setIsInitialized(false); // Mark as not ready while we sync
 
+            // Get local state first, as it's always available synchronously.
+            const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
+            const localGeminiKey = localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI);
+            const localRateLimit = getInitialRateLimit(); // This function already handles expiry.
+
             if (currentUser) {
                 // --- USER IS LOGGED IN ---
                 const remotePrefs = await api.getPreferences(currentUser.uid);
-                const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
-                const localGeminiKey = localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI);
-
-                let finalTmdbKey = remotePrefs.tmdbApiKey || null;
-                let finalGeminiKey = remotePrefs.geminiApiKey || null;
-                
                 const prefsToSave: Partial<api.Preferences> = {};
-                let needsRemoteSave = false;
+                let needsSave = false;
 
-                // **Smart Merge Logic:** If cloud is empty but local exists, migrate local to cloud.
-                if (!finalTmdbKey && localTmdbKey) {
-                    finalTmdbKey = localTmdbKey;
-                    prefsToSave.tmdbApiKey = localTmdbKey;
-                    needsRemoteSave = true;
+                // 1. Sync API Keys (MIGRATE-UP strategy)
+                // If remote key is empty/null but a local key exists, use the local one and mark for saving.
+                const remoteTmdbKey = remotePrefs.tmdbApiKey;
+                const finalTmdbKey = (remoteTmdbKey && remoteTmdbKey.trim() !== '') ? remoteTmdbKey : localTmdbKey;
+                if (finalTmdbKey && finalTmdbKey !== remoteTmdbKey) {
+                    prefsToSave.tmdbApiKey = finalTmdbKey;
+                    needsSave = true;
                 }
-                if (!finalGeminiKey && localGeminiKey) {
-                    finalGeminiKey = localGeminiKey;
-                    prefsToSave.geminiApiKey = localGeminiKey;
-                    needsRemoteSave = true;
+
+                const remoteGeminiKey = remotePrefs.geminiApiKey;
+                const finalGeminiKey = (remoteGeminiKey && remoteGeminiKey.trim() !== '') ? remoteGeminiKey : localGeminiKey;
+                if (finalGeminiKey && finalGeminiKey !== remoteGeminiKey) {
+                    prefsToSave.geminiApiKey = finalGeminiKey;
+                    needsSave = true;
                 }
                 
-                // Set the determined keys in the app's state.
-                setTmdbApiKey(finalTmdbKey);
-                setGeminiApiKey(finalGeminiKey);
-                
-                // Sync Rate Limit state from the cloud, resetting if expired.
-                const now = new Date().getTime();
-                let currentRateLimit = remotePrefs.rateLimitState || getInitialRateLimit();
-                if (now > currentRateLimit.resetTime) {
-                    currentRateLimit = { count: 0, resetTime: now + 24 * 60 * 60 * 1000 };
-                    prefsToSave.rateLimitState = currentRateLimit;
-                    needsRemoteSave = true;
-                }
-                setRateLimit(currentRateLimit);
+                setTmdbApiKey(finalTmdbKey || null);
+                setGeminiApiKey(finalGeminiKey || null);
 
-                // If we migrated local keys or reset the rate limit, save back to Firestore.
-                if (needsRemoteSave) {
+                // 2. Sync Rate Limit (CLOUD-FIRST strategy)
+                let finalRateLimit = remotePrefs.rateLimitState;
+                const now = Date.now();
+
+                // If no remote state exists, or the remote state is expired, create a fresh one.
+                if (!finalRateLimit || now > finalRateLimit.resetTime) {
+                    finalRateLimit = { count: 0, resetTime: now + 24 * 60 * 60 * 1000 };
+                    prefsToSave.rateLimitState = finalRateLimit;
+                    needsSave = true;
+                }
+                setRateLimit(finalRateLimit);
+
+                // 3. Perform the save operation if anything needs to be updated in the cloud.
+                if (needsSave) {
                     await api.savePreferences(currentUser.uid, prefsToSave);
                 }
+                
+                // 4. Clean up local storage after successful sync to prevent future conflicts.
+                // This is a crucial step.
+                localStorage.removeItem(LOCAL_STORAGE_KEY_TMDB);
+                localStorage.removeItem(LOCAL_STORAGE_KEY_GEMINI);
+                localStorage.removeItem(LOCAL_STORAGE_KEY_RATE_LIMIT);
+
             } else {
                 // --- USER IS LOGGED OUT ---
-                // Load all settings directly from local browser storage.
-                setTmdbApiKey(localStorage.getItem(LOCAL_STORAGE_KEY_TMDB));
-                setGeminiApiKey(localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI));
-                setRateLimit(getInitialRateLimit());
+                // State is determined purely by what's in the browser's local storage.
+                setTmdbApiKey(localTmdbKey);
+                setGeminiApiKey(localGeminiKey);
+                setRateLimit(localRateLimit);
             }
 
             setIsInitialized(true); // Signal that settings are loaded and app can render.
