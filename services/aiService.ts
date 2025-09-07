@@ -10,22 +10,22 @@ const aiSearchParamsSchema = {
     properties: {
         title: {
             type: Type.STRING,
-            description: "A creative and relevant title for the list of recommendations based on the user's query. For example, if the user asks for 'Marvel movies with Chris Evans', a good title would be 'Marvel Movies Starring Chris Evans'."
+            description: "A creative and relevant title for the list of recommendations that accurately reflects ALL conditions from the user's query. For example, if the user asks for 'Marvel movies with Chris Evans', a good title would be 'Marvel Movies Starring Chris Evans'."
         },
         search_params: {
             type: Type.OBJECT,
-            description: "Structured search parameters extracted from the user's query.",
+            description: "Strictly structured search parameters extracted from the user's query. Every parameter here is a mandatory 'AND' condition.",
             properties: {
-                keywords: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Keywords from the query." },
-                genres: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Genres mentioned." },
-                actors: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Actor names mentioned." },
-                directors: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Director names mentioned." },
-                companies: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Production companies or studios mentioned (e.g., 'Marvel', 'A24')." },
-                characters: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Character names mentioned." },
-                year_from: { type: Type.INTEGER, description: "The starting year for a date range." },
-                year_to: { type: Type.INTEGER, description: "The ending year for a date range." },
+                keywords: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Specific keywords from the query that must be present." },
+                genres: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Genres mentioned. The results must match ALL specified genres." },
+                actors: { type: Type.ARRAY, items: { type: Type.STRING }, description: "A list of actor names. The results MUST star ALL actors listed." },
+                directors: { type: Type.ARRAY, items: { type: Type.STRING }, description: "A list of director names. The results MUST be directed by ALL directors listed." },
+                companies: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Production companies or studios mentioned (e.g., 'Marvel Studios', 'A24', 'Walt Disney Pictures'). The results MUST be produced by ALL companies listed." },
+                characters: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Character names mentioned. Use this for specific character searches." },
+                year_from: { type: Type.INTEGER, description: "The starting year for a required date range." },
+                year_to: { type: Type.INTEGER, description: "The ending year for a required date range." },
                 sort_by: { type: Type.STRING, description: "A sort order. Can be 'popularity.desc', 'release_date.desc', or 'vote_average.desc'." },
-                media_type: { type: Type.STRING, description: "The type of media. Can be 'movie', 'tv', or 'all'." },
+                media_type: { type: Type.STRING, description: "The type of media. Can be 'movie', 'tv', or 'all'. Infer from the query if possible." },
             },
         }
     },
@@ -43,13 +43,7 @@ export const getAiRecommendations = async (query: string, aiClient: GoogleGenAI)
             contents: `Parse the following user request into a structured JSON object for searching a movie/TV show database.
             User Request: "${query}"`,
             config: {
-                systemInstruction: `You are an expert at parsing natural language queries into structured search parameters for a movie database.
-                Your task is to analyze the user's request and extract key information like genres, actors, directors, production companies (e.g., Marvel, A24, Disney), keywords, date ranges, and media type (movie, tv, or all).
-                You must also create a concise, descriptive title for the search results.
-                Your entire response must be ONLY the raw JSON object matching the provided schema, without any markdown formatting, comments, or extra text.
-                If a parameter is not mentioned, omit the key from the 'search_params' object.
-                For 'companies', be specific. If a user asks for 'Marvel movies', the company is 'Marvel Studios'. If they ask for 'Disney', it is 'Walt Disney Pictures'.
-                For 'media_type', infer if the user is asking for movies, TV shows, or either. Default to 'all' if unsure.`,
+                systemInstruction: `You are a highly precise API query generator. Your sole purpose is to convert a user's natural language request into a strict set of JSON parameters. Every condition specified by the user MUST be treated as a mandatory 'AND' requirement. For example, if the user asks for 'Marvel movies starring Chris Evans', your parameters must ensure the movie is from 'Marvel Studios' AND stars 'Chris Evans'. If a user asks for 'A24 horror movies', the company must be 'A24' AND the genre must be 'Horror'. Do not broaden the search. Your entire response must be ONLY the raw JSON object matching the provided schema, without any markdown formatting, comments, or extra text. If a parameter is not mentioned, omit the key from the 'search_params' object. For 'companies', use specific names like 'Marvel Studios' for Marvel, or 'Walt Disney Pictures' for Disney.`,
                 responseMimeType: "application/json",
                 responseSchema: aiSearchParamsSchema,
             }
@@ -58,22 +52,29 @@ export const getAiRecommendations = async (query: string, aiClient: GoogleGenAI)
         const responseText = response.text.trim();
         const aiResult = JSON.parse(responseText);
         
-        if (!aiResult.search_params) {
-            throw new Error("AI response did not contain search_params.");
+        const searchParamsObject = aiResult.search_params;
+        
+        if (!searchParamsObject || Object.keys(searchParamsObject).length === 0) {
+            // AI couldn't extract any specific parameters, so fall back to a general search for vague queries.
+            console.log("AI could not parse specific params, falling back to text search.");
+            const fallbackResults = await searchMedia(query);
+            return { results: fallbackResults, title: `Results for "${query}"` };
         }
 
-        const searchParams: AiSearchParams = { ...aiResult.search_params, original_query: query };
+        const searchParams: AiSearchParams = { ...searchParamsObject, original_query: query };
         const mediaResults = await discoverMediaFromAi(searchParams);
         
-        // discoverMediaFromAi has its own fallback, so we trust its result.
-        // We only override the title if no results were found.
-        const resultTitle = mediaResults.length > 0 ? aiResult.title : `No results found for "${query}"`;
+        // If the structured search yields no results, it's more accurate to say so
+        // than to fall back to a broad, inaccurate search.
+        if (mediaResults.length === 0) {
+            return { results: [], title: `Couldn't find anything matching all criteria for "${query}"` };
+        }
         
-        return { results: mediaResults, title: resultTitle };
+        return { results: mediaResults, title: aiResult.title };
 
     } catch (error) {
-        console.error('Error getting AI recommendations:', error);
-        // If any part of the structured search fails, fall back to a simple text search.
+        console.error('Error getting AI recommendations, falling back to text search:', error);
+        // Catch-all fallback for JSON parsing errors or other unexpected issues.
         const fallbackResults = await searchMedia(query);
         return { results: fallbackResults, title: `Results for "${query}"` };
     }
