@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { RecommendationCard } from './RecommendationCard.tsx';
 import type { MediaDetails } from '../types.ts';
@@ -31,7 +32,7 @@ export const MediaRow: React.FC<MediaRowProps> = ({ title, items, onSelect, anim
           {items.map((item, index) => (
             <div 
               key={`${item.id}-${index}`} 
-              className="flex-shrink-0 w-36 sm:w-44 md:w-48"
+              className="flex-shrink-0 w-32 sm:w-40 md:w-48"
             >
               <RecommendationCard media={item} onSelect={() => onSelect(item)} />
             </div>
@@ -41,4 +42,3 @@ export const MediaRow: React.FC<MediaRowProps> = ({ title, items, onSelect, anim
     </section>
   );
 };
-      

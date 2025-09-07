@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { SearchIcon } from './icons.tsx';
 
@@ -27,7 +28,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading, theme
   }`;
 
   return (
-    <form onSubmit={handleSubmit} className="relative w-full max-w-xs sm:max-w-sm">
+    <form onSubmit={handleSubmit} className="relative w-full max-w-[180px] sm:max-w-xs">
       <input
         type="text"
         value={query}
@@ -46,4 +47,3 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading, theme
     </form>
   );
 };
-      

@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders, OmdbDetails, FunFact } from '../types.ts';
 import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, HomeIcon, SparklesIcon, InfoIcon, ChatBubbleIcon } from './icons.tsx';
@@ -435,7 +436,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
   return (
     <>
       <div className="w-full max-w-6xl mx-auto fade-in">
-        <div className="my-12 flex items-center gap-3">
+        <div className="my-8 sm:my-12 flex items-center gap-3">
             <button onClick={onClose} className="px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">&larr; Back</button>
             <a href="#/home" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">
                 <HomeIcon className="w-4 h-4" />
@@ -444,7 +445,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         </div>
 
         {/* Hero Section */}
-        <div className="relative glass-panel rounded-[28px] overflow-hidden mb-8 min-h-[400px] md:min-h-[450px] flex items-end">
+        <div className="relative glass-panel rounded-[28px] overflow-hidden mb-8 min-h-[380px] md:min-h-[450px] flex items-end">
             <div className="absolute inset-0">
                 <img src={backgroundImageUrl} alt="" className="w-full h-full object-cover opacity-10 blur-2xl scale-125" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-black/10 to-transparent" />
@@ -452,7 +453,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             </div>
 
             <div className="relative p-6 md:p-12 flex flex-col md:flex-row items-center md:items-end gap-6 md:gap-12 w-full">
-                <img src={mainPosterUrl} alt={isMedia ? item.title : item.name} className="w-40 md:w-60 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] aspect-[2/3] object-cover flex-shrink-0" />
+                <img src={mainPosterUrl} alt={isMedia ? item.title : item.name} className="w-36 sm:w-48 md:w-60 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] aspect-[2/3] object-cover flex-shrink-0" />
                 <div className="flex-grow text-center md:text-left">
                     <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white drop-shadow-[0_2px_5px_rgba(0,0,0,0.7)] mb-4">
                         {isMediaDetails(item) ? item.title : item.name}
@@ -525,4 +526,3 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
     </>
   );
 };
-      

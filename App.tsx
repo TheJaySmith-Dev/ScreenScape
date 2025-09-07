@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navigation } from './components/Navigation.tsx';
 import { SearchBar } from './components/SearchBar.tsx';
@@ -323,7 +324,7 @@ const App: React.FC = () => {
               </div>
             </div>
           </header>
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-28 md:pt-36 pb-24">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-32 pb-28">
             {renderPage()}
           </div>
         </main>
@@ -371,4 +372,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-      

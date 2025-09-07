@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 
 type ActiveTab = 'home' | 'foryou' | 'watchlist' | 'movies' | 'tv' | 'collections' | 'people' | 'studios' | 'brands' | 'streaming' | 'networks' | 'game';
@@ -44,7 +45,7 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, theme = 'dark
     : 'w-full max-w-4xl p-2 glass-panel rounded-2xl';
 
   return (
-    <nav className={`${navClass} hidden md:block`}>
+    <nav className={`${navClass} hidden md:flex`}>
       <div className="flex items-center justify-center flex-wrap gap-2">
         <NavLink label="Home" href="#/home" isActive={activeTab === 'home'} theme={theme} />
         <NavLink label="For You" href="#/foryou" isActive={activeTab === 'foryou'} theme={theme} />
@@ -62,4 +63,3 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, theme = 'dark
     </nav>
   );
 };
-      
