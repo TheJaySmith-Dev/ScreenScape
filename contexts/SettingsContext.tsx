@@ -34,8 +34,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     const [rateLimit, setRateLimit] = useState<RateLimitState>(getInitialRateLimit());
     const [isInitialized, setIsInitialized] = useState(false);
 
-    const syncWithPreferences = useCallback(async (email: string) => {
-        const prefs = await api.getPreferences(email);
+    const syncWithPreferences = useCallback(async (uid: string) => {
+        const prefs = await api.getPreferences(uid);
         setTmdbApiKey(prefs.tmdbApiKey || null);
         setGeminiApiKey(prefs.geminiApiKey || null);
         if (prefs.rateLimitState) {
@@ -61,7 +61,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     useEffect(() => {
         if (currentUser) {
-            syncWithPreferences(currentUser.email);
+            syncWithPreferences(currentUser.uid);
         } else {
             syncWithLocalStorage();
         }
@@ -84,7 +84,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     const updateRateLimit = useCallback((newRateLimit: RateLimitState) => {
         setRateLimit(newRateLimit);
         if (currentUser) {
-            api.savePreferences(currentUser.email, { rateLimitState: newRateLimit });
+            api.savePreferences(currentUser.uid, { rateLimitState: newRateLimit });
         } else {
             localStorage.setItem(LOCAL_STORAGE_KEY_RATE_LIMIT, JSON.stringify(newRateLimit));
         }
@@ -114,7 +114,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         setTmdbApiKey(keys.tmdbKey);
         setGeminiApiKey(keys.geminiKey);
         if (currentUser) {
-            await api.savePreferences(currentUser.email, { tmdbApiKey: keys.tmdbKey, geminiApiKey: keys.geminiKey });
+            await api.savePreferences(currentUser.uid, { tmdbApiKey: keys.tmdbKey, geminiApiKey: keys.geminiKey });
         } else {
             localStorage.setItem(LOCAL_STORAGE_KEY_TMDB, keys.tmdbKey);
             localStorage.setItem(LOCAL_STORAGE_KEY_GEMINI, keys.geminiKey);

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSettings } from '../hooks/useSettings.ts';
+import { useAuth } from '../hooks/useAuth.ts';
 
 interface ApiKeyModalProps {
     onSave: (keys: { tmdbKey: string; geminiKey: string; }) => void;
@@ -8,6 +9,7 @@ interface ApiKeyModalProps {
 
 export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onSave, onClose }) => {
     const { tmdbApiKey, geminiApiKey } = useSettings();
+    const { currentUser } = useAuth();
     const [tmdbKey, setTmdbKey] = useState(tmdbApiKey || '');
     const [geminiKey, setGeminiKey] = useState(geminiApiKey || '');
     const [error, setError] = useState('');
@@ -25,13 +27,18 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onSave, onClose }) => 
         });
     };
 
+    const storageMessage = currentUser 
+      ? 'Your keys will be securely saved to your account and synced across devices.' 
+      : 'Your keys will be saved locally in this browser.';
+
     return (
         <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
             <div className="w-full max-w-lg text-center glass-panel p-8 rounded-3xl border-indigo-500/30">
                 <h2 className="text-2xl font-bold text-indigo-400 mb-4 text-glow" style={{ "--glow-color": "rgba(129, 140, 248, 0.4)" } as React.CSSProperties}>API Keys Required</h2>
-                <p className="text-gray-300 mb-6">
+                <p className="text-gray-300 mb-2">
                     This application requires API keys from TMDb (for movie data) and Google Gemini (for AI features). You can get them for free from their respective websites.
                 </p>
+                <p className="text-gray-400 text-sm mb-6">{storageMessage}</p>
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                     <input
                         type="password"

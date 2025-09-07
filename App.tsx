@@ -23,7 +23,6 @@ import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
 import { GuideModal } from './components/GuideModal.tsx';
 import { QuestionMarkCircleIcon } from './components/icons.tsx';
-import Callback from './pages/Callback/index.tsx';
 
 import * as mediaService from './services/mediaService.ts';
 import { popularStudios } from './services/studioService.ts';
@@ -35,18 +34,14 @@ import { people } from './services/peopleService.ts';
 import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Person, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide } from './types.ts';
 import { getViewingGuidesForBrand } from './services/aiService.ts';
 import { useSettings } from './hooks/useSettings.ts';
+import { useAuth } from './hooks/useAuth.ts';
+import { SignInPrompt } from './components/SignInPrompt.tsx';
 
 const getHashRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
 
 const App: React.FC = () => {
-    // Intercept the Logto callback route before rendering the main app layout.
-    // This allows the app to handle the OIDC redirect and then proceed with its
-    // normal hash-based routing for all other pages.
-    if (window.location.pathname === '/callback') {
-      return <Callback />;
-    }
-
     const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient } = useSettings();
+    const { currentUser, loading: authLoading } = useAuth();
     const [route, setRoute] = useState<string[]>(getHashRoute());
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -104,7 +99,7 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (isInitialized && tmdbApiKey) {
+        if (isInitialized && tmdbApiKey && currentUser) {
             fetchInitialData();
              // Fetch user location
             fetch('https://ipinfo.io/json?token=a0c105b32a98f7')
@@ -112,7 +107,7 @@ const App: React.FC = () => {
                 .then(data => setUserLocation({ name: data.country, code: data.country }))
                 .catch(() => setUserLocation({ name: 'United States', code: 'US' })); // Fallback
         }
-    }, [isInitialized, tmdbApiKey, fetchInitialData]);
+    }, [isInitialized, tmdbApiKey, fetchInitialData, currentUser]);
 
     const handleSelectMedia = useCallback(async (media: MediaDetails) => {
         setIsDetailLoading(true);
@@ -204,9 +199,18 @@ const App: React.FC = () => {
     const renderPage = () => {
         const page = route[0] || 'home';
 
-        if (!isInitialized) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
+        if (authLoading || !isInitialized) {
+            return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
+        }
+
+        if (!currentUser) {
+            return <SignInPrompt />;
+        }
         
-        if (!tmdbApiKey || !geminiApiKey) return <ApiKeyModal onSave={saveApiKeys} onClose={() => {}} />;
+        if (!tmdbApiKey || !geminiApiKey) {
+            return <ApiKeyModal onSave={saveApiKeys} onClose={() => {}} />;
+        }
+        
         if (isLoading) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
 
         switch(page) {
@@ -254,7 +258,7 @@ const App: React.FC = () => {
         const id = route[1];
         
         const fetchDataForPage = async () => {
-            if (!tmdbApiKey) return;
+            if (!tmdbApiKey || !currentUser) return;
             setIsLoading(true);
             try {
                 switch(page) {
@@ -290,7 +294,7 @@ const App: React.FC = () => {
         };
 
         fetchDataForPage();
-    }, [route, tmdbApiKey, userLocation]);
+    }, [route, tmdbApiKey, userLocation, currentUser]);
     
     return (
       <>

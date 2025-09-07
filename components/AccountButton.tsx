@@ -61,7 +61,7 @@ export const AccountButton: React.FC<AccountButtonProps> = ({ userLocation, them
         );
     }
 
-    const photoURL = currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName)}&background=4b5563&color=e5e7eb&rounded=true`;
+    const photoURL = currentUser.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.displayName || 'User')}&background=4b5563&color=e5e7eb&rounded=true`;
 
     return (
         <div className="relative" ref={menuRef}>
@@ -82,7 +82,7 @@ export const AccountButton: React.FC<AccountButtonProps> = ({ userLocation, them
                 <div className={dropdownClass} style={{ animationDuration: '200ms' }}>
                     <div className={`p-4 border-b ${borderClass}`}>
                         <p className={`font-semibold truncate ${textPrimaryClass}`}>{currentUser.displayName || 'User'}</p>
-                        <p className={`text-sm truncate ${textSecondaryClass}`}>{currentUser.email}</p>
+                        <p className={`text-sm truncate ${textSecondaryClass}`}>{currentUser.email || 'No email provided'}</p>
                     </div>
                     {userLocation?.name && (
                         <div className={`p-4 flex items-center gap-2 text-sm border-b ${borderClass} ${textSecondaryClass}`}>

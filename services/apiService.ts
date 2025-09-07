@@ -8,7 +8,7 @@ const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 // --- Preferences API ---
 
-const getPreferencesStorageKey = (email: string) => `screenscape_prefs_${email}`;
+const getPreferencesStorageKey = (uid: string) => `screenscape_prefs_${uid}`;
 
 export interface Preferences {
     likes: LikedItem[];
@@ -32,10 +32,10 @@ export const getTmdbApiKey = (): string | null => {
     return null;
 };
 
-export const getPreferences = async (email: string): Promise<Preferences> => {
+export const getPreferences = async (uid: string): Promise<Preferences> => {
     // In a real app, this would fetch from a backend database.
     await delay(200);
-    const key = getPreferencesStorageKey(email);
+    const key = getPreferencesStorageKey(uid);
     try {
         const stored = localStorage.getItem(key);
         if (stored) {
@@ -47,12 +47,12 @@ export const getPreferences = async (email: string): Promise<Preferences> => {
     return { likes: [], dislikes: [] };
 };
 
-export const savePreferences = async (email: string, prefs: Partial<Preferences>): Promise<void> => {
+export const savePreferences = async (uid: string, prefs: Partial<Preferences>): Promise<void> => {
     // In a real app, this would save to a backend database.
     await delay(100); 
-    const key = getPreferencesStorageKey(email);
+    const key = getPreferencesStorageKey(uid);
     try {
-        const existingPrefs = await getPreferences(email);
+        const existingPrefs = await getPreferences(uid);
         const newPrefs = { ...existingPrefs, ...prefs };
         localStorage.setItem(key, JSON.stringify(newPrefs));
     } catch (error) {

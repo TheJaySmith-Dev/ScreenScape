@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { useLogto } from '@logto/react';
+import { onAuthStateChanged, signInWithPopup, signOut, User as FirebaseUser } from 'firebase/auth';
+import { auth, googleProvider } from '../services/firebase.ts';
 import type { User, AuthContextType } from '../types.ts';
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -9,60 +10,46 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const { 
-    isAuthenticated, 
-    isLoading: isLogtoLoading, 
-    signIn, 
-    signOut, 
-    getIdTokenClaims 
-  } = useLogto();
-  
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const getUserInfo = async () => {
-      if (isAuthenticated) {
-        try {
-          if (typeof getIdTokenClaims === 'function') {
-            const claims = await getIdTokenClaims();
-            if (claims?.email && claims?.name) {
-              setCurrentUser({
-                email: claims.email,
-                displayName: claims.name,
-                photoURL: claims.picture,
-              });
-            }
-          }
-        } catch (error) {
-          console.error("Failed to get user info from Logto ID token:", error);
-          setCurrentUser(null);
-        }
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        setCurrentUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL,
+        });
       } else {
         setCurrentUser(null);
       }
-    };
-    
-    if (!isLogtoLoading) {
-        getUserInfo();
-    }
-  }, [isAuthenticated, isLogtoLoading, getIdTokenClaims]);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const login = useCallback(async () => {
-    if (typeof signIn === 'function') {
-      // Use a path-based redirect URI without a fragment (#) as required by Logto.
-      await signIn(`${window.location.origin}/callback`);
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error("Firebase sign-in error:", error);
     }
-  }, [signIn]);
+  }, []);
 
   const logout = useCallback(async () => {
-    if (typeof signOut === 'function') {
-      await signOut(window.location.origin);
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Firebase sign-out error:", error);
     }
-  }, [signOut]);
+  }, []);
 
   const value = { 
     currentUser, 
-    loading: isLogtoLoading, 
+    loading, 
     login, 
     logout 
   };

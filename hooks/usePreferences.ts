@@ -14,7 +14,7 @@ export const usePreferences = () => {
             if (currentUser) {
                 setIsLoading(true);
                 try {
-                    const prefs = await api.getPreferences(currentUser.email);
+                    const prefs = await api.getPreferences(currentUser.uid);
                     setLikes(prefs.likes);
                     setDislikes(prefs.dislikes);
                 } catch (error) {
@@ -35,7 +35,7 @@ export const usePreferences = () => {
     const savePreferences = useCallback(async (newLikes: LikedItem[], newDislikes: DislikedItem[]) => {
         if (currentUser) {
             try {
-                await api.savePreferences(currentUser.email, { likes: newLikes, dislikes: newDislikes });
+                await api.savePreferences(currentUser.uid, { likes: newLikes, dislikes: newDislikes });
             } catch (error) {
                 console.error("Failed to save preferences:", error);
             }

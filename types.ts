@@ -137,9 +137,10 @@ export interface ActorDetails extends Actor {
 
 // New/Modified types for local auth
 export interface User {
-  email: string;
-  displayName: string;
-  photoURL?: string;
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL?: string | null;
 }
 
 export interface AuthContextType {
