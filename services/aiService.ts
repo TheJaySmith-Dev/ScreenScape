@@ -18,14 +18,17 @@ const aiResponseSchema = {
         },
         search_params: {
             type: Type.OBJECT,
-            description: "Strictly structured search parameters extracted from the user's query. Every parameter here is a mandatory 'AND' condition.",
+            description: "Structured search parameters based on the classified intent.",
             properties: {
-                keywords: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Specific keywords from the query that must be present." },
+                direct_search_query: {
+                    type: Type.STRING,
+                    description: "For 'direct_search' intent ONLY. This is the cleaned-up search term for the TMDb API. E.g., for 'movies with Marty McFly', this should be 'Back to the Future'."
+                },
+                keywords: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Specific keywords from the query. Used for 'vague' intent or as a fallback." },
                 genres: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Genres mentioned. The results must match ALL specified genres." },
                 actors: { type: Type.ARRAY, items: { type: Type.STRING }, description: "A list of actor names. The results MUST star ALL actors listed." },
                 directors: { type: Type.ARRAY, items: { type: Type.STRING }, description: "A list of director names. The results MUST be directed by ALL directors listed." },
-                companies: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Production companies or studios mentioned (e.g., 'Marvel Studios', 'A24', 'Walt Disney Pictures'). The results MUST be produced by ALL companies listed." },
-                characters: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Character names mentioned. Use this for specific character searches." },
+                companies: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Production companies or studios mentioned (e.g., 'Marvel Studios', 'A24'). The results MUST be produced by ALL companies listed." },
                 year_from: { type: Type.INTEGER, description: "The starting year for a required date range." },
                 year_to: { type: Type.INTEGER, description: "The ending year for a required date range." },
                 sort_by: { type: Type.STRING, description: "A sort order. Can be 'popularity.desc', 'release_date.desc', or 'vote_average.desc'." },
@@ -36,11 +39,13 @@ const aiResponseSchema = {
     required: ['intent', 'title', 'search_params']
 };
 
+
 /**
  * Uses Gemini to parse a natural language query into structured search parameters,
- * then uses TMDb's discovery endpoint for more accurate recommendations.
+ * then uses TMDb for more accurate recommendations. Includes robust fallbacks.
  */
 export const getAiRecommendations = async (query: string, aiClient: GoogleGenAI): Promise<{ results: MediaDetails[], title: string }> => {
+    let aiResult;
     try {
         const response = await aiClient.models.generateContent({
             model,
@@ -49,14 +54,23 @@ export const getAiRecommendations = async (query: string, aiClient: GoogleGenAI)
             config: {
                 systemInstruction: `You are a movie search query analyzer. Your job is to classify the user's request and extract parameters into a strict JSON format.
 
+**Key Entity Mapping Rules (MUST FOLLOW for 'discover' intent):**
+- "Marvel" -> company "Marvel Studios"
+- "Disney" -> company "Walt Disney Pictures"
+- "Warner Bros" -> "Warner Bros. Pictures"
+- "Universal" -> "Universal Pictures"
+- "Star Wars" -> company "Lucasfilm Ltd."
+- "A24" -> company "A24"
+
 1.  **Analyze Intent:**
-    *   \`direct_search\`: If the user is asking for a specific, known movie or TV show title (e.g., "Back to the Future", "The Office", "The Avengers from 1961").
-    *   \`discover\`: If the user is asking for recommendations using multiple filters (e.g., "Marvel movies starring Chris Evans", "horror movies from the 80s", "A24 comedies").
-    *   \`vague\`: If the query is based on a mood, vibe, or concept that doesn't map to concrete database fields (e.g., "sad movies", "something to watch on a rainy day").
+    *   \`direct_search\`: Use this for queries about a **specific title** (e.g., "Back to the Future from 1985") or a **specific character** (e.g., "movies with Marty McFly"). This intent is for finding a *known entity*.
+    *   \`discover\`: Use this ONLY when the user is asking for a list of media based on combined, generic criteria and does NOT name a specific title (e.g., "action movies from the 90s", "A24 horror films", "movies starring Tom Hanks and directed by Spielberg").
+    *   \`vague\`: Use this for mood, vibe, or conceptual queries (e.g., "sad movies", "something to watch on a rainy day").
 
 2.  **Populate Parameters:**
-    *   For \`direct_search\` or \`vague\` intents, populate \`search_params.keywords\` with the key terms from the user's query. Leave other \`search_params\` fields empty.
-    *   For \`discover\` intent, extract all specific criteria into their respective fields in \`search_params\`. Treat every condition as a mandatory 'AND' requirement. Be precise with company names (e.g., 'Marvel Studios' for Marvel, 'Walt Disney Pictures' for Disney). If you identify an actor, movie title, or brand, add them to the keywords as well for a hybrid search.
+    *   If \`intent\` is \`direct_search\`, your primary job is to determine the official media title the user is referring to. Put this cleaned-up title in the \`direct_search_query\` field. For "Movies with the character Marty McFly", \`direct_search_query\` should be "Back to the Future". For "Back To The Future from 1985", it should be "Back to the Future". IGNORE all other parameter fields for this intent.
+    *   If \`intent\` is \`discover\`, extract all specific criteria into their respective fields (\`genres\`, \`actors\`, etc.). Do NOT use \`direct_search_query\`.
+    *   If \`intent\` is \`vague\`, populate \`keywords\` with the key search terms.
 
 3.  **Generate Title:**
     *   Always create a descriptive \`title\` for the results page that reflects the query.
@@ -69,44 +83,39 @@ export const getAiRecommendations = async (query: string, aiClient: GoogleGenAI)
         });
 
         const responseText = response.text.trim();
-        const aiResult = JSON.parse(responseText);
-        
-        const { intent, search_params, title } = aiResult;
-        
-        // Use discover only if the intent is 'discover' and there are specific filterable parameters.
-        const hasSpecificFilters = search_params && (
-            search_params.genres?.length ||
-            search_params.actors?.length ||
-            search_params.directors?.length ||
-            search_params.companies?.length ||
-            search_params.year_from ||
-            search_params.year_to
-        );
-
-        if (intent === 'discover' && hasSpecificFilters) {
-            console.log("AI intent is 'discover', using precise filtering.");
-            const mediaResults = await discoverMediaFromAi(search_params);
-             if (mediaResults.length === 0) {
-                return { results: [], title: `No results found matching all criteria for "${query}"` };
-            }
-            return { results: mediaResults, title: title };
-        } else {
-            // For 'direct_search', 'vague', or 'discover' with only keywords, use a standard text search.
-            console.log(`AI intent is '${intent}', using standard text search.`);
-            const searchQuery = search_params?.keywords?.join(' ') || query;
-            const mediaResults = await searchMedia(searchQuery);
-            return { results: mediaResults, title: title || `Results for "${searchQuery}"` };
-        }
-
+        aiResult = JSON.parse(responseText);
     } catch (error) {
-        console.error('Error processing AI recommendations. Falling back to simple search.', error);
-        // If the AI parsing fails for any reason, fall back to a simple, reliable text search.
+        console.error("AI parsing failed. Falling back to simple text search.", error);
         const fallbackResults = await searchMedia(query);
-        return { 
-            results: fallbackResults, 
-            title: `Results for "${query}"` 
-        };
+        return { results: fallbackResults, title: `Results for "${query}"` };
     }
+
+    const { intent, search_params, title } = aiResult;
+    let mediaResults: MediaDetails[] = [];
+    let resultTitle = title || `Results for "${query}"`;
+
+    if (intent === 'direct_search') {
+        const searchQuery = search_params?.direct_search_query || query;
+        mediaResults = await searchMedia(searchQuery);
+        resultTitle = title || `Results for "${searchQuery}"`;
+    } else if (intent === 'discover') {
+        mediaResults = await discoverMediaFromAi(search_params);
+        if (mediaResults.length === 0) {
+            console.warn(`Discover search for "${query}" returned no results. Falling back to text search.`);
+            mediaResults = await searchMedia(query);
+            resultTitle = `Showing results for "${query}"`;
+        }
+    } else { // 'vague' or any other fallback
+        const searchQuery = search_params?.keywords?.join(' ') || query;
+        mediaResults = await searchMedia(searchQuery);
+        resultTitle = title || `Results for "${searchQuery}"`;
+    }
+
+    if (mediaResults.length === 0) {
+        throw new Error(`No results found for "${query}". Try being more specific!`);
+    }
+
+    return { results: mediaResults, title: resultTitle };
 };
 
 const viewingGuideSchema = {

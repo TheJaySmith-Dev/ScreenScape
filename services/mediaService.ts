@@ -6,6 +6,25 @@ import { fetchBoxOffice } from './omdbService.ts';
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 const entityCache = new Map<string, number>();
 
+// Alias map to handle common ambiguous names and ensure correct ID lookup.
+const companyAliasMap: { [key: string]: string } = {
+    'marvel': 'marvel studios',
+    'disney': 'walt disney pictures',
+    'warner bros': 'warner bros. pictures',
+    'universal': 'universal pictures',
+    'lucasfilm': 'lucasfilm ltd.',
+    'star wars': 'lucasfilm ltd.',
+    '20th century fox': '20th century studios',
+};
+
+const genreMap: { [key: string]: number } = {
+    "action": 28, "adventure": 12, "animation": 16, "comedy": 35, "crime": 80,
+    "documentary": 99, "drama": 18, "family": 10751, "fantasy": 14, "history": 36,
+    "horror": 27, "music": 10402, "mystery": 9648, "romance": 10749,
+    "science fiction": 878, "sci-fi": 878, "scifi": 878,
+    "tv movie": 10770, "thriller": 53, "war": 10752, "western": 37
+};
+
 export const fetchApi = async <T,>(endpoint: string): Promise<T> => {
     const apiKey = getTmdbApiKey();
     if (!apiKey) {
@@ -217,44 +236,42 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
 };
 
 const getEntityId = async (name: string, type: 'genre' | 'company' | 'person' | 'keyword'): Promise<number | null> => {
-    const cacheKey = `${type}:${name.toLowerCase()}`;
+    let searchName = name;
+    // For companies, use the alias map to find the more specific, correct name before searching.
+    if (type === 'company') {
+        const normalizedName = name.toLowerCase();
+        if (companyAliasMap[normalizedName]) {
+            searchName = companyAliasMap[normalizedName];
+        }
+    }
+
+    const cacheKey = `${type}:${searchName.toLowerCase()}`;
     if (entityCache.has(cacheKey)) {
         return entityCache.get(cacheKey) ?? null;
     }
 
-    let endpoint = '';
-    switch (type) {
-        case 'genre':
-            const genreMap: { [key: string]: number } = {
-                "action": 28, "adventure": 12, "animation": 16, "comedy": 35, "crime": 80,
-                "documentary": 99, "drama": 18, "family": 10751, "fantasy": 14, "history": 36,
-                "horror": 27, "music": 10402, "mystery": 9648, "romance": 10749,
-                "science fiction": 878, "tv movie": 10770, "thriller": 53, "war": 10752, "western": 37
-            };
-            const genreId = genreMap[name.toLowerCase()];
-            if (genreId) {
-                entityCache.set(cacheKey, genreId);
-                return genreId;
-            }
-            return null;
-        case 'company':
-        case 'person':
-        case 'keyword':
-            endpoint = `/search/${type}?query=${encodeURIComponent(name)}`;
-            break;
-        default:
-            return null;
+    if (type === 'genre') {
+        const genreId = genreMap[searchName.toLowerCase()];
+        if (genreId) {
+            entityCache.set(cacheKey, genreId);
+            return genreId;
+        }
+        return null;
     }
 
+    const endpoint = `/search/${type}?query=${encodeURIComponent(searchName)}`;
+
     try {
-        const data = await fetchApi<{ results: { id: number }[] }>(endpoint);
+        const data = await fetchApi<{ results: { id: number; name: string }[] }>(endpoint);
         if (data.results && data.results.length > 0) {
-            const id = data.results[0].id;
+            // Prioritize an exact, case-insensitive match to prevent ambiguity (e.g., "Marvel" vs "Marvel Studios").
+            const exactMatch = data.results.find(result => result.name.toLowerCase() === searchName.toLowerCase());
+            const id = exactMatch ? exactMatch.id : data.results[0].id;
             entityCache.set(cacheKey, id);
             return id;
         }
     } catch (error) {
-        console.error(`Could not find ID for ${type}: ${name}`, error);
+        console.error(`Could not find ID for ${type}: ${searchName}`, error);
     }
     return null;
 };
