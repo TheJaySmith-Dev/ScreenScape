@@ -42,16 +42,17 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
         const localGeminiKey = localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI);
         
-        setTmdbApiKey(localTmdbKey);
+        if (localTmdbKey) {
+            setTmdbApiKey(localTmdbKey);
+            // Immediately sync with the apiService to prevent race conditions
+            setLocalTmdbApiKey(localTmdbKey);
+        }
+        
         setGeminiApiKey(localGeminiKey);
         setRateLimit(getInitialRateLimit());
         
         setIsInitialized(true);
     }, []);
-
-    useEffect(() => {
-        setLocalTmdbApiKey(tmdbApiKey);
-    }, [tmdbApiKey]);
 
     useEffect(() => {
         if (geminiApiKey) {
@@ -70,6 +71,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     const saveApiKeys = useCallback((keys: { tmdbKey: string; geminiKey: string }) => {
         setTmdbApiKey(keys.tmdbKey);
+        setLocalTmdbApiKey(keys.tmdbKey); // Sync immediately
         setGeminiApiKey(keys.geminiKey);
         localStorage.setItem(LOCAL_STORAGE_KEY_TMDB, keys.tmdbKey);
         localStorage.setItem(LOCAL_STORAGE_KEY_GEMINI, keys.geminiKey);
@@ -107,6 +109,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         const newRateLimit = { count: 0, resetTime: newResetTime };
 
         setTmdbApiKey(null);
+        setLocalTmdbApiKey(null); // Sync immediately
         setGeminiApiKey(null);
         setAiClient(null);
         setRateLimit(newRateLimit);

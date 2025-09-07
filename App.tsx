@@ -21,8 +21,7 @@ import { ComingSoonPage } from './components/ComingSoonPage.tsx';
 import { ApiKeyModal } from './components/ApiKeyModal.tsx';
 import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
-import { GuideModal } from './components/GuideModal.tsx';
-import { QuestionMarkCircleIcon, SparklesIcon } from './components/icons.tsx';
+import { SparklesIcon } from './components/icons.tsx';
 import { MobileNavigation } from './components/MobileNavigation.tsx';
 import { MobileMenuModal } from './components/MobileMenuModal.tsx';
 
@@ -66,7 +65,6 @@ const App: React.FC = () => {
     const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
     const [isAiSearchOpen, setIsAiSearchOpen] = useState(false);
     const [isViewingGuideModalOpen, setIsViewingGuideModalOpen] = useState(false);
-    const [isAppGuideOpen, setIsAppGuideOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [brandGuides, setBrandGuides] = useState<ViewingGuide[]>([]);
     const [isGuideLoading, setIsGuideLoading] = useState(false);
@@ -335,9 +333,6 @@ const App: React.FC = () => {
           <header className="fixed top-0 left-0 right-0 z-40 p-4">
               <div className="container mx-auto flex items-center justify-between gap-4">
                   <div className="flex-1 flex justify-start">
-                     <button onClick={() => setIsAppGuideOpen(true)} className="p-2 glass-panel rounded-full hover:bg-white/5 transition-colors" aria-label="Open App Guide">
-                          <QuestionMarkCircleIcon className="w-6 h-6 text-gray-300" />
-                      </button>
                   </div>
                   <div className="flex-1 hidden md:flex justify-center">
                     {/* FIX: Cast route value to 'any' to satisfy the 'ActiveTab' type, as the type is not exported. */}
@@ -375,10 +370,6 @@ const App: React.FC = () => {
             brandName={selectedBrand?.name || ''}
             guides={brandGuides}
             onSelectMedia={handleSelectMedia}
-          />
-          <GuideModal 
-            isOpen={isAppGuideOpen}
-            onClose={() => setIsAppGuideOpen(false)}
           />
 
           <MobileNavigation 
