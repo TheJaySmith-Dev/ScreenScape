@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useSettings } from '../hooks/useSettings.ts';
 import { usePreferences } from '../hooks/usePreferences.ts';
@@ -31,9 +32,15 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
     return (
         <>
             <div className="w-full max-w-7xl fade-in">
-                <header className="text-center md:text-left mb-12">
-                    <h1 className="text-4xl font-bold text-white">MyScape</h1>
-                    <p className="text-lg text-gray-400">Your local hub for settings and liked items.</p>
+                <header className="flex flex-col md:flex-row justify-between md:items-center gap-4 text-center md:text-left mb-12">
+                    <div>
+                        <h1 className="text-4xl font-bold text-white">MyScape</h1>
+                        <p className="text-lg text-gray-400">Your local hub for settings and liked items.</p>
+                    </div>
+                    <a href="#/foryou" className="flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-semibold transition-all duration-300">
+                        <ThumbsUpIcon className="w-6 h-6 text-green-400" />
+                        <span>For You Recommendations</span>
+                    </a>
                 </header>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">

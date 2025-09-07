@@ -1,6 +1,6 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { Navigation } from './components/Navigation.tsx';
 import { SearchBar } from './components/SearchBar.tsx';
 import { HeroSection } from './components/HeroSection.tsx';
 import { MediaRow } from './components/MediaRow.tsx';
@@ -21,7 +21,7 @@ import { ComingSoonPage } from './components/ComingSoonPage.tsx';
 import { ApiKeyModal } from './components/ApiKeyModal.tsx';
 import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
-import { SparklesIcon } from './components/icons.tsx';
+import { SparklesIcon, UserIcon } from './components/icons.tsx';
 import { MobileNavigation } from './components/MobileNavigation.tsx';
 import { MobileMenuModal } from './components/MobileMenuModal.tsx';
 
@@ -37,6 +37,19 @@ import { getViewingGuidesForBrand } from './services/aiService.ts';
 import { useSettings } from './hooks/useSettings.ts';
 
 const getHashRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
+
+const NavLink: React.FC<{ href: string; label: string; isActive: boolean; }> = ({ href, label, isActive }) => (
+    <a
+        href={href}
+        className={`px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${
+            isActive
+                ? 'bg-white/10 text-white'
+                : 'text-gray-300 hover:bg-white/5 hover:text-white'
+        }`}
+    >
+        {label}
+    </a>
+);
 
 const App: React.FC = () => {
     const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient } = useSettings();
@@ -316,7 +329,6 @@ const App: React.FC = () => {
                 }
                 return <div className="text-center">Loading actor...</div>;
 
-            // FIX: Removed duplicate 'streaming' case and separated grouped cases to use correct content state.
             case 'studio':
                 return <RecommendationGrid recommendations={studioContent} onSelect={handleSelectMedia} />;
             case 'network':
@@ -328,22 +340,47 @@ const App: React.FC = () => {
         }
     };
 
+    const activeRoute = route[0] || 'home';
+
     return (
       <div className="min-h-screen">
           <header className="fixed top-0 left-0 right-0 z-40 p-4">
-              <div className="container mx-auto flex items-center justify-between gap-4">
-                  <div className="flex-1 flex justify-start">
+              {/* Desktop Header */}
+              <div className="container mx-auto hidden md:flex items-center justify-between gap-4">
+                  <div className="flex items-center justify-start gap-1 w-[450px]">
+                      <NavLink href="#/home" label="Home" isActive={activeRoute === 'home'} />
+                      <NavLink href="#/movies" label="Movies" isActive={activeRoute === 'movies'} />
+                      <NavLink href="#/tv" label="TV" isActive={activeRoute === 'tv'} />
+                      <NavLink href="#/collections" label="Soon" isActive={activeRoute === 'collections'} />
+                      <NavLink href="#/people" label="Talent" isActive={activeRoute === 'people'} />
                   </div>
-                  <div className="flex-1 hidden md:flex justify-center">
-                    {/* FIX: Cast route value to 'any' to satisfy the 'ActiveTab' type, as the type is not exported. */}
-                    <Navigation activeTab={(route[0] || 'home') as any} />
-                  </div>
-                  <div className="flex-1 flex justify-end items-center gap-3">
-                      <button onClick={() => setIsAiSearchOpen(true)} className="p-2 glass-panel rounded-full hover:bg-white/5 transition-colors" aria-label="Open AI Search">
-                          <SparklesIcon className="w-6 h-6 text-indigo-400" />
+                  
+                  <div className="flex flex-col items-center gap-2">
+                      <button onClick={() => setIsAiSearchOpen(true)} className="flex w-full items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-full transition-colors" aria-label="Open AI Search">
+                          <SparklesIcon className="w-5 h-5" />
+                          <span>AI Search</span>
                       </button>
                       <SearchBar onSearch={handleSearch} isLoading={isLoading} />
                   </div>
+
+                  <div className="flex items-center justify-end gap-1 w-[450px]">
+                      <NavLink href="#/game" label="CineQuiz" isActive={activeRoute === 'game'} />
+                      <NavLink href="#/studios" label="Studios" isActive={activeRoute === 'studios'} />
+                      <NavLink href="#/brands" label="Brands" isActive={activeRoute === 'brands'} />
+                      <NavLink href="#/streaming" label="Streaming" isActive={activeRoute === 'streaming'} />
+                      <NavLink href="#/networks" label="Networks" isActive={activeRoute === 'networks'} />
+                      <a href="#/myscape" className={`ml-4 p-2 rounded-full transition-colors ${activeRoute === 'myscape' ? 'bg-white/10' : 'bg-black/20 hover:bg-white/5'}`} aria-label="MyScape">
+                          <UserIcon className="w-6 h-6" />
+                      </a>
+                  </div>
+              </div>
+
+              {/* Mobile Header */}
+              <div className="container mx-auto flex md:hidden items-center justify-end gap-3">
+                  <button onClick={() => setIsAiSearchOpen(true)} className="p-2 glass-panel rounded-full hover:bg-white/5 transition-colors" aria-label="Open AI Search">
+                      <SparklesIcon className="w-6 h-6 text-indigo-400" />
+                  </button>
+                  <SearchBar onSearch={handleSearch} isLoading={isLoading} />
               </div>
           </header>
           
