@@ -15,20 +15,22 @@ const getInitialRateLimit = (): RateLimitState => {
         if (stored) {
             const state: RateLimitState = JSON.parse(stored);
             if (new Date().getTime() > state.resetTime) {
+                // If the stored reset time is in the past, reset the counter.
                 return { count: 0, resetTime: new Date().getTime() + 24 * 60 * 60 * 1000 };
             }
             return state;
         }
     } catch (e) {
-        console.error("Failed to parse rate limit state", e);
+        console.error("Failed to parse rate limit state from local storage", e);
     }
+    // Default state if nothing is stored or parsing fails.
     return { count: 0, resetTime: new Date().getTime() + 24 * 60 * 60 * 1000 };
 };
 
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { currentUser } = useAuth();
+    const { currentUser, loading: authLoading } = useAuth();
     const [tmdbApiKey, setTmdbApiKey] = useState<string | null>(null);
     const [geminiApiKey, setGeminiApiKey] = useState<string | null>(null);
     const [aiClient, setAiClient] = useState<GoogleGenAI | null>(null);
@@ -36,70 +38,79 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     const [isInitialized, setIsInitialized] = useState(false);
 
     useEffect(() => {
+        // This effect ensures that any service outside of React that needs the
+        // TMDb API key has access to the most current one.
         setLocalTmdbApiKey(tmdbApiKey);
     }, [tmdbApiKey]);
 
-    const syncWithPreferences = useCallback(async (uid: string) => {
-        const remotePrefs = await api.getPreferences(uid);
-        const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
-        const localGeminiKey = localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI);
-
-        const finalTmdbKey = remotePrefs.tmdbApiKey || localTmdbKey || null;
-        const finalGeminiKey = remotePrefs.geminiApiKey || localGeminiKey || null;
-        
-        const prefsToSave: Partial<api.Preferences> = {};
-        let needsSave = false;
-
-        // Migrate local keys to remote if remote is empty
-        if (localTmdbKey && !remotePrefs.tmdbApiKey) {
-            prefsToSave.tmdbApiKey = localTmdbKey;
-            needsSave = true;
-        }
-        if (localGeminiKey && !remotePrefs.geminiApiKey) {
-            prefsToSave.geminiApiKey = localGeminiKey;
-            needsSave = true;
+    useEffect(() => {
+        // This is the main synchronization logic. It waits until Firebase has confirmed
+        // the user's authentication status (`authLoading` is false) before running.
+        if (authLoading) {
+            return;
         }
 
-        setTmdbApiKey(finalTmdbKey);
-        setGeminiApiKey(finalGeminiKey);
-        
-        const now = new Date().getTime();
-        let currentRateLimit = remotePrefs.rateLimitState!;
+        const syncSettings = async () => {
+            setIsInitialized(false); // Mark as not ready while we sync
 
-        if (now > currentRateLimit.resetTime) {
-            currentRateLimit = { count: 0, resetTime: now + 24 * 60 * 60 * 1000 };
-            prefsToSave.rateLimitState = currentRateLimit;
-            needsSave = true;
-        }
-        setRateLimit(currentRateLimit);
+            if (currentUser) {
+                // --- USER IS LOGGED IN ---
+                const remotePrefs = await api.getPreferences(currentUser.uid);
+                const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
+                const localGeminiKey = localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI);
 
-        if (needsSave) {
-            await api.savePreferences(uid, prefsToSave);
-        }
-        
-        setIsInitialized(true);
-    }, []);
+                let finalTmdbKey = remotePrefs.tmdbApiKey || null;
+                let finalGeminiKey = remotePrefs.geminiApiKey || null;
+                
+                const prefsToSave: Partial<api.Preferences> = {};
+                let needsRemoteSave = false;
 
-    const syncWithLocalStorage = useCallback(() => {
-        const tmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
-        const geminiKey = localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI);
-        setTmdbApiKey(tmdbKey);
-        setGeminiApiKey(geminiKey);
-        setRateLimit(getInitialRateLimit());
-        setIsInitialized(true);
-    }, []);
+                // **Smart Merge Logic:** If cloud is empty but local exists, migrate local to cloud.
+                if (!finalTmdbKey && localTmdbKey) {
+                    finalTmdbKey = localTmdbKey;
+                    prefsToSave.tmdbApiKey = localTmdbKey;
+                    needsRemoteSave = true;
+                }
+                if (!finalGeminiKey && localGeminiKey) {
+                    finalGeminiKey = localGeminiKey;
+                    prefsToSave.geminiApiKey = localGeminiKey;
+                    needsRemoteSave = true;
+                }
+                
+                // Set the determined keys in the app's state.
+                setTmdbApiKey(finalTmdbKey);
+                setGeminiApiKey(finalGeminiKey);
+                
+                // Sync Rate Limit state from the cloud, resetting if expired.
+                const now = new Date().getTime();
+                let currentRateLimit = remotePrefs.rateLimitState || getInitialRateLimit();
+                if (now > currentRateLimit.resetTime) {
+                    currentRateLimit = { count: 0, resetTime: now + 24 * 60 * 60 * 1000 };
+                    prefsToSave.rateLimitState = currentRateLimit;
+                    needsRemoteSave = true;
+                }
+                setRateLimit(currentRateLimit);
+
+                // If we migrated local keys or reset the rate limit, save back to Firestore.
+                if (needsRemoteSave) {
+                    await api.savePreferences(currentUser.uid, prefsToSave);
+                }
+            } else {
+                // --- USER IS LOGGED OUT ---
+                // Load all settings directly from local browser storage.
+                setTmdbApiKey(localStorage.getItem(LOCAL_STORAGE_KEY_TMDB));
+                setGeminiApiKey(localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI));
+                setRateLimit(getInitialRateLimit());
+            }
+
+            setIsInitialized(true); // Signal that settings are loaded and app can render.
+        };
+
+        syncSettings();
+    }, [currentUser, authLoading]);
 
     useEffect(() => {
-        if (currentUser) {
-            syncWithPreferences(currentUser.uid);
-        } else {
-            // When user logs out, or for anonymous users.
-            setIsInitialized(false); // Reset initialization state to force re-load
-            syncWithLocalStorage();
-        }
-    }, [currentUser, syncWithPreferences, syncWithLocalStorage]);
-
-    useEffect(() => {
+        // Initialize the Gemini AI client whenever the API key changes.
         if (geminiApiKey) {
             try {
                 const client = new GoogleGenAI({ apiKey: geminiApiKey });
@@ -113,35 +124,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
     }, [geminiApiKey]);
 
-    const updateRateLimit = useCallback((newRateLimit: RateLimitState) => {
-        setRateLimit(newRateLimit);
-        if (currentUser) {
-            api.savePreferences(currentUser.uid, { rateLimitState: newRateLimit });
-        } else {
-            localStorage.setItem(LOCAL_STORAGE_KEY_RATE_LIMIT, JSON.stringify(newRateLimit));
-        }
-    }, [currentUser]);
-
-    const canMakeRequest = useCallback(() => {
-        const now = new Date().getTime();
-        if (now > rateLimit.resetTime) {
-            return { canRequest: true, resetTime: null };
-        }
-        if (rateLimit.count < 500) {
-            return { canRequest: true, resetTime: null };
-        }
-        return { canRequest: false, resetTime: rateLimit.resetTime };
-    }, [rateLimit]);
-
-    const incrementRequestCount = useCallback(() => {
-        const now = new Date().getTime();
-        if (now > rateLimit.resetTime) {
-            updateRateLimit({ count: 1, resetTime: now + 24 * 60 * 60 * 1000 });
-        } else {
-            updateRateLimit({ ...rateLimit, count: rateLimit.count + 1 });
-        }
-    }, [rateLimit, updateRateLimit]);
-
     const saveApiKeys = useCallback(async (keys: { tmdbKey: string; geminiKey: string }) => {
         setTmdbApiKey(keys.tmdbKey);
         setGeminiApiKey(keys.geminiKey);
@@ -152,18 +134,50 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
             localStorage.setItem(LOCAL_STORAGE_KEY_GEMINI, keys.geminiKey);
         }
     }, [currentUser]);
-    
+
+    const incrementRequestCount = useCallback(() => {
+        setRateLimit(currentRateLimit => {
+            const now = new Date().getTime();
+            let newRateLimit: RateLimitState;
+            if (now > currentRateLimit.resetTime) {
+                newRateLimit = { count: 1, resetTime: now + 24 * 60 * 60 * 1000 };
+            } else {
+                newRateLimit = { ...currentRateLimit, count: currentRateLimit.count + 1 };
+            }
+            
+            // Persist the new rate limit state.
+            if (currentUser) {
+                api.savePreferences(currentUser.uid, { rateLimitState: newRateLimit });
+            } else {
+                localStorage.setItem(LOCAL_STORAGE_KEY_RATE_LIMIT, JSON.stringify(newRateLimit));
+            }
+            return newRateLimit;
+        });
+    }, [currentUser]);
+
+    const canMakeRequest = useCallback(() => {
+        const now = new Date().getTime();
+        // Check for stale rate limit state and allow request if it should have been reset.
+        if (now > rateLimit.resetTime) {
+            return { canRequest: true, resetTime: null };
+        }
+        if (rateLimit.count < 500) {
+            return { canRequest: true, resetTime: null };
+        }
+        return { canRequest: false, resetTime: rateLimit.resetTime };
+    }, [rateLimit]);
+
     const clearAllSettings = useCallback(() => {
+        const newRateLimit = { count: 0, resetTime: new Date().getTime() + 24 * 60 * 60 * 1000 };
         setTmdbApiKey(null);
         setGeminiApiKey(null);
         setAiClient(null);
-        const newRateLimit = { count: 0, resetTime: new Date().getTime() + 24 * 60 * 60 * 1000 };
         setRateLimit(newRateLimit);
-        // This function is for a manual "clear" action. The logout flow is handled by useEffect.
-        // It should clear both local storage and remote if user is logged in.
+        
         localStorage.removeItem(LOCAL_STORAGE_KEY_TMDB);
         localStorage.removeItem(LOCAL_STORAGE_KEY_GEMINI);
         localStorage.removeItem(LOCAL_STORAGE_KEY_RATE_LIMIT);
+        
         if (currentUser) {
              api.savePreferences(currentUser.uid, { tmdbApiKey: '', geminiApiKey: '', rateLimitState: newRateLimit });
         }
