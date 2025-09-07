@@ -55,8 +55,9 @@ export const getAiRecommendations = async (query: string, aiClient: GoogleGenAI)
         const searchParamsObject = aiResult.search_params;
         
         if (!searchParamsObject || Object.keys(searchParamsObject).length === 0) {
-            // AI couldn't extract any specific parameters, so fall back to a general search for vague queries.
-            console.log("AI could not parse specific params, falling back to text search.");
+            // AI couldn't extract any specific parameters. This query might be too vague for a structured search.
+            // Fall back to a general text search in this specific case.
+            console.log("AI could not parse specific params, falling back to text search for vague query.");
             const fallbackResults = await searchMedia(query);
             return { results: fallbackResults, title: `Results for "${query}"` };
         }
@@ -64,19 +65,21 @@ export const getAiRecommendations = async (query: string, aiClient: GoogleGenAI)
         const searchParams: AiSearchParams = { ...searchParamsObject, original_query: query };
         const mediaResults = await discoverMediaFromAi(searchParams);
         
-        // If the structured search yields no results, it's more accurate to say so
-        // than to fall back to a broad, inaccurate search.
         if (mediaResults.length === 0) {
-            return { results: [], title: `Couldn't find anything matching all criteria for "${query}"` };
+            // The specific, structured search yielded no results. This is an accurate outcome.
+            return { results: [], title: `No results found matching all criteria for "${query}"` };
         }
         
         return { results: mediaResults, title: aiResult.title };
 
     } catch (error) {
-        console.error('Error getting AI recommendations, falling back to text search:', error);
-        // Catch-all fallback for JSON parsing errors or other unexpected issues.
-        const fallbackResults = await searchMedia(query);
-        return { results: fallbackResults, title: `Results for "${query}"` };
+        console.error('Error processing AI recommendations. The structured search failed.', error);
+        // If the high-precision path fails due to an error (e.g., malformed AI response),
+        // it's better to inform the user than to return inaccurate results from a broad fallback.
+        return { 
+            results: [], 
+            title: `Could not process the request: "${query}". Please try rephrasing.` 
+        };
     }
 };
 

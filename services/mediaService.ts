@@ -336,10 +336,8 @@ export const discoverMediaFromAi = async (params: AiSearchParams): Promise<Media
             }
         }
         
-        if (combined.length === 0 && params.original_query) {
-           return searchMedia(params.original_query);
-        }
-
+        // If the precise search yields no results, return an empty array.
+        // This is more accurate than falling back to a broad search that might include irrelevant items.
         return combined;
 
     } catch (error) {
