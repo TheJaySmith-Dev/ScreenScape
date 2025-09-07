@@ -20,8 +20,9 @@ import { ActorPage } from './components/ActorPage.tsx';
 import { ComingSoonPage } from './components/ComingSoonPage.tsx';
 import { ApiKeyModal } from './components/ApiKeyModal.tsx';
 import { AiSearchModal } from './components/AiSearchModal.tsx';
+import { SearchModal } from './components/SearchModal.tsx';
 import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
-import { SparklesIcon, UserIcon } from './components/icons.tsx';
+import { SparklesIcon, UserIcon, SearchIcon } from './components/icons.tsx';
 import { MobileNavigation } from './components/MobileNavigation.tsx';
 import { MobileMenuModal } from './components/MobileMenuModal.tsx';
 
@@ -76,6 +77,7 @@ const App: React.FC = () => {
     const [selectedItem, setSelectedItem] = useState<MediaDetails | CollectionDetails | null>(null);
     const [selectedActor, setSelectedActor] = useState<ActorDetails | null>(null);
     const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isAiSearchOpen, setIsAiSearchOpen] = useState(false);
     const [isViewingGuideModalOpen, setIsViewingGuideModalOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -188,6 +190,7 @@ const App: React.FC = () => {
             return;
         }
         setIsLoading(true);
+        setIsSearchOpen(false);
         try {
             const results = await mediaService.searchMedia(query);
             setSearchResults(results);
@@ -355,12 +358,14 @@ const App: React.FC = () => {
                       <NavLink href="#/people" label="Talent" isActive={activeRoute === 'people'} />
                   </div>
                   
-                  <div className="flex flex-col items-center gap-2">
-                      <button onClick={() => setIsAiSearchOpen(true)} className="flex w-full items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-full transition-colors" aria-label="Open AI Search">
+                  <div className="flex flex-row items-center justify-center gap-2">
+                      <button onClick={() => setIsSearchOpen(true)} className="p-2.5 glass-panel rounded-full hover:bg-white/5 transition-colors" aria-label="Open Search">
+                          <SearchIcon className="w-5 h-5" />
+                      </button>
+                      <button onClick={() => setIsAiSearchOpen(true)} className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-semibold text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-full transition-colors" aria-label="Open AI Search">
                           <SparklesIcon className="w-5 h-5" />
                           <span>AI Search</span>
                       </button>
-                      <SearchBar onSearch={handleSearch} isLoading={isLoading} />
                   </div>
 
                   <div className="flex items-center justify-end gap-1 w-[450px]">
@@ -377,10 +382,12 @@ const App: React.FC = () => {
 
               {/* Mobile Header */}
               <div className="container mx-auto flex md:hidden items-center justify-end gap-3">
+                  <button onClick={() => setIsSearchOpen(true)} className="p-2 glass-panel rounded-full hover:bg-white/5 transition-colors" aria-label="Open Search">
+                      <SearchIcon className="w-6 h-6 text-white" />
+                  </button>
                   <button onClick={() => setIsAiSearchOpen(true)} className="p-2 glass-panel rounded-full hover:bg-white/5 transition-colors" aria-label="Open AI Search">
                       <SparklesIcon className="w-6 h-6 text-indigo-400" />
                   </button>
-                  <SearchBar onSearch={handleSearch} isLoading={isLoading} />
               </div>
           </header>
           
@@ -395,6 +402,12 @@ const App: React.FC = () => {
               </div>
           )}
 
+          <SearchModal 
+            isOpen={isSearchOpen}
+            onClose={() => setIsSearchOpen(false)}
+            onSearch={handleSearch}
+            isLoading={isLoading}
+          />
           <AiSearchModal 
             isOpen={isAiSearchOpen}
             onClose={() => setIsAiSearchOpen(false)}

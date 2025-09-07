@@ -7,9 +7,10 @@ interface SearchBarProps {
   onSearch: (query: string) => void;
   isLoading: boolean;
   theme?: 'dark' | 'light';
+  autoFocus?: boolean;
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading, theme = 'dark' }) => {
+export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading, theme = 'dark', autoFocus = false }) => {
   const [query, setQuery] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -28,7 +29,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading, theme
   }`;
 
   return (
-    <form onSubmit={handleSubmit} className="relative w-full max-w-xs sm:max-w-sm">
+    <form onSubmit={handleSubmit} className="relative w-full">
       <input
         type="text"
         value={query}
@@ -36,6 +37,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch, isLoading, theme
         placeholder="Search..."
         className={inputClass}
         disabled={isLoading}
+        autoFocus={autoFocus}
       />
       <button
         type="submit"
