@@ -1,5 +1,3 @@
-
-
 import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import * as api from '../services/apiService.ts';
@@ -38,30 +36,47 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     const [isInitialized, setIsInitialized] = useState(false);
 
     useEffect(() => {
-        // Keep the module-level variable in apiService in sync with the context state.
-        // This provides access to the key for services outside of React's context,
-        // ensuring the correct key is used whether the user is logged in or not.
         setLocalTmdbApiKey(tmdbApiKey);
     }, [tmdbApiKey]);
 
     const syncWithPreferences = useCallback(async (uid: string) => {
-        const prefs = await api.getPreferences(uid);
-        setTmdbApiKey(prefs.tmdbApiKey || null);
-        setGeminiApiKey(prefs.geminiApiKey || null);
+        const remotePrefs = await api.getPreferences(uid);
+        const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
+        const localGeminiKey = localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI);
+
+        const finalTmdbKey = remotePrefs.tmdbApiKey || localTmdbKey || null;
+        const finalGeminiKey = remotePrefs.geminiApiKey || localGeminiKey || null;
+        
+        const prefsToSave: Partial<api.Preferences> = {};
+        let needsSave = false;
+
+        // Migrate local keys to remote if remote is empty
+        if (localTmdbKey && !remotePrefs.tmdbApiKey) {
+            prefsToSave.tmdbApiKey = localTmdbKey;
+            needsSave = true;
+        }
+        if (localGeminiKey && !remotePrefs.geminiApiKey) {
+            prefsToSave.geminiApiKey = localGeminiKey;
+            needsSave = true;
+        }
+
+        setTmdbApiKey(finalTmdbKey);
+        setGeminiApiKey(finalGeminiKey);
         
         const now = new Date().getTime();
-        let currentRateLimit = prefs.rateLimitState!; // Assured to exist by getPreferences
+        let currentRateLimit = remotePrefs.rateLimitState!;
 
-        // Check if the rate limit timer has expired.
         if (now > currentRateLimit.resetTime) {
-            // If it expired, create a new state with the count reset to 0.
             currentRateLimit = { count: 0, resetTime: now + 24 * 60 * 60 * 1000 };
-            // Persist this reset state back to the database for the next session.
-            api.savePreferences(uid, { rateLimitState: currentRateLimit });
+            prefsToSave.rateLimitState = currentRateLimit;
+            needsSave = true;
+        }
+        setRateLimit(currentRateLimit);
+
+        if (needsSave) {
+            await api.savePreferences(uid, prefsToSave);
         }
         
-        // Set the context state with either the loaded value or the newly reset value.
-        setRateLimit(currentRateLimit);
         setIsInitialized(true);
     }, []);
 
@@ -78,6 +93,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         if (currentUser) {
             syncWithPreferences(currentUser.uid);
         } else {
+            // When user logs out, or for anonymous users.
+            setIsInitialized(false); // Reset initialization state to force re-load
             syncWithLocalStorage();
         }
     }, [currentUser, syncWithPreferences, syncWithLocalStorage]);
@@ -142,10 +159,13 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         setAiClient(null);
         const newRateLimit = { count: 0, resetTime: new Date().getTime() + 24 * 60 * 60 * 1000 };
         setRateLimit(newRateLimit);
-        if (!currentUser) {
-            localStorage.removeItem(LOCAL_STORAGE_KEY_TMDB);
-            localStorage.removeItem(LOCAL_STORAGE_KEY_GEMINI);
-            localStorage.removeItem(LOCAL_STORAGE_KEY_RATE_LIMIT);
+        // This function is for a manual "clear" action. The logout flow is handled by useEffect.
+        // It should clear both local storage and remote if user is logged in.
+        localStorage.removeItem(LOCAL_STORAGE_KEY_TMDB);
+        localStorage.removeItem(LOCAL_STORAGE_KEY_GEMINI);
+        localStorage.removeItem(LOCAL_STORAGE_KEY_RATE_LIMIT);
+        if (currentUser) {
+             api.savePreferences(currentUser.uid, { tmdbApiKey: '', geminiApiKey: '', rateLimitState: newRateLimit });
         }
     }, [currentUser]);
 
