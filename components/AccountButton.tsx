@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth.ts';
-import { UserIcon, GlobeIcon } from './icons.tsx';
+import { useSettings } from '../hooks/useSettings.ts';
+import { UserIcon, GlobeIcon, SparklesIcon } from './icons.tsx';
 import type { UserLocation } from '../types.ts';
 
 interface AccountButtonProps {
@@ -10,6 +11,7 @@ interface AccountButtonProps {
 
 export const AccountButton: React.FC<AccountButtonProps> = ({ userLocation, theme = 'dark' }) => {
     const { currentUser, login, logout, loading } = useAuth();
+    const { rateLimit } = useSettings();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -90,6 +92,13 @@ export const AccountButton: React.FC<AccountButtonProps> = ({ userLocation, them
                             <span>{userLocation.name}</span>
                         </div>
                     )}
+                    <div className={`p-4 flex items-center justify-between text-sm border-b ${borderClass} ${textSecondaryClass}`}>
+                        <div className="flex items-center gap-2">
+                           <SparklesIcon className="w-4 h-4 text-indigo-400" />
+                           <span>Today's AI Usage</span>
+                        </div>
+                        <span className="font-semibold text-white">{rateLimit.count} / 500</span>
+                    </div>
                     <div className="p-2">
                          <button
                             onClick={handleLogout}
