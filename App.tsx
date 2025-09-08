@@ -1,4 +1,5 @@
 
+
 // FIX: Correctly import React hooks (useState, useEffect, useCallback) to resolve 'Cannot find name' errors.
 import React, { useState, useEffect, useCallback } from 'react';
 import { HeroSection } from './components/HeroSection.tsx';
@@ -116,6 +117,51 @@ const App: React.FC = () => {
         }
     }, [isInitialized, tmdbApiKey, fetchInitialData]);
 
+    // FIX: Add a useEffect hook to handle fetching data for brand pages based on the current route.
+    // This ensures content loads correctly on both direct navigation and clicks.
+    useEffect(() => {
+        const [page, id] = route;
+        if (!isInitialized || !tmdbApiKey) return;
+    
+        const fetchBrandData = async (brandId: string) => {
+            if (selectedBrand && selectedBrand.id === brandId) {
+                return; // Avoid re-fetching if the correct brand is already loaded
+            }
+    
+            const brand = brands.find(b => b.id === brandId);
+            if (brand) {
+                setIsLoading(true);
+                setSelectedBrand(brand);
+                try {
+                    let media: MediaDetails[] = [];
+                    if (brand.mediaIds && brand.mediaIds.length > 0) {
+                        media = await mediaService.fetchMediaByIds(brand.mediaIds);
+                    } else if (brand.collectionIds && brand.collectionIds.length > 0) {
+                        media = await mediaService.fetchMediaByCollectionIds(brand.collectionIds);
+                    } else if (brand.companyId) {
+                        media = await mediaService.getMediaByStudio(brand.companyId);
+                    }
+                    setBrandContent(media);
+                } catch (error) {
+                    console.error(`Failed to fetch content for brand ${brand.name}`, error);
+                    setBrandContent([]);
+                } finally {
+                    setIsLoading(false);
+                }
+            } else if (page === 'brand') {
+                window.location.hash = '/brands'; // Redirect if brand not found
+            }
+        };
+    
+        if (page === 'brand' && id) {
+            fetchBrandData(id);
+        } else if (selectedBrand) {
+            // Clean up brand data when navigating away
+            setSelectedBrand(null);
+            setBrandContent([]);
+        }
+    }, [route, isInitialized, tmdbApiKey, selectedBrand]);
+
     const handleSelectMedia = useCallback(async (media: MediaDetails) => {
         setIsDetailLoading(true);
         setSelectedItem(media);
@@ -186,8 +232,9 @@ const App: React.FC = () => {
         }
     };
     
+    // FIX: Simplify the brand selection function to only change the URL hash.
+    // The new useEffect hook will handle the data fetching and state updates.
     const openBrandDetail = (brand: Brand) => {
-      setSelectedBrand(brand);
       window.location.hash = `/brand/${brand.id}`;
     };
 
