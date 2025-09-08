@@ -305,6 +305,19 @@ export const brands: Brand[] = [
     defaultSort: 'timeline',
   },
   {
+    id: 'diehard',
+    name: 'Die Hard',
+    posterUrl: '', // Not used when logoUrl is present, but required by type.
+    logoUrl: 'https://image.tmdb.org/t/p/original/czR0VkvmOFaeUq81tyBP1Zmj5yv.png',
+    backdropUrl: 'https://image.tmdb.org/t/p/original/nKShbIW0wJnSbl3t8uPje0QhTb7.jpg',
+    bgColor: '#000000',
+    borderColor: '#D32F2F',
+    hoverGifUrl: 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExbWxrcnBnYmUxaWYydzc4eWtpdnE3c2h0ZGsxdGZraWRwcTl0dGJjcCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/AphxZxXiVklYQ/giphy.gif',
+    characterCollections: [],
+    collectionIds: [1570], // Die Hard Collection
+    defaultSort: 'timeline',
+  },
+  {
     id: 'fastandfurious',
     name: 'Fast & Furious',
     posterUrl: '', // Not used when logoUrl is present, but required by type.
