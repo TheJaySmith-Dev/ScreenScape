@@ -13,6 +13,7 @@ const defaultBgColor = '#111111';
 export const StreamingCard: React.FC<StreamingCardProps> = ({ provider, onSelect }) => {
   const bgColor = provider.bgColor || defaultBgColor;
   const hoverGif = provider.hoverGifUrl || defaultHoverGifUrl;
+  const imageStyle = provider.forceWhiteLogo ? { filter: 'brightness(0) invert(1)' } : {};
 
   const cardStyle = { 
     backgroundColor: bgColor,
@@ -54,6 +55,7 @@ export const StreamingCard: React.FC<StreamingCardProps> = ({ provider, onSelect
             alt={`${provider.name} logo`}
             className="relative w-full h-full object-contain p-4 sm:p-6 drop-shadow-[0_5px_5px_rgba(0,0,0,0.7)] transition-opacity duration-500 group-hover:opacity-0"
             loading="lazy"
+            style={imageStyle}
           />
       )}
     </div>

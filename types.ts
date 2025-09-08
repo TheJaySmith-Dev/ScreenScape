@@ -185,6 +185,7 @@ export interface StreamingProviderInfo {
   hubLogoUrl?: string;
   hubLogoHeight?: string;
   hubLogoInvert?: boolean;
+  forceWhiteLogo?: boolean;
 }
 
 // Types for the Higher or Lower game
