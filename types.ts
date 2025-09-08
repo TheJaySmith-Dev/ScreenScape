@@ -175,6 +175,7 @@ export interface StreamingProviderInfo {
   key: 'disney' | 'netflix' | 'prime' | 'max' | 'paramount';
   name: string;
   logoUrl: string;
+  backgroundUrl?: string;
   bgColor?: string;
   hoverGifUrl?: string;
   borderColor?: string;

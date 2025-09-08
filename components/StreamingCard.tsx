@@ -23,31 +23,39 @@ export const StreamingCard: React.FC<StreamingCardProps> = ({ provider, onSelect
     provider.borderColor ? 'hover:border-opacity-80' : 'border-white/10 hover:border-white/30'
   }`;
 
-  const imageClassName = `relative w-full h-full ${
-    provider.edgeToEdge 
-      ? 'object-cover' 
-      : 'object-contain p-4 sm:p-6'
-  } drop-shadow-[0_5px_5px_rgba(0,0,0,0.7)] transition-opacity duration-500 group-hover:opacity-0`;
-
   return (
     <div
       onClick={onSelect}
       className={cardClassName}
       style={cardStyle}
     >
-      {/* Background GIF for hover effect */}
+      {/* Background Layer: Use backgroundUrl if available, otherwise use logoUrl if edgeToEdge */}
+      {(provider.backgroundUrl || (provider.edgeToEdge && provider.logoUrl)) && (
+          <img
+            src={provider.backgroundUrl || provider.logoUrl}
+            alt="" // Decorative
+            className="absolute inset-0 w-full h-full object-cover"
+            aria-hidden="true"
+            loading="lazy"
+          />
+      )}
+
+      {/* Hover GIF Layer */}
       <div
         style={{ backgroundImage: `url(${hoverGif})` }}
         className="absolute inset-0 bg-cover bg-center opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         aria-hidden="true"
       />
-      {/* Provider Logo, positioned above the GIF */}
-      <img
-        src={provider.logoUrl}
-        alt={`${provider.name} logo`}
-        className={imageClassName}
-        loading="lazy"
-      />
+
+      {/* Logo Layer: Show if it's not already being used as the background */}
+      {(!provider.edgeToEdge || provider.backgroundUrl) && provider.logoUrl && (
+          <img
+            src={provider.logoUrl}
+            alt={`${provider.name} logo`}
+            className="relative w-full h-full object-contain p-4 sm:p-6 drop-shadow-[0_5px_5px_rgba(0,0,0,0.7)] transition-opacity duration-500 group-hover:opacity-0"
+            loading="lazy"
+          />
+      )}
     </div>
   );
 };
