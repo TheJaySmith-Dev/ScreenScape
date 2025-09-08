@@ -1,5 +1,4 @@
 
-
 import type { StreamingProviderInfo } from '../types.ts';
 
 // Logos from TMDb with w500 size
@@ -21,12 +20,12 @@ export const supportedProviders: StreamingProviderInfo[] = [
     id: 337,
     key: 'disney',
     name: 'Disney+',
-    logoUrl: 'https://lumiere-a.akamaihd.net/v1/images/a8e5567d1658de062d95d079ebf536b0_4096x2309_6dedcc02.png?region=0%2C0%2C4096%2C2309',
+    logoUrl: 'https://images.ctfassets.net/y2ske730sjqp/6uQNJGGk4003T2rGoT1dbA/1649325998a537c223c6f49f13677d22/brand-dplus-logo-white.png',
     backgroundUrl: 'https://i.postimg.cc/MGHsyrfx/Disney-background.avif',
     bgColor: '#0A193C',
     hoverGifUrl: 'https://lumiere-a.akamaihd.net/v1/images/disney_logo_animation_march_2024_27a0dafe.gif',
     borderColor: '#258792',
-    edgeToEdge: true,
+    edgeToEdge: false,
     hubBgColor: '#258792',
     hubLogoUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Disney%2B_logo.svg',
     hubLogoHeight: 'h-10 md:h-12',
