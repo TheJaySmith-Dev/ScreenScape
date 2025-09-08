@@ -1,4 +1,5 @@
 
+
 import type { StreamingProviderInfo } from '../types.ts';
 
 // Logos from TMDb with w500 size
@@ -34,7 +35,7 @@ export const supportedProviders: StreamingProviderInfo[] = [
     id: 9,
     key: 'prime',
     name: 'Prime Video',
-    logoUrl: 'https://asset.brandfetch.io/idvZo_bHzX/idwKxAF1Yy.svg',
+    logoUrl: 'https://cdn.brandfetch.io/idXRXV6qi8/w/320/h/60/theme/light/idvZo_bHzX.png?c=1bxid64Mup7aczewSAYMX&t=1712148633253',
     bgColor: '#0F79AF',
     hoverGifUrl: 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExN2o0NnR6MXRhMmV6eTFiN2dpejF6aTE1bXFvZnJmMWJ4dDY4dHljZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/gvfw1b9opaAFgOTBDI/giphy.gif',
     borderColor: '#0F171E',
