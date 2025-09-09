@@ -163,6 +163,7 @@ const App: React.FC = () => {
     }, [route, isInitialized, tmdbApiKey, selectedBrand]);
 
     const handleSelectMedia = useCallback(async (media: MediaDetails) => {
+        setSelectedActor(null); // Clear actor modal when opening media modal
         setIsDetailLoading(true);
         setSelectedItem(media);
         document.body.classList.add('modal-open');
@@ -191,6 +192,7 @@ const App: React.FC = () => {
     }, []);
 
     const handleSelectActor = useCallback(async (actorId: number) => {
+        setSelectedItem(null); // Clear media modal when opening actor modal
         setIsDetailLoading(true);
         setSelectedActor({ id: actorId, name: 'Loading...', biography: '', profilePath: '', birthday: null, placeOfBirth: null, filmography: [] });
         document.body.classList.add('modal-open');
