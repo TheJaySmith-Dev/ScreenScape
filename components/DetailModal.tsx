@@ -41,14 +41,15 @@ const CountdownTimer: React.FC<{ airDate: string }> = ({ airDate }) => {
     );
 };
 
-const EpisodeCard: React.FC<{ episode: Episode }> = ({ episode }) => {
+const EpisodeCard: React.FC<{ episode: Episode; backdropUrl: string }> = ({ episode, backdropUrl }) => {
     const hasAired = episode.airDate ? new Date(episode.airDate) <= new Date() : true;
     const formattedAirDate = episode.airDate ? new Date(episode.airDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }) : 'TBA';
+    const imageUrl = !hasAired ? backdropUrl : episode.stillUrl;
 
     return (
         <div className="glass-panel rounded-xl overflow-hidden flex flex-col md:flex-row gap-4 p-4">
             <div className="flex-shrink-0 w-full md:w-48 aspect-video relative">
-                <img src={episode.stillUrl} alt={episode.title} className="w-full h-full object-cover rounded-lg" loading="lazy" />
+                <img src={imageUrl} alt={episode.title} className="w-full h-full object-cover rounded-lg" loading="lazy" />
                 {!hasAired && episode.airDate && (
                     <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-center p-2 rounded-lg">
                         <span className="text-sm font-semibold uppercase tracking-wider bg-indigo-500/80 px-2 py-0.5 rounded-md mb-2">Upcoming</span>
@@ -69,7 +70,7 @@ const EpisodeCard: React.FC<{ episode: Episode }> = ({ episode }) => {
     );
 };
 
-const EpisodeGuide: React.FC<{ tvShowId: number, seasonsData: SeasonSummary[] }> = ({ tvShowId, seasonsData }) => {
+const EpisodeGuide: React.FC<{ tvShowId: number, seasonsData: SeasonSummary[], backdropUrl: string }> = ({ tvShowId, seasonsData, backdropUrl }) => {
     const regularSeasons = seasonsData.filter(s => s.season_number > 0).sort((a,b) => a.season_number - b.season_number);
     const [selectedSeason, setSelectedSeason] = useState<number>(regularSeasons.length > 0 ? regularSeasons[0].season_number : 1);
     const [seasonDetails, setSeasonDetails] = useState<SeasonDetails | null>(null);
@@ -120,7 +121,7 @@ const EpisodeGuide: React.FC<{ tvShowId: number, seasonsData: SeasonSummary[] }>
                 <p className="text-red-400 text-center">{error}</p>
             ) : (
                 <div className="space-y-4">
-                    {seasonDetails?.episodes.map(episode => <EpisodeCard key={episode.id} episode={episode} />)}
+                    {seasonDetails?.episodes.map(episode => <EpisodeCard key={episode.id} episode={episode} backdropUrl={backdropUrl} />)}
                 </div>
             )}
         </div>
@@ -492,7 +493,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
 
         {media.type === 'tv' && media.numberOfSeasons && media.seasons && (
             <ModalSection title="Seasons & Episodes">
-                <EpisodeGuide tvShowId={media.id} seasonsData={media.seasons} />
+                <EpisodeGuide tvShowId={media.id} seasonsData={media.seasons} backdropUrl={media.backdropUrl} />
             </ModalSection>
         )}
 
