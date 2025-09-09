@@ -388,11 +388,33 @@
             animation-delay: 0.8s;
         }
         
-        /* LIQUID GLASS - ADAPTIVE HEADER */
-        .header-scrolled {
-          /* Add a subtle background when scrolled to separate from content */
-           background-color: rgba(12, 12, 14, 0.5);
-           backdrop-filter: blur(12px);
+        /* Page Container with rounded hardware edges */
+        .page-container {
+            background-color: #111214;
+            border-radius: 36px;
+            overflow: hidden;
+            margin: 0 1rem;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Mobile Dock with sheened, fading glass effect */
+        .mobile-dock {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 6rem;
+            padding-bottom: 1rem; /* For home bar safe area */
+            background-image: linear-gradient(to top, rgba(30, 30, 32, 0.9) 10%, transparent 100%);
+            backdrop-filter: blur(20px) saturate(1.5);
+            -webkit-backdrop-filter: blur(20px) saturate(1.5);
+            -webkit-mask-image: linear-gradient(to top, black 50%, transparent 100%);
+            mask-image: linear-gradient(to top, black 50%, transparent 100%);
         }
 
         /* Responsive Design Adjustments */
@@ -400,14 +422,9 @@
         h2 { font-size: clamp(1.5rem, 4vw, 2.25rem); }
         h3 { font-size: clamp(1.25rem, 3vw, 1.875rem); }
 
-        @media (max-width: 768px) {
-          header .flex-1.justify-center {
-            display: none; /* Hide desktop nav on mobile */
-          }
-          .hero-section {
-            min-height: 400px;
-            height: 50vh;
-          }
+        .hero-section {
+          min-height: 400px;
+          height: 50vh;
         }
     </style>
 </head>

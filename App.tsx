@@ -391,8 +391,12 @@ const App: React.FC = () => {
         // For all other pages, wrap content in a container to maintain a centered, readable layout.
         if (pageContent) {
             return (
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28">
-                    {pageContent}
+                <div className="pt-20">
+                    <div className="page-container">
+                        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                            {pageContent}
+                        </div>
+                    </div>
                 </div>
             );
         }
@@ -427,10 +431,8 @@ const App: React.FC = () => {
 
     return (
       <div className="min-h-screen">
-          <header className={`fixed top-0 left-0 right-0 z-40 p-4 hidden md:block transition-all duration-300 rounded-b-3xl ${isScrolled ? 'header-scrolled' : ''}`}>
-              <div className="container mx-auto flex items-center justify-center">
-                  <PillNavigation />
-              </div>
+          <header className="fixed top-0 left-0 right-0 z-40 p-4 hidden md:flex items-center justify-center">
+              <PillNavigation />
           </header>
           
           <main className="pb-24 md:pb-0">
@@ -475,7 +477,7 @@ const App: React.FC = () => {
             onSelectMedia={handleSelectMedia}
           />
 
-          <nav className="md:hidden fixed bottom-0 left-0 right-0 h-20 bg-black/50 backdrop-blur-lg border-t border-white/10 z-50 flex items-center justify-center">
+          <nav className="mobile-dock md:hidden">
               <PillNavigation />
           </nav>
 
