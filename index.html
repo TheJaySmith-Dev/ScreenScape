@@ -109,6 +109,7 @@
           min-height: 500px;
           display: flex;
           align-items: flex-end;
+          overflow: hidden;
         }
         .hero-backdrop {
           position: absolute;
@@ -118,6 +119,21 @@
           height: 100%;
           object-fit: cover;
           opacity: 0.3;
+          will-change: transform;
+        }
+        @keyframes kenburns {
+            0% {
+                transform: scale(1) translate(0, 0);
+            }
+            50% {
+                transform: scale(1.1) translate(-2%, 2%);
+            }
+            100% {
+                transform: scale(1) translate(0, 0);
+            }
+        }
+        .hero-backdrop-animated {
+            animation: kenburns 40s ease-in-out infinite;
         }
         .hero-gradient {
           position: absolute;
@@ -398,7 +414,7 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        /* Mobile Dock with sheened, fading glass effect */
+        /* Mobile Dock as a positioning container for the glass pill */
         .mobile-dock {
             position: fixed;
             bottom: 0;
@@ -410,11 +426,10 @@
             justify-content: center;
             height: 6rem;
             padding-bottom: 1rem; /* For home bar safe area */
-            background-image: linear-gradient(to top, rgba(30, 30, 32, 0.9) 10%, transparent 100%);
-            backdrop-filter: blur(20px) saturate(1.5);
-            -webkit-backdrop-filter: blur(20px) saturate(1.5);
-            -webkit-mask-image: linear-gradient(to top, black 50%, transparent 100%);
-            mask-image: linear-gradient(to top, black 50%, transparent 100%);
+            pointer-events: none; /* Allow clicks/taps to pass through the container */
+        }
+        .mobile-dock > * {
+            pointer-events: auto; /* Make the actual pill clickable */
         }
 
         /* Responsive Design Adjustments */

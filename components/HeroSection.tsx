@@ -16,7 +16,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ item, onPlay, onMoreIn
 
   return (
     <section className="hero-section sm:-mb-20 md:-mb-28">
-      <img src={item.backdropUrl} alt="" className="hero-backdrop" />
+      <img src={item.backdropUrl} alt="" className="hero-backdrop hero-backdrop-animated" />
       <div className="hero-gradient" />
       <div className="hero-content container mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28">
         <div className="max-w-md lg:max-w-lg">
