@@ -28,7 +28,7 @@ export const popularNetworks: Network[] = [
     name: 'CBS',
     logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/ee/CBS_logo_%282020%29.svg',
     bgColor: '#FFFFFF',
-    hoverGifUrl: 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExMXlzdjA4eXlxa2NnaXg2NHA2bnFnZXU3dHZvYW1mMzRiaGNqdHFlYiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26BoCwvSLbCCd5g6Q/giphy.gif',
+    hoverGifUrl: 'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExZjVldGQxMDJ4dm1tYTh6ZDk2aTBmcXJjM2liZjczc3IwbjUwcnN6ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/0kY45oypiA2pqDTSag/giphy.gif',
   },
   {
     id: 88,
