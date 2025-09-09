@@ -172,6 +172,8 @@ const App: React.FC = () => {
             setSelectedItem(prev => prev ? { ...prev, ...details } : null);
         } catch (error) {
             console.error("Failed to fetch full details:", error);
+            setSelectedItem(null); // Close modal on error
+            document.body.classList.remove('modal-open');
         } finally {
             setIsDetailLoading(false);
         }
@@ -199,9 +201,10 @@ const App: React.FC = () => {
         try {
             const details = await mediaService.fetchActorDetails(actorId);
             setSelectedActor(details);
-            window.location.hash = `/actor/${actorId}`;
         } catch (error) {
             console.error("Failed to fetch actor details:", error);
+            setSelectedActor(null); // Close actor modal on error
+            document.body.classList.remove('modal-open');
         } finally {
             setIsDetailLoading(false);
         }
@@ -210,10 +213,10 @@ const App: React.FC = () => {
     const handleCloseModal = useCallback(() => {
         setSelectedItem(null);
         setSelectedActor(null);
-        setSelectedBrand(null);
         setIsViewingGuideModalOpen(false);
         document.body.classList.remove('modal-open');
-        window.history.pushState("", document.title, window.location.pathname + window.location.search); // Clears hash
+        // Clear hash on close to prevent back button issues
+        window.history.pushState("", document.title, window.location.pathname + window.location.search);
     }, []);
 
     const handleSearch = async (query: string) => {
@@ -362,12 +365,6 @@ const App: React.FC = () => {
                         return <BrandDetail brand={selectedBrand} media={brandContent} onBack={() => window.location.hash = '/brands'} onSelectMedia={handleSelectMedia} onSelectCollection={handleSelectCollection} mediaTypeFilter={mediaTypeFilter} setMediaTypeFilter={setMediaTypeFilter} sortBy={sortBy} setSortBy={setSortBy} />;
                     }
                     return <div className="text-center">Loading brand...</div>;
-                case 'actor':
-                    if (selectedActor) {
-                        return <ActorPage actor={selectedActor} onBack={handleCloseModal} onSelectMedia={handleSelectMedia} />;
-                    }
-                    return <div className="text-center">Loading actor...</div>;
-
                 case 'studio':
                     return <RecommendationGrid recommendations={studioContent} onSelect={handleSelectMedia} />;
                 case 'network':
@@ -435,9 +432,18 @@ const App: React.FC = () => {
           </main>
           
           {(selectedItem || selectedActor) && (
-              <div className="fixed inset-0 bg-black/70 backdrop-blur-lg z-50 overflow-y-auto">
-                   {selectedItem && <DetailModal item={selectedItem} onClose={handleCloseModal} isLoading={isDetailLoading} onSelectMedia={handleSelectMedia} onSelectActor={handleSelectActor} userLocation={userLocation} />}
-                   {selectedActor && <ActorPage actor={selectedActor} onBack={handleCloseModal} onSelectMedia={handleSelectMedia} />}
+              <div
+                className="fixed inset-0 bg-black/70 backdrop-blur-lg z-50 overflow-y-auto flex items-center justify-center p-4"
+                onClick={handleCloseModal}
+              >
+                   {selectedItem && (
+                        <DetailModal item={selectedItem} onClose={handleCloseModal} isLoading={isDetailLoading} onSelectMedia={handleSelectMedia} onSelectActor={handleSelectActor} userLocation={userLocation} />
+                   )}
+                   {selectedActor && (
+                        <div onClick={(e) => e.stopPropagation()}>
+                            <ActorPage actor={selectedActor} onBack={handleCloseModal} onSelectMedia={handleSelectMedia} isLoading={isDetailLoading} />
+                        </div>
+                   )}
               </div>
           )}
 
