@@ -545,7 +545,10 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
 
   return (
     <>
-      <div className="w-full max-w-6xl mx-auto fade-in">
+      <div 
+        className="w-full max-w-6xl mx-auto fade-in"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="my-8 sm:my-12 flex items-center gap-3">
             <button onClick={onClose} className="px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">&larr; Back</button>
             <a href="#/home" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">

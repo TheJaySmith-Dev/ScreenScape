@@ -215,8 +215,6 @@ const App: React.FC = () => {
         setSelectedActor(null);
         setIsViewingGuideModalOpen(false);
         document.body.classList.remove('modal-open');
-        // Clear hash on close to prevent back button issues
-        window.history.pushState("", document.title, window.location.pathname + window.location.search);
     }, []);
 
     const handleSearch = async (query: string) => {
