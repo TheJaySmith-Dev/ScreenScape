@@ -79,4 +79,11 @@ export const popularStudios: Studio[] = [
     hoverGifUrl: 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExOGFrdHI4Y3A0aG8zdTd0NGhhdHNncmwyMWNtMWhtZzJsa29rOTQ5eiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ynCHdWYZsY2tAgvvhr/giphy.gif',
     forceWhiteLogo: true
   },
+  { 
+    id: 8411, 
+    name: 'MGM', 
+    logoUrl: 'https://cdn.brandfetch.io/idLI5gJfl8/w/161/h/86/theme/dark/logo.png?c=1bxid64Mup7aczewSAYMX&t=1667810266726',
+    bgColor: '#D4AE36',
+    hoverGifUrl: 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExNDAxeDR6eGRteXQwYTdvdWw1ZjFubjhvMWJuaGZsdzBoaGN6azVkdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/PZfAdZzYByppxJ4uMi/giphy.gif',
+  },
 ];
