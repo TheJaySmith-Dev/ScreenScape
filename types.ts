@@ -23,6 +23,16 @@ export interface CastMember {
   profileUrl: string;
 }
 
+export interface SeasonSummary {
+    air_date: string | null;
+    episode_count: number;
+    id: number;
+    name: string;
+    overview: string;
+    poster_path: string | null;
+    season_number: number;
+}
+
 export interface MediaDetails {
   id: number;
   title: string;
@@ -48,6 +58,7 @@ export interface MediaDetails {
   lastAirDate?: string; // For TV shows
   status?: string; // For TV shows, e.g. "Ended", "Returning Series"
   rated?: string; // MPAA rating from TMDb
+  seasons?: SeasonSummary[];
 }
 
 export interface Collection {
@@ -153,6 +164,25 @@ export interface DislikedItem {
 export interface ExternalRatings {
   rottenTomatoes?: string;
   metacritic?: string;
+}
+
+export interface Episode {
+  id: number;
+  title: string;
+  overview: string;
+  stillUrl: string;
+  airDate: string | null;
+  episodeNumber: number;
+  seasonNumber: number;
+}
+
+export interface SeasonDetails {
+  id: number;
+  seasonNumber: number;
+  name: string;
+  overview: string;
+  posterUrl: string;
+  episodes: Episode[];
 }
 
 // TMDB Watch Provider Types

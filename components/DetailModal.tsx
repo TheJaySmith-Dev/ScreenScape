@@ -1,7 +1,7 @@
 
 
-import React, { useState, useEffect } from 'react';
-import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders, OmdbDetails, FunFact } from '../types.ts';
+import React, { useState, useEffect, useCallback } from 'react';
+import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders, OmdbDetails, FunFact, SeasonDetails, Episode, SeasonSummary } from '../types.ts';
 import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, HomeIcon, SparklesIcon, InfoIcon, ChatBubbleIcon } from './icons.tsx';
 import { RecommendationCard } from './RecommendationCard.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
@@ -14,6 +14,8 @@ import { getFunFactsForMedia } from '../services/aiService.ts';
 import { RateLimitMessage } from './RateLimitMessage.tsx';
 import { ChatModal } from './ChatModal.tsx';
 import { useSettings } from '../hooks/useSettings.ts';
+import { fetchSeasonDetails } from '../services/mediaService.ts';
+import { useCountdown } from '../hooks/useCountdown.ts';
 
 interface DetailModalProps {
   item: MediaDetails | CollectionDetails;
@@ -23,6 +25,107 @@ interface DetailModalProps {
   onSelectActor: (actorId: number) => void;
   userLocation: UserLocation | null;
 }
+
+const CountdownTimer: React.FC<{ airDate: string }> = ({ airDate }) => {
+    const { days, hours, minutes, seconds, isFinished } = useCountdown(airDate);
+
+    if (isFinished) return null;
+
+    return (
+        <div className="flex justify-center items-center gap-2 text-xs">
+            <div className="flex flex-col items-center"><span className="font-bold">{String(days).padStart(2, '0')}</span><span className="opacity-70">d</span></div>
+            <div className="flex flex-col items-center"><span className="font-bold">{String(hours).padStart(2, '0')}</span><span className="opacity-70">h</span></div>
+            <div className="flex flex-col items-center"><span className="font-bold">{String(minutes).padStart(2, '0')}</span><span className="opacity-70">m</span></div>
+            <div className="flex flex-col items-center"><span className="font-bold">{String(seconds).padStart(2, '0')}</span><span className="opacity-70">s</span></div>
+        </div>
+    );
+};
+
+const EpisodeCard: React.FC<{ episode: Episode }> = ({ episode }) => {
+    const hasAired = episode.airDate ? new Date(episode.airDate) <= new Date() : true;
+    const formattedAirDate = episode.airDate ? new Date(episode.airDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }) : 'TBA';
+
+    return (
+        <div className="glass-panel rounded-xl overflow-hidden flex flex-col md:flex-row gap-4 p-4">
+            <div className="flex-shrink-0 w-full md:w-48 aspect-video relative">
+                <img src={episode.stillUrl} alt={episode.title} className="w-full h-full object-cover rounded-lg" loading="lazy" />
+                {!hasAired && episode.airDate && (
+                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-center p-2 rounded-lg">
+                        <span className="text-sm font-semibold uppercase tracking-wider bg-indigo-500/80 px-2 py-0.5 rounded-md mb-2">Upcoming</span>
+                        <CountdownTimer airDate={episode.airDate} />
+                    </div>
+                )}
+            </div>
+            <div className="flex-grow">
+                <h5 className="font-semibold text-white truncate">
+                    {`S${episode.seasonNumber}.E${episode.episodeNumber} - ${episode.title}`}
+                </h5>
+                <p className="text-xs text-gray-400 mb-2">{formattedAirDate}</p>
+                <p className="text-sm text-gray-300 line-clamp-2 md:line-clamp-3 leading-snug">
+                    {episode.overview || 'No overview available.'}
+                </p>
+            </div>
+        </div>
+    );
+};
+
+const EpisodeGuide: React.FC<{ tvShowId: number, seasonsData: SeasonSummary[] }> = ({ tvShowId, seasonsData }) => {
+    const regularSeasons = seasonsData.filter(s => s.season_number > 0).sort((a,b) => a.season_number - b.season_number);
+    const [selectedSeason, setSelectedSeason] = useState<number>(regularSeasons.length > 0 ? regularSeasons[0].season_number : 1);
+    const [seasonDetails, setSeasonDetails] = useState<SeasonDetails | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchDetails = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const details = await fetchSeasonDetails(tvShowId, selectedSeason);
+                setSeasonDetails(details);
+            } catch (err) {
+                setError("Could not load season details. Please try again later.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchDetails();
+    }, [tvShowId, selectedSeason]);
+    
+    if (regularSeasons.length === 0) {
+        return <p className="text-gray-400">No season information available for this show.</p>;
+    }
+    
+    return (
+        <div>
+            <div className="media-row overflow-x-auto pb-4 mb-4">
+                <div className="flex space-x-2">
+                    {regularSeasons.map(season => (
+                        <button
+                            key={season.id}
+                            onClick={() => setSelectedSeason(season.season_number)}
+                            className={`flex-shrink-0 px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                                selectedSeason === season.season_number ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5'
+                            }`}
+                        >
+                            Season {season.season_number}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            
+            {isLoading ? (
+                <div className="flex justify-center items-center h-48"><LoadingSpinner /></div>
+            ) : error ? (
+                <p className="text-red-400 text-center">{error}</p>
+            ) : (
+                <div className="space-y-4">
+                    {seasonDetails?.episodes.map(episode => <EpisodeCard key={episode.id} episode={episode} />)}
+                </div>
+            )}
+        </div>
+    );
+};
 
 const formatRuntime = (minutes: number | undefined): string => {
     if (minutes === undefined || minutes === null || minutes <= 0) return '';
@@ -313,7 +416,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                 className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 glass-panel rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/5 hover:scale-105 text-sm sm:text-base"
                 disabled={!aiClient}
             >
-                <ChatBubbleIcon className="w-5 h-5 sm:w-6 sm-h-6" />
+                <ChatBubbleIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                 <span>Ask ScapeAI</span>
             </button>
             <div className="flex items-center gap-2">
@@ -384,6 +487,12 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                         </p>
                     )}
                 </div>
+            </ModalSection>
+        )}
+
+        {media.type === 'tv' && media.numberOfSeasons && media.seasons && (
+            <ModalSection title="Seasons & Episodes">
+                <EpisodeGuide tvShowId={media.id} seasonsData={media.seasons} />
             </ModalSection>
         )}
 

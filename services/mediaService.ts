@@ -1,4 +1,4 @@
-import type { MediaDetails, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor, AiSearchParams } from '../types.ts';
+import type { MediaDetails, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor, AiSearchParams, SeasonDetails, Episode } from '../types.ts';
 import { supportedProviders } from './streamingService.ts';
 import { getTmdbApiKey } from './apiService.ts';
 import { fetchBoxOffice } from './omdbService.ts';
@@ -212,6 +212,7 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
               if (usRating?.rating) {
                   additionalDetails.rated = usRating.rating;
               }
+              additionalDetails.seasons = details.seasons;
           }
   
           const finalDetails = {
@@ -233,6 +234,37 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
               trailerUrl: null, cast: [], related: [], watchProviders: null, isInTheaters: false, imdbId: null,
           };
       }
+};
+
+const formatEpisode = (episode: any): Episode => {
+    return {
+        id: episode.id,
+        title: episode.name || `Episode ${episode.episode_number}`,
+        overview: episode.overview,
+        stillUrl: episode.still_path ? `https://image.tmdb.org/t/p/w300${episode.still_path}` : 'https://i.postimg.cc/9F0b7f6f/placeholder-still.png',
+        airDate: episode.air_date,
+        episodeNumber: episode.episode_number,
+        seasonNumber: episode.season_number,
+    };
+};
+
+export const fetchSeasonDetails = async (tvId: number, seasonNumber: number): Promise<SeasonDetails> => {
+    try {
+        const endpoint = `/tv/${tvId}/season/${seasonNumber}`;
+        const details = await fetchApi<any>(endpoint);
+
+        return {
+            id: details.id,
+            seasonNumber: details.season_number,
+            name: details.name,
+            overview: details.overview,
+            posterUrl: details.poster_path ? `https://image.tmdb.org/t/p/w500${details.poster_path}` : 'https://picsum.photos/500/750?grayscale',
+            episodes: details.episodes.map(formatEpisode),
+        };
+    } catch (error) {
+        console.error(`Failed to fetch season details for TV ID ${tvId}, season ${seasonNumber}:`, error);
+        throw error;
+    }
 };
 
 const getEntityId = async (name: string, type: 'genre' | 'company' | 'person' | 'keyword'): Promise<number | null> => {
