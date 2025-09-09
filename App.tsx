@@ -139,7 +139,7 @@ const App: React.FC = () => {
                     } else if (brand.collectionIds && brand.collectionIds.length > 0) {
                         media = await mediaService.fetchMediaByCollectionIds(brand.collectionIds);
                     } else if (brand.companyId) {
-                        media = await mediaService.getMediaByStudio(brand.companyId);
+                        media = await mediaService.getMediaByStudio([brand.companyId]);
                     }
                     setBrandContent(media);
                 } catch (error) {
@@ -255,7 +255,10 @@ const App: React.FC = () => {
     const handleSelectStudio = async (studio: Studio) => {
         setIsLoading(true);
         try {
-            const results = await mediaService.getMediaByStudio(studio.id);
+            const idsToFetch = (studio.companyIds && studio.companyIds.length > 0)
+                ? studio.companyIds
+                : [studio.id];
+            const results = await mediaService.getMediaByStudio(idsToFetch);
             setStudioContent(results);
             window.location.hash = `/studio/${studio.id}`;
         } catch(e) {

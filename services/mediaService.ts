@@ -435,9 +435,10 @@ export const fetchCollectionDetails = async (id: number): Promise<CollectionDeta
     };
 };
 
-export const getMediaByStudio = async (studioId: number): Promise<MediaDetails[]> => {
-    const movieEndpoint = `/discover/movie?with_companies=${studioId}&sort_by=popularity.desc`;
-    const tvEndpoint = `/discover/tv?with_companies=${studioId}&sort_by=popularity.desc`;
+export const getMediaByStudio = async (studioIds: number[]): Promise<MediaDetails[]> => {
+    const idsString = studioIds.join('|');
+    const movieEndpoint = `/discover/movie?with_companies=${idsString}&sort_by=popularity.desc`;
+    const tvEndpoint = `/discover/tv?with_companies=${idsString}&sort_by=popularity.desc`;
     const [movies, tvShows] = await Promise.all([
         fetchList(movieEndpoint, 'movie'),
         fetchList(tvEndpoint, 'tv')

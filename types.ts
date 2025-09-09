@@ -92,6 +92,7 @@ export interface Studio {
   hoverGifUrl?: string;
   forceWhiteLogo?: boolean;
   sizeClass?: string;
+  companyIds?: number[];
 }
 
 export interface Network {
