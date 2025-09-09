@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import type { ActorDetails, MediaDetails } from '../types.ts';
-import { RecommendationGrid } from './RecommendationGrid.tsx';
+import { MediaRow } from './MediaRow.tsx';
 import { CakeIcon, LocationMarkerIcon, HomeIcon } from './icons.tsx';
 
 interface ActorPageProps {
@@ -39,7 +39,7 @@ export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMed
   };
 
   return (
-    <div className="w-full max-w-7xl fade-in">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 fade-in">
       <div className="flex items-center gap-3 mb-6">
         <button onClick={onBack} className="px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">&larr; Back</button>
         <a href="#/home" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">
@@ -71,9 +71,11 @@ export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMed
         </div>
       </div>
 
-      <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white">Known For</h2>
-      <RecommendationGrid recommendations={actor.filmography} onSelect={onSelectMedia} />
+      {actor.filmography && actor.filmography.length > 0 && (
+        <div className="-mx-4 sm:-mx-6 lg:-mx-8">
+          <MediaRow title="Known For" items={actor.filmography} onSelect={onSelectMedia} />
+        </div>
+      )}
     </div>
   );
 };
-      
