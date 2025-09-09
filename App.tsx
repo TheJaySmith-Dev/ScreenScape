@@ -1,4 +1,5 @@
 
+
 // FIX: Correctly import React hooks (useState, useEffect, useCallback) to resolve 'Cannot find name' errors.
 import React, { useState, useEffect, useCallback } from 'react';
 import { HeroSection } from './components/HeroSection.tsx';
@@ -438,17 +439,19 @@ const App: React.FC = () => {
           
           {(selectedItem || selectedActor) && (
               <div
-                className="fixed inset-0 bg-black/80 backdrop-blur-2xl z-50 overflow-y-auto flex items-center justify-center p-4"
+                className="fixed inset-0 bg-black/80 backdrop-blur-2xl z-50 overflow-y-auto"
                 onClick={handleCloseModal}
               >
-                   {selectedItem && (
-                        <DetailModal item={selectedItem} onClose={handleCloseModal} isLoading={isDetailLoading} onSelectMedia={handleSelectMedia} onSelectActor={handleSelectActor} userLocation={userLocation} />
-                   )}
-                   {selectedActor && (
-                        <div onClick={(e) => e.stopPropagation()}>
-                            <ActorPage actor={selectedActor} onBack={handleCloseModal} onSelectMedia={handleSelectMedia} isLoading={isDetailLoading} />
-                        </div>
-                   )}
+                  <div className="flex items-center justify-center min-h-full p-4">
+                       {selectedItem && (
+                            <DetailModal item={selectedItem} onClose={handleCloseModal} isLoading={isDetailLoading} onSelectMedia={handleSelectMedia} onSelectActor={handleSelectActor} userLocation={userLocation} />
+                       )}
+                       {selectedActor && (
+                            <div onClick={(e) => e.stopPropagation()}>
+                                <ActorPage actor={selectedActor} onBack={handleCloseModal} onSelectMedia={handleSelectMedia} isLoading={isDetailLoading} />
+                            </div>
+                       )}
+                  </div>
               </div>
           )}
 
