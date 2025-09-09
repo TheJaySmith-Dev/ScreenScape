@@ -39,37 +39,40 @@
             overflow: hidden;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        /* LIQUID GLASS - SPECULAR HIGHLIGHT */
+        /* LIQUID GLASS - SPECULAR HIGHLIGHT & LIQUID REFLECTION */
+        @keyframes liquid-flow {
+            0% { transform: translate(-100%, -75%) rotate(35deg); }
+            100% { transform: translate(75%, 100%) rotate(55deg); }
+        }
         .glass-panel::before {
             content: '';
             position: absolute;
-            top: -50%;
-            left: -50%;
+            top: 0;
+            left: 0;
             width: 200%;
             height: 200%;
-            background-image: linear-gradient(
-                115deg,
-                transparent 30%,
-                rgba(255, 255, 255, 0.1) 48%,
-                rgba(255, 255, 255, 0.05) 50%,
-                transparent 70%
+            background-image: radial-gradient(
+                circle at center,
+                rgba(255, 255, 255, 0.1) 0%,
+                rgba(255, 255, 255, 0.05) 30%,
+                transparent 65%
             );
-            transform: rotate(45deg) scale(1);
-            opacity: 0;
-            transition: opacity 0.6s ease, transform 0.8s ease;
+            opacity: 0.5; /* Always on, but subtle */
+            animation: liquid-flow 20s ease-in-out infinite alternate;
             pointer-events: none;
+            transition: opacity 0.5s ease, animation-duration 1s ease;
         }
         .glass-panel:hover::before {
-            opacity: 1;
-            transform: rotate(35deg) scale(1.2);
+            opacity: 0.8;
+            animation-duration: 15s; /* Speed up on hover */
         }
 
         /* ACCESSIBILITY - ALL CLEAR MODE */
         .all-clear-mode .glass-panel {
-            background-image: linear-gradient(135deg, rgba(20, 20, 22, 0.4), rgba(15, 15, 17, 0.5));
-            backdrop-filter: blur(8px) saturate(1.2);
-            -webkit-backdrop-filter: blur(8px) saturate(1.2);
-            border-color: rgba(255, 255, 255, 0.15);
+            background-image: linear-gradient(135deg, rgba(30, 30, 32, 0.2), rgba(25, 25, 27, 0.35));
+            backdrop-filter: blur(4px) saturate(1.4);
+            -webkit-backdrop-filter: blur(4px) saturate(1.4);
+            border-color: rgba(255, 255, 255, 0.18);
         }
         .modal-backdrop-overlay {
             background-color: rgba(0,0,0,0.8);
@@ -78,9 +81,9 @@
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .all-clear-mode .modal-backdrop-overlay {
-            background-color: rgba(0,0,0,0.5);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            background-color: rgba(0,0,0,0.4);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
         }
         
         .text-glow {
