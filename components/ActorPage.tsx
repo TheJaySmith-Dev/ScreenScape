@@ -1,5 +1,4 @@
 
-
 import React, { useState } from 'react';
 import type { ActorDetails, MediaDetails } from '../types.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
@@ -48,10 +47,10 @@ export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMed
   };
 
   return (
-    <div className="w-full max-w-4xl glass-panel rounded-3xl p-6 md:p-8 max-h-[90vh] flex flex-col fade-in-modal relative">
+    <div className="w-full max-w-4xl glass-panel rounded-[28px] p-6 md:p-8 max-h-[90vh] flex flex-col fade-in-modal relative">
       <button
         onClick={onBack}
-        className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-colors z-20"
+        className="absolute top-4 right-4 p-2.5 glass-button !rounded-full z-20"
         aria-label="Close"
       >
         <CloseIcon className="w-6 h-6" />

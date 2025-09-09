@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { MediaDetails } from '../types.ts';
 
@@ -14,7 +15,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({ media, o
     return (
       <div
         onClick={onSelect}
-        className="group cursor-pointer rounded-3xl overflow-hidden glass-panel md:hover:border-white transition-all duration-300 aspect-[2/3] flex flex-col justify-center items-center text-center p-4"
+        className="group cursor-pointer rounded-[28px] overflow-hidden glass-panel md:hover:border-white transition-all duration-300 aspect-[2/3] flex flex-col justify-center items-center text-center p-4"
       >
         <h3 className="text-gray-200 text-lg font-bold leading-tight">
           {media.title}
@@ -28,7 +29,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({ media, o
   return (
     <div
       onClick={onSelect}
-      className="group cursor-pointer rounded-3xl overflow-hidden glass-panel transition-all duration-300 md:hover:border-white aspect-[2/3] relative flex flex-col justify-end text-white"
+      className="group cursor-pointer rounded-[28px] overflow-hidden glass-panel transition-all duration-300 md:hover:border-white aspect-[2/3] relative flex flex-col justify-end text-white"
       tabIndex={0}
       role="button"
       aria-label={`View details for ${media.title}`}

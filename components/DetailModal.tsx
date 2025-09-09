@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useCallback } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders, OmdbDetails, FunFact, SeasonDetails, Episode, SeasonSummary } from '../types.ts';
 import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, HomeIcon, SparklesIcon, InfoIcon, ChatBubbleIcon } from './icons.tsx';
@@ -396,7 +395,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             {!isLoading && media.trailerUrl && (
                 <button
                     onClick={handleWatchTrailer}
-                    className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 glass-panel rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/5 hover:scale-105 text-sm sm:text-base"
+                    className="glass-button text-sm sm:text-base"
                 >
                     <PlayIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                     <span>Trailer</span>
@@ -405,7 +404,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             {!isLoading && media.imdbId && (
                 <button
                     onClick={() => setIsDetailsVisible(prev => !prev)}
-                    className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 glass-panel rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/5 hover:scale-105 text-sm sm:text-base"
+                    className="glass-button text-sm sm:text-base"
                 >
                     <InfoIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                     <span className="hidden sm:inline">{isDetailsVisible ? 'Hide Info' : 'More Info'}</span>
@@ -414,7 +413,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             )}
              <button
                 onClick={() => setIsChatModalOpen(true)}
-                className="flex items-center justify-center gap-2 px-4 py-2 sm:px-6 sm:py-3 glass-panel rounded-xl text-white font-semibold transition-all duration-300 hover:bg-white/5 hover:scale-105 text-sm sm:text-base"
+                className="glass-button text-sm sm:text-base"
                 disabled={!aiClient}
             >
                 <ChatBubbleIcon className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -424,10 +423,10 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                 <button
                     onClick={handleLike}
                     aria-label={currentIsLiked ? "Unlike" : "Like"}
-                    className={`p-2 sm:p-3 glass-panel rounded-full transition-all duration-300 hover:scale-110 ${
+                    className={`p-3 glass-button !rounded-full transition-all duration-300 ${
                         currentIsLiked 
-                        ? 'bg-green-500/20 !border-green-500 text-green-400'
-                        : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                        ? '!bg-green-500/20 !border-green-500 text-green-400'
+                        : ''
                     }`}
                 >
                     <ThumbsUpIcon className="w-5 h-5 sm:w-6 sm:h-6"/>
@@ -435,10 +434,10 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                 <button
                     onClick={handleDislike}
                     aria-label={currentIsDisliked ? "Remove dislike" : "Dislike"}
-                    className={`p-2 sm:p-3 glass-panel rounded-full transition-all duration-300 hover:scale-110 ${
+                    className={`p-3 glass-button !rounded-full transition-all duration-300 ${
                         currentIsDisliked
-                        ? 'bg-red-500/20 !border-red-500 text-red-400'
-                        : 'text-gray-300 hover:bg-white/5 hover:text-white'
+                        ? '!bg-red-500/20 !border-red-500 text-red-400'
+                        : ''
                     }`}
                 >
                     <ThumbsDownIcon className="w-5 h-5 sm:w-6 sm:h-6"/>
@@ -476,7 +475,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                             href={`https://reelgood.com/search?q=${encodeURIComponent(media.title)}`} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="inline-block mt-2 px-4 py-2 text-sm glass-panel rounded-lg transition-colors text-center w-full sm:w-auto hover:bg-white/5"
+                            className="inline-block mt-2 px-4 py-2 text-sm glass-panel !rounded-lg transition-colors text-center w-full sm:w-auto hover:bg-white/5"
                         >
                             Search all options on ReelGood
                         </a>
@@ -550,8 +549,8 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         onClick={(e) => e.stopPropagation()}
       >
         <div className="my-8 sm:my-12 flex items-center gap-3">
-            <button onClick={onClose} className="px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">&larr; Back</button>
-            <a href="#/home" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">
+            <button onClick={onClose} className="glass-button text-sm !px-4 !py-2">&larr; Back</button>
+            <a href="#/home" className="glass-button text-sm !px-4 !py-2">
                 <HomeIcon className="w-4 h-4" />
                 <span>Home</span>
             </a>
@@ -601,7 +600,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                         </div>
 
                         <div className="flex flex-wrap items-start justify-center md:justify-start gap-3 mb-4">
-                            <div className="flex items-center gap-2 glass-panel p-2 rounded-xl">
+                            <div className="flex items-center gap-2 glass-panel !rounded-xl p-2">
                                 <StarIcon className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-400" />
                                 <div>
                                     <span className="font-bold text-base sm:text-lg text-white">{item.rating}</span>
