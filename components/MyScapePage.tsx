@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { useSettings } from '../hooks/useSettings.ts';
 import { usePreferences } from '../hooks/usePreferences.ts';
@@ -56,24 +57,27 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                                 <span className="text-gray-300">Gemini API Key:</span>
                                 <span className="font-mono text-gray-400">{geminiApiKey ? `...${geminiApiKey.slice(-4)}` : 'Not Set'}</span>
                             </div>
-                             <div className="flex justify-between items-center text-sm">
-                                <label htmlFor="all-clear-toggle" className="text-gray-300">'All Clear' Mode:</label>
+                             <div className="flex justify-between items-center">
+                                <div>
+                                    <label htmlFor="all-clear-toggle" className="text-gray-200 text-sm">"All Clear" Mode</label>
+                                    <p className="text-xs text-gray-400 -mt-1">Increases UI transparency.</p>
+                                </div>
                                 <button
                                     id="all-clear-toggle"
                                     onClick={toggleAllClearMode}
-                                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${
-                                        isAllClearMode ? 'bg-indigo-500' : 'bg-gray-600'
+                                    className={`relative inline-flex items-center h-7 rounded-full w-12 transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-indigo-500 ${
+                                        isAllClearMode ? 'bg-indigo-600' : 'bg-gray-700'
                                     }`}
-                                    aria-pressed={isAllClearMode}
+                                    role="switch"
+                                    aria-checked={isAllClearMode}
                                 >
                                     <span
-                                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                                        className={`inline-block w-5 h-5 transform bg-white rounded-full transition-transform duration-300 ease-in-out shadow-lg ring-1 ring-black/10 ${
                                             isAllClearMode ? 'translate-x-6' : 'translate-x-1'
                                         }`}
                                     />
                                 </button>
                             </div>
-                            <p className="text-xs text-gray-400 -mt-2">Increases UI transparency for better visibility of background content.</p>
                             <div className="pt-2 space-y-2">
                                 <button onClick={() => setIsApiKeyModalOpen(true)} className="w-full px-4 py-2 text-sm text-center bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
                                     Manage API Keys

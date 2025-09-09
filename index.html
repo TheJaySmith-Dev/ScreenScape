@@ -27,65 +27,58 @@
         .container {
           max-width: 1280px;
         }
-        /* LIQUID GLASS - CORE MATERIAL */
+        /* LIQUID GLASS - CORE MATERIAL (v3) */
         .glass-panel {
-            background-image: linear-gradient(135deg, rgba(40, 40, 42, 0.7), rgba(30, 30, 32, 0.85));
-            backdrop-filter: blur(24px) saturate(1.8);
-            -webkit-backdrop-filter: blur(24px) saturate(1.8);
-            border-radius: 28px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            background-image: linear-gradient(135deg, rgba(40, 40, 42, 0.6), rgba(25, 25, 27, 0.75));
+            backdrop-filter: blur(32px) saturate(1.8);
+            -webkit-backdrop-filter: blur(32px) saturate(1.8);
+            border-radius: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
             position: relative;
             overflow: hidden;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        /* LIQUID GLASS - SPECULAR HIGHLIGHT & LIQUID REFLECTION */
-        @keyframes liquid-reflection {
-            0% { transform: translate(-50%, -60%) rotate(15deg); }
-            50% { transform: translate(-40%, -70%) rotate(35deg); }
-            100% { transform: translate(-50%, -60%) rotate(15deg); }
+
+        /* LIQUID GLASS - SPECULAR HIGHLIGHT & LIQUID REFLECTION (v3) */
+        @keyframes specular-glint {
+            0% { transform: translateX(-150%) skewX(-25deg); }
+            100% { transform: translateX(150%) skewX(-25deg); }
         }
-        .glass-panel::before {
+        .glass-panel::after {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
-            width: 250%;
-            height: 250%;
-            background-image: radial-gradient(
-                ellipse at center,
-                rgba(255, 255, 255, 0.12) 0%,
-                rgba(255, 255, 255, 0.06) 25%,
-                transparent 60%
-            );
-            opacity: 0.5;
-            animation: liquid-reflection 18s ease-in-out infinite alternate;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%);
+            animation: specular-glint 8s ease-in-out infinite;
+            animation-delay: 1.5s;
             pointer-events: none;
-            transition: opacity 0.5s ease, animation-duration 1s ease, transform 0.5s ease;
+            transition: opacity 0.5s ease;
         }
-        .glass-panel:hover::before {
-            opacity: 0.8;
-            animation-duration: 12s;
-            transform: scale(1.05);
+        .glass-panel:hover::after {
+            animation-duration: 6s;
         }
-
-        /* ACCESSIBILITY - ALL CLEAR MODE */
+        
+        /* ACCESSIBILITY - ALL CLEAR MODE (v3 - More transparent) */
         .all-clear-mode .glass-panel {
-            background-image: linear-gradient(135deg, rgba(28, 28, 30, 0.3), rgba(22, 22, 24, 0.5));
-            backdrop-filter: blur(12px) saturate(1.6);
-            -webkit-backdrop-filter: blur(12px) saturate(1.6);
-            border-color: rgba(255, 255, 255, 0.16);
+            background-image: linear-gradient(135deg, rgba(28, 28, 30, 0.1), rgba(22, 22, 24, 0.2));
+            backdrop-filter: blur(8px) saturate(1.5);
+            -webkit-backdrop-filter: blur(8px) saturate(1.5);
+            border-color: rgba(255, 255, 255, 0.2);
         }
         .modal-backdrop-overlay {
-            background-color: rgba(0,0,0,0.8);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
+            background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(32px);
+            -webkit-backdrop-filter: blur(32px);
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .all-clear-mode .modal-backdrop-overlay {
-            background-color: rgba(0,0,0,0.3);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background-color: rgba(0,0,0,0.1);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
         
         .text-glow {
@@ -428,14 +421,15 @@
             animation-delay: 0.8s;
         }
         
-        /* Page Container with rounded hardware edges */
+        /* Page Container with rounded hardware edges (v3) */
         .page-container {
             background-color: #111214;
-            border-radius: 36px;
+            border-radius: 44px; /* More pronounced rounding */
             overflow: hidden;
             margin: 0 1rem;
             position: relative;
             border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
         }
 
         /* Mobile Dock as a positioning container for the glass pill */
