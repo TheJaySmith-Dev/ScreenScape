@@ -27,56 +27,81 @@
         .container {
           max-width: 1280px;
         }
-        /* LIQUID GLASS - CORE MATERIAL (v3) */
+        /* LIQUID GLASS - CORE MATERIAL (v4 - Refractive & Beveled) */
         .glass-panel {
-            background-image: linear-gradient(135deg, rgba(40, 40, 42, 0.6), rgba(25, 25, 27, 0.75));
-            backdrop-filter: blur(32px) saturate(1.8);
-            -webkit-backdrop-filter: blur(32px) saturate(1.8);
+            /* Reduced blur, focus is on depth and reflection now */
+            backdrop-filter: blur(16px) saturate(1.5);
+            -webkit-backdrop-filter: blur(16px) saturate(1.5);
+            /* Layered background for depth */
+            background-image:
+                /* 1. Subtle inner glow for edges */
+                radial-gradient(ellipse at center, rgba(255, 255, 255, 0.08) 0%, transparent 80%),
+                /* 2. Main translucent body */
+                linear-gradient(135deg, rgba(40, 40, 42, 0.3), rgba(25, 25, 27, 0.4));
+            /* Polished edge */
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            /* Beveled edge effect using inset shadows */
+            box-shadow:
+                /* Outer shadow for floating effect */
+                0 16px 40px rgba(0, 0, 0, 0.5),
+                /* Inner light source from top-left */
+                inset 1px 1px 1px rgba(255, 255, 255, 0.1),
+                /* Inner shadow for depth */
+                inset -2px -2px 2px rgba(0, 0, 0, 0.2);
             border-radius: 32px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
             position: relative;
             overflow: hidden;
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* LIQUID GLASS - SPECULAR HIGHLIGHT & LIQUID REFLECTION (v3) */
+        /* LIQUID GLASS - SPECULAR GLINT (v4 - Sharper, more realistic) */
         @keyframes specular-glint {
-            0% { transform: translateX(-150%) skewX(-25deg); }
-            100% { transform: translateX(150%) skewX(-25deg); }
+            0% { transform: translateX(-150%) skewX(-30deg); opacity: 0.5; }
+            50% { opacity: 0.8; }
+            100% { transform: translateX(150%) skewX(-30deg); opacity: 0.5; }
         }
         .glass-panel::after {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
-            width: 50%;
+            width: 30%; /* Sharper, more focused glint */
             height: 100%;
-            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0) 100%);
-            animation: specular-glint 8s ease-in-out infinite;
-            animation-delay: 1.5s;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0) 100%);
+            animation: specular-glint 9s ease-in-out infinite;
+            animation-delay: 1s;
             pointer-events: none;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.5s ease, animation-duration 0.5s ease;
         }
         .glass-panel:hover::after {
-            animation-duration: 6s;
+            animation-duration: 7s;
         }
         
-        /* ACCESSIBILITY - ALL CLEAR MODE (v3 - More transparent) */
+        /* ACCESSIBILITY - ALL CLEAR MODE (v4 - Crystal Clear) */
         .all-clear-mode .glass-panel {
-            background-image: linear-gradient(135deg, rgba(28, 28, 30, 0.1), rgba(22, 22, 24, 0.2));
-            backdrop-filter: blur(8px) saturate(1.5);
-            -webkit-backdrop-filter: blur(8px) saturate(1.5);
-            border-color: rgba(255, 255, 255, 0.2);
+            /* Minimal blur, maximum clarity */
+            backdrop-filter: blur(4px) saturate(1.2);
+            -webkit-backdrop-filter: blur(4px) saturate(1.2);
+            /* Almost fully transparent background */
+            background-image:
+                radial-gradient(ellipse at center, rgba(255, 255, 255, 0.05) 0%, transparent 70%),
+                linear-gradient(135deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.03));
+            /* A more defined border to see the object's shape */
+            border-color: rgba(255, 255, 255, 0.25);
+            /* Maintain the inset shadow for the 3D effect */
+            box-shadow:
+                0 10px 30px rgba(0, 0, 0, 0.2),
+                inset 1px 1px 1px rgba(255, 255, 255, 0.15),
+                inset -1px -1px 1px rgba(0, 0, 0, 0.1);
         }
         .modal-backdrop-overlay {
-            background-color: rgba(0,0,0,0.7);
-            backdrop-filter: blur(32px);
-            -webkit-backdrop-filter: blur(32px);
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .all-clear-mode .modal-backdrop-overlay {
-            background-color: rgba(0,0,0,0.1);
+            background-color: rgba(10, 10, 12, 0.2); /* Darker but still very transparent */
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
         }
