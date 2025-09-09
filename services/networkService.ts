@@ -24,6 +24,13 @@ export const popularNetworks: Network[] = [
     hoverGifUrl: 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZW9kbHUzNGdieDRpbjlvajA1c2gwNXNlaTA5M2FjMXltcmIyZjViZiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/n9N6RuWhS5fbOrXHla/giphy.gif',
   },
   {
+    id: 16,
+    name: 'CBS',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/ee/CBS_logo_%282020%29.svg',
+    bgColor: '#FFFFFF',
+    hoverGifUrl: 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExMXlzdjA4eXlxa2NnaXg2NHA2bnFnZXU3dHZvYW1mMzRiaGNqdHFlYiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26BoCwvSLbCCd5g6Q/giphy.gif',
+  },
+  {
     id: 88,
     name: 'FX',
     logoUrl: 'https://cdn.brandfetch.io/idOAEGeWKM/theme/light/logo.svg?c=1dxbfHSJFAPEGdCLU4o5B',
