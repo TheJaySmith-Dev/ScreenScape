@@ -322,6 +322,8 @@ export interface SettingsContextType {
   aiClient: GoogleGenAI | null;
   rateLimit: RateLimitState;
   isInitialized: boolean;
+  isAllClearMode: boolean;
+  toggleAllClearMode: () => void;
   canMakeRequest: () => { canRequest: boolean; resetTime: number | null };
   incrementRequestCount: () => void;
   saveApiKeys: (keys: { tmdbKey: string; geminiKey: string }) => void;

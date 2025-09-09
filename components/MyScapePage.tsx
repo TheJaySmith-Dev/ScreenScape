@@ -13,7 +13,7 @@ interface MyScapePageProps {
 }
 
 export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
-    const { rateLimit, tmdbApiKey, geminiApiKey, saveApiKeys, clearAllSettings } = useSettings();
+    const { rateLimit, tmdbApiKey, geminiApiKey, saveApiKeys, clearAllSettings, isAllClearMode, toggleAllClearMode } = useSettings();
     const { likes, isLoading: preferencesLoading } = usePreferences();
     const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
 
@@ -47,7 +47,7 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                     {/* Settings */}
                     <div className="glass-panel p-6 rounded-2xl">
                         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><Cog6ToothIcon className="w-6 h-6"/> Settings</h2>
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-gray-300">TMDb API Key:</span>
                                 <span className="font-mono text-gray-400">{tmdbApiKey ? `...${tmdbApiKey.slice(-4)}` : 'Not Set'}</span>
@@ -56,12 +56,32 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                                 <span className="text-gray-300">Gemini API Key:</span>
                                 <span className="font-mono text-gray-400">{geminiApiKey ? `...${geminiApiKey.slice(-4)}` : 'Not Set'}</span>
                             </div>
-                            <button onClick={() => setIsApiKeyModalOpen(true)} className="w-full mt-2 px-4 py-2 text-sm text-center bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                                Manage API Keys
-                            </button>
-                             <button onClick={clearAllSettings} className="w-full mt-2 px-4 py-2 text-sm text-center text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors">
-                                Clear All Local Data
-                            </button>
+                             <div className="flex justify-between items-center text-sm">
+                                <label htmlFor="all-clear-toggle" className="text-gray-300">'All Clear' Mode:</label>
+                                <button
+                                    id="all-clear-toggle"
+                                    onClick={toggleAllClearMode}
+                                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${
+                                        isAllClearMode ? 'bg-indigo-500' : 'bg-gray-600'
+                                    }`}
+                                    aria-pressed={isAllClearMode}
+                                >
+                                    <span
+                                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
+                                            isAllClearMode ? 'translate-x-6' : 'translate-x-1'
+                                        }`}
+                                    />
+                                </button>
+                            </div>
+                            <p className="text-xs text-gray-400 -mt-2">Increases UI transparency for better visibility of background content.</p>
+                            <div className="pt-2 space-y-2">
+                                <button onClick={() => setIsApiKeyModalOpen(true)} className="w-full px-4 py-2 text-sm text-center bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                                    Manage API Keys
+                                </button>
+                                 <button onClick={clearAllSettings} className="w-full px-4 py-2 text-sm text-center text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors">
+                                    Clear All Local Data
+                                </button>
+                            </div>
                         </div>
                     </div>
                     {/* Usage */}

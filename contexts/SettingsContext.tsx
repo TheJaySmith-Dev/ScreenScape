@@ -6,6 +6,7 @@ import type { SettingsContextType, RateLimitState } from '../types.ts';
 const LOCAL_STORAGE_KEY_TMDB = 'screenscape_tmdb_api_key';
 const LOCAL_STORAGE_KEY_GEMINI = 'screenscape_gemini_api_key';
 const LOCAL_STORAGE_KEY_RATE_LIMIT = 'screenscape_rate_limit';
+const LOCAL_STORAGE_KEY_ALL_CLEAR = 'screenscape_all_clear_mode';
 
 const getInitialRateLimit = (): RateLimitState => {
     try {
@@ -36,16 +37,21 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     const [aiClient, setAiClient] = useState<GoogleGenAI | null>(null);
     const [rateLimit, setRateLimit] = useState<RateLimitState>(getInitialRateLimit());
     const [isInitialized, setIsInitialized] = useState(false);
+    const [isAllClearMode, setIsAllClearMode] = useState<boolean>(false);
 
     // Initialize settings from local storage on component mount
     useEffect(() => {
         const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
         const localGeminiKey = localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI);
+        const localAllClear = localStorage.getItem(LOCAL_STORAGE_KEY_ALL_CLEAR);
         
         if (localTmdbKey) {
             setTmdbApiKey(localTmdbKey);
             // Immediately sync with the apiService to prevent race conditions
             setLocalTmdbApiKey(localTmdbKey);
+        }
+        if (localAllClear) {
+            setIsAllClearMode(JSON.parse(localAllClear));
         }
         
         setGeminiApiKey(localGeminiKey);
@@ -75,6 +81,14 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         setGeminiApiKey(keys.geminiKey);
         localStorage.setItem(LOCAL_STORAGE_KEY_TMDB, keys.tmdbKey);
         localStorage.setItem(LOCAL_STORAGE_KEY_GEMINI, keys.geminiKey);
+    }, []);
+
+    const toggleAllClearMode = useCallback(() => {
+        setIsAllClearMode(prev => {
+            const newState = !prev;
+            localStorage.setItem(LOCAL_STORAGE_KEY_ALL_CLEAR, JSON.stringify(newState));
+            return newState;
+        });
     }, []);
 
     const incrementRequestCount = useCallback(() => {
@@ -113,10 +127,12 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         setGeminiApiKey(null);
         setAiClient(null);
         setRateLimit(newRateLimit);
+        setIsAllClearMode(false);
         
         localStorage.removeItem(LOCAL_STORAGE_KEY_TMDB);
         localStorage.removeItem(LOCAL_STORAGE_KEY_GEMINI);
         localStorage.removeItem(LOCAL_STORAGE_KEY_RATE_LIMIT);
+        localStorage.removeItem(LOCAL_STORAGE_KEY_ALL_CLEAR);
     }, []);
 
     const value = {
@@ -125,6 +141,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         aiClient,
         rateLimit,
         isInitialized,
+        isAllClearMode,
+        toggleAllClearMode,
         canMakeRequest,
         incrementRequestCount,
         saveApiKeys,

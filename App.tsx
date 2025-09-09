@@ -37,7 +37,7 @@ import { useSettings } from './hooks/useSettings.ts';
 const getHashRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
 
 const App: React.FC = () => {
-    const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient } = useSettings();
+    const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient, isAllClearMode } = useSettings();
     const [route, setRoute] = useState<string[]>(getHashRoute());
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -86,6 +86,14 @@ const App: React.FC = () => {
             window.removeEventListener('scroll', handleScroll);
         };
     }, []);
+
+    useEffect(() => {
+        if (isAllClearMode) {
+            document.body.classList.add('all-clear-mode');
+        } else {
+            document.body.classList.remove('all-clear-mode');
+        }
+    }, [isAllClearMode]);
 
     const fetchInitialData = useCallback(async () => {
         setIsLoading(true);
@@ -454,7 +462,7 @@ const App: React.FC = () => {
                       {backdropUrl && (
                           <img src={backdropUrl} alt="" className="w-full h-full object-cover" />
                       )}
-                      <div className="absolute inset-0 bg-black/80 backdrop-blur-2xl" />
+                      <div className="absolute inset-0 modal-backdrop-overlay" />
                   </div>
 
                   <div className="flex items-center justify-center min-h-full p-4">
