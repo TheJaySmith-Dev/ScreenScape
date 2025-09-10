@@ -61,7 +61,7 @@ export const findBestTrailer = (videos: any[]): any | null => {
         const dateB = new Date(b.published_at).getTime();
         if (dateA < dateB) {
             scoreA += 1;
-        } else if (dateB < dateA) { // FIX: Corrected a typo in the comparison logic.
+        } else if (dateB < dateA) {
             scoreB += 1;
         }
         return scoreB - scoreA;
@@ -267,6 +267,291 @@ export const fetchSeasonDetails = async (tvId: number, seasonNumber: number): Pr
     }
 };
 
+export const getTrending = (): Promise<MediaDetails[]> => fetchList('/trending/all/week');
+export const getPopularMovies = (): Promise<MediaDetails[]> => fetchList('/movie/popular', 'movie');
+export const getPopularTv = (): Promise<MediaDetails[]> => fetchList('/tv/popular', 'tv');
+export const getNowPlayingMovies = (): Promise<MediaDetails[]> => fetchList('/movie/now_playing', 'movie');
+export const getTopRatedMovies = (): Promise<MediaDetails[]> => fetchList('/movie/top_rated', 'movie');
+export const getTopRatedTv = (): Promise<MediaDetails[]> => fetchList('/tv/top_rated', 'tv');
+
+export const getComingSoonMedia = async (): Promise<MediaDetails[]> => {
+    const upcomingMovies = await fetchList('/movie/upcoming', 'movie');
+    const onTheAirTv = await fetchList('/tv/on_the_air', 'tv');
+
+    // Combine and sort by release date, soonest first
+    const combined = [...upcomingMovies, ...onTheAirTv];
+    combined.sort((a, b) => {
+        const dateA = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
+        const dateB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
+        return dateA - dateB;
+    });
+
+    return combined.slice(0, 20);
+};
+
+export const searchMedia = (query: string): Promise<MediaDetails[]> => {
+    return fetchList(`/search/multi?query=${encodeURIComponent(query)}`);
+};
+
+export const fetchCollectionDetails = async (collectionId: number): Promise<CollectionDetails> => {
+    const details = await fetchApi<any>(`/collection/${collectionId}`);
+    return {
+        id: details.id,
+        name: details.name,
+        overview: details.overview,
+        posterUrl: details.poster_path ? `https://image.tmdb.org/t/p/w500${details.poster_path}` : 'https://picsum.photos/500/750',
+        backdropUrl: details.backdrop_path ? `https://image.tmdb.org/t/p/w1280${details.backdrop_path}` : 'https://picsum.photos/1280/720',
+        parts: details.parts
+            .map((item: any) => formatMediaListItem(item, 'movie'))
+            .filter((item): item is MediaDetails => item !== null)
+    };
+};
+
+export const getRecommendationsFromTastes = async (likes: LikedItem[], dislikes: DislikedItem[]): Promise<MediaDetails[]> => {
+    if (likes.length === 0) return [];
+
+    const seedItems = likes.slice(-3); // Use the 3 most recent likes for seeding
+    const recommendations: MediaDetails[] = [];
+    const recommendedIds = new Set<number>();
+    const dislikedIds = new Set(dislikes.map(d => d.id));
+
+    for (const item of seedItems) {
+        if (recommendations.length >= 20) break;
+        const endpoint = `/${item.type}/${item.id}/recommendations`;
+        try {
+            const data = await fetchApi<{ results: any[] }>(endpoint);
+            for (const rec of data.results) {
+                if (recommendations.length >= 20) break;
+                if (!recommendedIds.has(rec.id) && !dislikedIds.has(rec.id)) {
+                    const formatted = formatMediaListItem(rec, rec.media_type);
+                    if (formatted) {
+                        recommendations.push(formatted);
+                        recommendedIds.add(rec.id);
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn(`Could not fetch recommendations for ${item.title}:`, error);
+        }
+    }
+    return recommendations;
+};
+
+export const fetchMediaByIds = async (ids: { id: number; type: 'movie' | 'tv' }[]): Promise<MediaDetails[]> => {
+    const promises = ids.map(item =>
+        fetchApi<any>(`/${item.type}/${item.id}`).then(details =>
+            formatMediaListItem(details, item.type)
+        )
+    );
+    const results = await Promise.all(promises);
+    return results.filter((item): item is MediaDetails => item !== null);
+};
+
+export const fetchMediaByCollectionIds = async (collectionIds: number[]): Promise<MediaDetails[]> => {
+    const allMedia: MediaDetails[] = [];
+    const seenIds = new Set<number>();
+
+    for (const id of collectionIds) {
+        try {
+            const collection = await fetchCollectionDetails(id);
+            if (collection.parts) {
+                collection.parts.forEach(part => {
+                    if (!seenIds.has(part.id)) {
+                        allMedia.push(part);
+                        seenIds.add(part.id);
+                    }
+                });
+            }
+        } catch (error) {
+            console.error(`Failed to fetch collection ID ${id}:`, error);
+        }
+    }
+
+    return allMedia;
+};
+
+export const getMediaByStudio = async (companyIds: number[]): Promise<MediaDetails[]> => {
+    const endpoint = `/discover/movie?with_companies=${companyIds.join('|')}&sort_by=popularity.desc`;
+    return fetchList(endpoint, 'movie');
+};
+
+export const getMediaByNetwork = async (networkId: number): Promise<MediaDetails[]> => {
+    const endpoint = `/discover/tv?with_networks=${networkId}&sort_by=popularity.desc`;
+    return fetchList(endpoint, 'tv');
+};
+
+export const getMediaByStreamingProvider = async (providerKey: StreamingProviderInfo['key'], countryCode: string): Promise<MediaDetails[]> => {
+    const provider = supportedProviders.find(p => p.key === providerKey);
+    if (!provider) return [];
+    
+    const movieEndpoint = `/discover/movie?with_watch_providers=${provider.id}&watch_region=${countryCode}&sort_by=popularity.desc`;
+    const tvEndpoint = `/discover/tv?with_watch_providers=${provider.id}&watch_region=${countryCode}&sort_by=popularity.desc`;
+
+    const [movies, tvShows] = await Promise.all([
+        fetchList(movieEndpoint, 'movie'),
+        fetchList(tvEndpoint, 'tv')
+    ]);
+
+    // Interleave movies and TV shows for variety
+    const results: MediaDetails[] = [];
+    const maxLength = Math.max(movies.length, tvShows.length);
+    for (let i = 0; i < maxLength; i++) {
+        if (movies[i]) results.push(movies[i]);
+        if (tvShows[i]) results.push(tvShows[i]);
+    }
+    return results;
+};
+
+export const fetchWatchProviders = async (id: number, type: 'movie' | 'tv', countryCode: string): Promise<WatchProviders | null> => {
+    try {
+        const endpoint = `/${type}/${id}/watch/providers`;
+        const data = await fetchApi<{ results: any }>(endpoint);
+        const providersData = data.results?.[countryCode.toUpperCase()];
+        if (providersData) {
+            return {
+                link: providersData.link,
+                flatrate: providersData.flatrate,
+                rent: providersData.rent,
+                buy: providersData.buy,
+            };
+        }
+        return null;
+    } catch (error) {
+        console.error(`Failed to fetch providers for ${type} ${id} in ${countryCode}:`, error);
+        return null;
+    }
+};
+
+
+export const getMediaByPerson = async (personId: number, role: 'actor' | 'director'): Promise<MediaDetails[]> => {
+    let endpoint: string;
+    if (role === 'actor') {
+        endpoint = `/person/${personId}/movie_credits`;
+    } else { // director
+        endpoint = `/person/${personId}/movie_credits`;
+    }
+    
+    const response = await fetchApi<{ cast: any[], crew: any[] }>(endpoint);
+    let mediaList: any[];
+
+    if (role === 'actor') {
+        mediaList = response.cast;
+    } else {
+        mediaList = response.crew.filter(c => c.job === 'Director');
+    }
+    
+    // Sort by popularity and take the top 20
+    mediaList.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+    return mediaList.slice(0, 20)
+        .map(item => formatMediaListItem(item, 'movie'))
+        .filter((item): item is MediaDetails => item !== null);
+};
+
+
+export const fetchActorDetails = async (actorId: number): Promise<ActorDetails> => {
+    const appendToResponse = 'movie_credits';
+    const endpoint = `/person/${actorId}?append_to_response=${appendToResponse}`;
+    const details = await fetchApi<any>(endpoint);
+    
+    const filmography = details.movie_credits.cast
+        .sort((a: any, b: any) => (b.popularity || 0) - (a.popularity || 0))
+        .slice(0, 10)
+        .map((item: any) => formatMediaListItem(item, 'movie'))
+        .filter((item): item is MediaDetails => item !== null);
+
+    return {
+        id: details.id,
+        name: details.name,
+        biography: details.biography,
+        profilePath: details.profile_path
+            ? `https://image.tmdb.org/t/p/w500${details.profile_path}`
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(details.name)}&background=374151&color=fff&size=500`,
+        birthday: details.birthday,
+        placeOfBirth: details.place_of_birth,
+        filmography
+    };
+};
+
+// --- Game Data Fetchers ---
+
+const formatGameMovie = async (movie: any): Promise<GameMovie | null> => {
+    if (!movie.imdb_id || !movie.popularity) return null;
+    const boxOffice = await fetchBoxOffice(movie.imdb_id);
+    if (boxOffice === null || boxOffice < 100000) return null; // Filter out movies with no box office data or very low gross
+    
+    return {
+        id: movie.id,
+        imdbId: movie.imdb_id,
+        title: movie.title,
+        posterUrl: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'https://picsum.photos/500/750',
+        releaseYear: movie.release_date.substring(0, 4),
+        boxOffice,
+        popularity: movie.popularity,
+    };
+};
+
+export const fetchMoviesForGame = async (page: number): Promise<GameMovie[]> => {
+    const endpoint = `/discover/movie?sort_by=revenue.desc&page=${page}&vote_count.gte=300&with_runtime.gte=60`;
+    const data = await fetchApi<{ results: any[] }>(endpoint);
+
+    const formattedMovies = await Promise.all(data.results.map(formatGameMovie));
+    return formattedMovies.filter((movie): movie is GameMovie => movie !== null);
+};
+
+const formatGameMedia = (media: any): GameMedia | null => {
+    const type = media.media_type;
+    if (!type || (type !== 'movie' && type !== 'tv')) return null;
+    if (!media.poster_path || !media.popularity || media.popularity < 100) return null;
+
+    return {
+        id: media.id,
+        title: media.title || media.name,
+        posterUrl: `https://image.tmdb.org/t/p/w500${media.poster_path}`,
+        releaseYear: (media.release_date || media.first_air_date || '').substring(0, 4),
+        type,
+        popularity: media.popularity,
+    };
+};
+
+export const fetchMediaForPopularityGame = async (page: number): Promise<GameMedia[]> => {
+    const endpoint = `/trending/all/week?page=${page}`;
+    const data = await fetchApi<{ results: any[] }>(endpoint);
+    return data.results
+        .map(formatGameMedia)
+        .filter((media): media is GameMedia => media !== null);
+};
+
+const formatGameActor = (actor: any): GameActor | null => {
+    if (!actor.profile_path || !actor.birthday || actor.popularity < 30) return null;
+
+    return {
+        id: actor.id,
+        name: actor.name,
+        profileUrl: `https://image.tmdb.org/t/p/w500${actor.profile_path}`,
+        birthday: actor.birthday,
+    };
+};
+
+export const fetchActorsForAgeGame = async (page: number): Promise<GameActor[]> => {
+    const peopleResponse = await fetchApi<{ results: any[] }>(`/person/popular?page=${page}`);
+    const actorsWithDetails: GameActor[] = [];
+
+    for (const person of peopleResponse.results) {
+        try {
+            const details = await fetchApi<any>(`/person/${person.id}`);
+            const formatted = formatGameActor(details);
+            if (formatted) {
+                actorsWithDetails.push(formatted);
+            }
+        } catch (error) {
+            console.warn(`Could not fetch details for person ${person.id}`);
+        }
+    }
+    return actorsWithDetails;
+};
+
+// --- AI Search Helper ---
+
 const getEntityId = async (name: string, type: 'genre' | 'company' | 'person' | 'keyword'): Promise<number | null> => {
     let searchName = name;
     // For companies, use the alias map to find the more specific, correct name before searching.
@@ -283,448 +568,61 @@ const getEntityId = async (name: string, type: 'genre' | 'company' | 'person' | 
     }
 
     if (type === 'genre') {
-        const genreId = genreMap[searchName.toLowerCase()];
+        const normalizedGenre = name.toLowerCase().replace(/[-_]/g, ' ');
+        const genreId = genreMap[normalizedGenre];
         if (genreId) {
             entityCache.set(cacheKey, genreId);
             return genreId;
         }
         return null;
     }
-
-    const endpoint = `/search/${type}?query=${encodeURIComponent(searchName)}`;
-
-    try {
-        const data = await fetchApi<{ results: { id: number; name: string }[] }>(endpoint);
-        if (data.results && data.results.length > 0) {
-            // Prioritize an exact, case-insensitive match to prevent ambiguity (e.g., "Marvel" vs "Marvel Studios").
-            const exactMatch = data.results.find(result => result.name.toLowerCase() === searchName.toLowerCase());
-            const id = exactMatch ? exactMatch.id : data.results[0].id;
-            entityCache.set(cacheKey, id);
-            return id;
-        }
-    } catch (error) {
-        console.error(`Could not find ID for ${type}: ${searchName}`, error);
-    }
-    return null;
-};
-
-export const discoverMediaFromAi = async (params: AiSearchParams): Promise<MediaDetails[]> => {
-    const { keywords, genres, actors, directors, companies, year_from, year_to, sort_by, media_type } = params;
-    
-    const with_genres = genres ? (await Promise.all(genres.map(g => getEntityId(g, 'genre')))).filter(Boolean).join(',') : '';
-    const with_companies = companies ? (await Promise.all(companies.map(c => getEntityId(c, 'company')))).filter(Boolean).join(',') : '';
-    const with_cast = actors ? (await Promise.all(actors.map(a => getEntityId(a, 'person')))).filter(Boolean).join(',') : '';
-    const with_crew = directors ? (await Promise.all(directors.map(d => getEntityId(d, 'person')))).filter(Boolean).join(',') : '';
-    const with_keywords = keywords ? (await Promise.all(keywords.map(k => getEntityId(k, 'keyword')))).filter(Boolean).join(',') : '';
-    
-    const buildQueryString = (type: 'movie' | 'tv'): string => {
-        const queryParams = new URLSearchParams();
-        if (with_genres) queryParams.append('with_genres', with_genres);
-        if (with_companies) queryParams.append('with_companies', with_companies);
-        if (with_cast) queryParams.append('with_cast', with_cast);
-        if (with_crew) queryParams.append('with_crew', with_crew);
-        if (with_keywords) queryParams.append('with_keywords', with_keywords);
-        
-        const datePrefix = type === 'movie' ? 'primary_release_date' : 'first_air_date';
-        if (year_from) queryParams.append(`${datePrefix}.gte`, `${year_from}-01-01`);
-        if (year_to) queryParams.append(`${datePrefix}.lte`, `${year_to}-12-31`);
-
-        queryParams.append('sort_by', sort_by || 'popularity.desc');
-        queryParams.append('vote_count.gte', '100');
-        return queryParams.toString();
-    }
-
-    try {
-        let movies: MediaDetails[] = [];
-        let tvShows: MediaDetails[] = [];
-
-        if (media_type === 'movie' || media_type === 'all' || !media_type) {
-            const movieEndpoint = `/discover/movie?${buildQueryString('movie')}`;
-            movies = await fetchList(movieEndpoint, 'movie');
-        }
-        
-        if (media_type === 'tv' || media_type === 'all' || !media_type) {
-            const tvEndpoint = `/discover/tv?${buildQueryString('tv')}`;
-            tvShows = await fetchList(tvEndpoint, 'tv');
-        }
-
-        let combined: MediaDetails[];
-
-        if (media_type === 'movie') {
-            combined = movies;
-        } else if (media_type === 'tv') {
-            combined = tvShows;
-        } else {
-            // Default to 'all', interleave the results for variety
-            combined = [];
-            const seenIds = new Set();
-            const maxLength = Math.max(movies.length, tvShows.length);
-            for (let i = 0; i < maxLength; i++) {
-                if (movies[i] && !seenIds.has(movies[i].id)) {
-                    combined.push(movies[i]);
-                    seenIds.add(movies[i].id);
-                }
-                if (tvShows[i] && !seenIds.has(tvShows[i].id)) {
-                    combined.push(tvShows[i]);
-                    seenIds.add(tvShows[i].id);
-                }
-            }
-        }
-        
-        return combined;
-
-    } catch (error) {
-        console.error("Failed to discover media from AI params:", error);
-        return [];
-    }
-};
-
-export const searchMedia = async (query: string): Promise<MediaDetails[]> => {
-    const endpoint = `/search/multi?query=${encodeURIComponent(query)}`;
-    return fetchList(endpoint);
-};
-
-export const getTrending = () => fetchList('/trending/all/week');
-export const getPopularMovies = () => fetchList('/movie/popular', 'movie');
-export const getPopularTv = () => fetchList('/tv/popular', 'tv');
-export const getNowPlayingMovies = () => fetchList('/movie/now_playing', 'movie');
-export const getTopRatedMovies = () => fetchList('/movie/top_rated', 'movie');
-export const getTopRatedTv = () => fetchList('/tv/top_rated', 'tv');
-
-export const getComingSoonMedia = async (): Promise<MediaDetails[]> => {
-    const today = new Date().toISOString().split('T')[0];
-    const inSixMonths = new Date();
-    inSixMonths.setMonth(inSixMonths.getMonth() + 6);
-    const inSixMonthsStr = inSixMonths.toISOString().split('T')[0];
-
-    const upcomingMoviesEndpoint = `/movie/upcoming?region=US&page=1`;
-    const upcomingTvEndpoint = `/discover/tv?sort_by=popularity.desc&first_air_date.gte=${today}&first_air_date.lte=${inSixMonthsStr}&air_date.gte=${today}&air_date.lte=${inSixMonthsStr}&with_original_language=en`;
     
     try {
-        const [movies, tvShows] = await Promise.all([
-            fetchList(upcomingMoviesEndpoint, 'movie'),
-            fetchList(upcomingTvEndpoint, 'tv')
-        ]);
-        
-        const combined = [...movies, ...tvShows];
-        const sorted = combined
-            .filter(item => item.releaseDate && new Date(item.releaseDate) >= new Date(today))
-            .sort((a, b) => {
-                const dateA = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
-                const dateB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
-                return dateA - dateB;
-            });
-        return sorted;
-    } catch (error) {
-        console.error("Failed to fetch coming soon media:", error);
-        return [];
-    }
-};
-
-export const fetchCollectionDetails = async (id: number): Promise<CollectionDetails> => {
-    const details = await fetchApi<any>(`/collection/${id}`);
-    return {
-        id: details.id,
-        name: details.name,
-        overview: details.overview,
-        posterUrl: details.poster_path ? `https://image.tmdb.org/t/p/w500${details.poster_path}` : 'https://picsum.photos/500/750?grayscale',
-        backdropUrl: details.backdrop_path ? `https://image.tmdb.org/t/p/w1280${details.backdrop_path}` : 'https://picsum.photos/1280/720?grayscale',
-        parts: details.parts
-            .map((part: any) => formatMediaListItem(part, 'movie'))
-            .filter((part: MediaDetails | null): part is MediaDetails => part !== null),
-    };
-};
-
-export const getMediaByStudio = async (studioIds: number[]): Promise<MediaDetails[]> => {
-    const idsString = studioIds.join('|');
-    const movieEndpoint = `/discover/movie?with_companies=${idsString}&sort_by=popularity.desc`;
-    const tvEndpoint = `/discover/tv?with_companies=${idsString}&sort_by=popularity.desc`;
-    const [movies, tvShows] = await Promise.all([
-        fetchList(movieEndpoint, 'movie'),
-        fetchList(tvEndpoint, 'tv')
-    ]);
-    const shorts = movies.filter(m => m.mediaSubType === 'short');
-    const regularMovies = movies.filter(m => m.mediaSubType !== 'short');
-    const combined = [];
-    const maxLength = Math.max(regularMovies.length, tvShows.length, shorts.length);
-    for (let i = 0; i < maxLength; i++) {
-        if (regularMovies[i]) combined.push(regularMovies[i]);
-        if (tvShows[i]) combined.push(tvShows[i]);
-        if (shorts[i]) combined.push(shorts[i]);
-    }
-    return combined;
-};
-
-export const getMediaByNetwork = async (networkId: number): Promise<MediaDetails[]> => {
-    const endpoint = `/discover/tv?with_networks=${networkId}&sort_by=popularity.desc`;
-    return fetchList(endpoint, 'tv');
-};
-
-export const getRecommendationsFromTastes = async (likes: LikedItem[], dislikes: DislikedItem[]): Promise<MediaDetails[]> => {
-    if (likes.length === 0) return [];
-    const movieLikes = likes.filter(l => l.type === 'movie');
-    const tvLikes = likes.filter(l => l.type === 'tv');
-    const recommendationPromises: Promise<MediaDetails[]>[] = [];
-
-    if (movieLikes.length > 0) {
-        const seedMovie = movieLikes[Math.floor(Math.random() * movieLikes.length)];
-        recommendationPromises.push(fetchList(`/movie/${seedMovie.id}/recommendations`, 'movie'));
-    }
-    if (tvLikes.length > 0) {
-        const seedTv = tvLikes[Math.floor(Math.random() * tvLikes.length)];
-        recommendationPromises.push(fetchList(`/tv/${seedTv.id}/recommendations`, 'tv'));
-    }
-    if (movieLikes.length > 0 && tvLikes.length === 0) {
-        recommendationPromises.push(getPopularTv().then(res => res.slice(0, 10)));
-    }
-    if (tvLikes.length > 0 && movieLikes.length === 0) {
-        recommendationPromises.push(getPopularMovies().then(res => res.slice(0, 10)));
-    }
-    
-    const results = await Promise.all(recommendationPromises);
-    const flattened = results.flat();
-    const dislikedIds = new Set(dislikes.map(d => d.id));
-    const likedIds = new Set(likes.map(l => l.id));
-    const uniqueRecommendations = new Map<number, MediaDetails>();
-    flattened.forEach(item => {
-        if (!dislikedIds.has(item.id) && !likedIds.has(item.id) && !uniqueRecommendations.has(item.id)) {
-            uniqueRecommendations.set(item.id, item);
-        }
-    });
-    return Array.from(uniqueRecommendations.values()).sort(() => Math.random() - 0.5);
-};
-
-export const getMediaByStreamingProvider = async (providerKey: StreamingProviderInfo['key'], countryCode: string): Promise<MediaDetails[]> => {
-    const providerId = supportedProviders.find(p => p.key === providerKey)?.id;
-    if (!providerId) return [];
-    const region = 'US';
-    const movieEndpoint = `/discover/movie?with_watch_providers=${providerId}&watch_region=${region}&sort_by=popularity.desc`;
-    const tvEndpoint = `/discover/tv?with_watch_providers=${providerId}&watch_region=${region}&sort_by=popularity.desc`;
-    const [movies, tvShows] = await Promise.all([
-        fetchList(movieEndpoint, 'movie'),
-        fetchList(tvEndpoint, 'tv')
-    ]);
-    const combined = [];
-    const maxLength = Math.max(movies.length, tvShows.length);
-    for (let i = 0; i < maxLength; i++) {
-        if (movies[i]) combined.push(movies[i]);
-        if (tvShows[i]) combined.push(tvShows[i]);
-    }
-    return combined;
-};
-
-export const fetchMediaByIds = async (mediaToFetch: { id: number; type: 'movie' | 'tv' }[]): Promise<MediaDetails[]> => {
-    const promises = mediaToFetch.map(item =>
-        fetchApi<any>(`/${item.type}/${item.id}`)
-            .then(details => formatMediaDetailsFromApiResponse(details, item.type))
-            .catch(err => {
-                console.error(`Failed to fetch details for ${item.type} ID ${item.id}:`, err);
-                return null;
-            })
-    );
-    const results = await Promise.all(promises);
-    return results.filter((item): item is MediaDetails => item !== null);
-};
-
-export const fetchMediaByCollectionIds = async (collectionIds: number[]): Promise<MediaDetails[]> => {
-    if (!collectionIds || collectionIds.length === 0) {
-        return [];
-    }
-    try {
-        const collectionPromises = collectionIds.map(id => fetchCollectionDetails(id));
-        const collections = await Promise.all(collectionPromises);
-        const allMedia = collections.flatMap(collection => collection.parts);
-        const uniqueMedia = Array.from(new Map(allMedia.map(item => [item.id, item])).values());
-        return uniqueMedia;
-    } catch (error) {
-        console.error(`Failed to fetch media for collection IDs ${collectionIds.join(', ')}:`, error);
-        throw error;
-    }
-};
-
-export const getMediaByPerson = async (personId: number, role: 'director' | 'actor'): Promise<MediaDetails[]> => {
-    const endpoint = `/person/${personId}/combined_credits`;
-    try {
-        const data = await fetchApi<{ cast: any[], crew: any[] }>(endpoint);
-        let mediaList: any[] = [];
-        
-        if (role === 'actor') {
-            mediaList = data.cast;
-        } else if (role === 'director') {
-            mediaList = data.crew.filter(item => item.job === 'Director');
-        }
-
-        const formattedMedia = mediaList
-            .map(item => formatMediaListItem(item))
-            .filter((item): item is MediaDetails => item !== null && !!item.posterUrl && !item.posterUrl.includes('picsum.photos'));
-        
-        // Remove duplicates by creating a map
-        const uniqueMedia = new Map<number, MediaDetails>();
-        formattedMedia.forEach(item => {
-            if (!uniqueMedia.has(item.id)) {
-                uniqueMedia.set(item.id, item);
-            }
-        });
-
-        return Array.from(uniqueMedia.values())
-            .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
-
-    } catch (error) {
-        console.error(`Failed to fetch media for person ${personId}:`, error);
-        throw error;
-    }
-};
-
-export const fetchActorDetails = async (actorId: number): Promise<ActorDetails> => {
-    try {
-        const detailsPromise = fetchApi<any>(`/person/${actorId}`);
-        const creditsPromise = fetchApi<any>(`/person/${actorId}/combined_credits`);
-        const [details, credits] = await Promise.all([detailsPromise, creditsPromise]);
-
-        const filmography = credits.cast
-            .filter((item: any) => item.poster_path)
-            .map((item: any) => formatMediaListItem(item))
-            .filter((item: MediaDetails | null): item is MediaDetails => item !== null)
-            .sort((a: MediaDetails, b: MediaDetails) => (b.popularity ?? 0) - (a.popularity ?? 0))
-            .filter((item: MediaDetails, index: number, self: MediaDetails[]) => self.findIndex(t => t.id === item.id) === index)
-            .slice(0, 20);
-
-        return {
-            id: details.id,
-            name: details.name,
-            biography: details.biography || 'No biography available.',
-            profilePath: details.profile_path ? `https://image.tmdb.org/t/p/h632${details.profile_path}` : `https://picsum.photos/500/750?grayscale`,
-            birthday: details.birthday,
-            placeOfBirth: details.place_of_birth,
-            filmography,
-        };
-    } catch (error) {
-        console.error(`Failed to fetch details for actor ID ${actorId}:`, error);
-        throw new Error('Could not fetch actor details.');
-    }
-};
-
-export const fetchMoviesForGame = async (page: number = 1): Promise<GameMovie[]> => {
-    const endpoint = `/discover/movie?sort_by=revenue.desc&page=${page}&include_adult=false&vote_count.gte=500&primary_release_date.lte=${new Date().toISOString().split('T')[0]}`;
-    
-    try {
-        const listData = await fetchApi<{ results: any[] }>(endpoint);
-        
-        const detailPromises = listData.results.slice(0, 10).map(m => 
-            fetchApi<any>(`/movie/${m.id}`).catch(() => null)
-        );
-        const moviesWithDetails = (await Promise.all(detailPromises)).filter(Boolean);
-
-        const gameMoviePromises = moviesWithDetails
-            .filter(movie => movie.imdb_id)
-            .map(async (movie) => {
-                const boxOffice = await fetchBoxOffice(movie.imdb_id);
-                if (boxOffice && boxOffice > 100000) {
-                    return {
-                        id: movie.id,
-                        imdbId: movie.imdb_id,
-                        title: movie.title,
-                        posterUrl: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : `https://picsum.photos/500/750?grayscale`,
-                        releaseYear: (movie.release_date || 'N/A').substring(0, 4),
-                        boxOffice: boxOffice,
-                        popularity: movie.popularity,
-                    };
-                }
-                return null;
-            });
-
-        const gameMovies = await Promise.all(gameMoviePromises);
-        return gameMovies.filter((movie): movie is GameMovie => movie !== null);
-
-    } catch (error) {
-        console.error(`Failed to fetch movies for game on page ${page}:`, error);
-        throw error;
-    }
-};
-
-export const fetchMediaForPopularityGame = async (page: number = 1): Promise<GameMedia[]> => {
-    const movieEndpoint = `/discover/movie?sort_by=popularity.desc&page=${page}&vote_count.gte=200&include_adult=false`;
-    const tvEndpoint = `/discover/tv?sort_by=popularity.desc&page=${page}&vote_count.gte=200`;
-    
-    try {
-        const [movieData, tvData] = await Promise.all([
-            fetchApi<{ results: any[] }>(movieEndpoint),
-            fetchApi<{ results: any[] }>(tvEndpoint)
-        ]);
-        
-        const movies: GameMedia[] = movieData.results
-            .filter(item => item.poster_path)
-            .map(item => ({
-                id: item.id,
-                title: item.title,
-                posterUrl: `https://image.tmdb.org/t/p/w500${item.poster_path}`,
-                releaseYear: (item.release_date || 'N/A').substring(0, 4),
-                type: 'movie',
-                popularity: item.popularity,
-            }));
-
-        const tvShows: GameMedia[] = tvData.results
-            .filter(item => item.poster_path)
-            .map(item => ({
-                id: item.id,
-                title: item.name,
-                posterUrl: `https://image.tmdb.org/t/p/w500${item.poster_path}`,
-                releaseYear: (item.first_air_date || 'N/A').substring(0, 4),
-                type: 'tv',
-                popularity: item.popularity,
-            }));
-        
-        return [...movies, ...tvShows];
-    } catch (error) {
-        console.error(`Failed to fetch media for popularity game on page ${page}:`, error);
-        throw error;
-    }
-};
-
-export const fetchActorsForAgeGame = async (page: number = 1): Promise<GameActor[]> => {
-    const popularActorsEndpoint = `/person/popular?page=${page}`;
-    try {
-        const data = await fetchApi<{ results: any[] }>(popularActorsEndpoint);
-        
-        const actorDetailsPromises = data.results.slice(0, 10).map(person => 
-            fetchApi<any>(`/person/${person.id}`).catch(() => null)
-        );
-
-        const actorDetails = (await Promise.all(actorDetailsPromises)).filter(Boolean);
-
-        const gameActors: GameActor[] = actorDetails
-            .filter(actor => actor.birthday && actor.profile_path && !actor.deathday)
-            .map(actor => ({
-                id: actor.id,
-                name: actor.name,
-                profileUrl: `https://image.tmdb.org/t/p/w500${actor.profile_path}`,
-                birthday: actor.birthday,
-            }));
-
-        return gameActors;
-    } catch (error) {
-        console.error(`Failed to fetch actors for age game on page ${page}:`, error);
-        throw error;
-    }
-};
-
-export const fetchWatchProviders = async (id: number, type: 'movie' | 'tv', countryCode: string): Promise<WatchProviders | null> => {
-    try {
-        const endpoint = `/${type}/${id}/watch/providers`;
-        const data = await fetchApi<any>(endpoint);
-        
-        const providersData = data?.results?.[countryCode.toUpperCase()];
-        if (providersData) {
-            return {
-                link: providersData.link,
-                flatrate: providersData.flatrate,
-                rent: providersData.rent,
-                buy: providersData.buy,
-            };
+        const data = await fetchApi<{ results: any[] }>(`/search/${type}?query=${encodeURIComponent(searchName)}`);
+        if (data.results.length > 0) {
+            const entityId = data.results[0].id;
+            entityCache.set(cacheKey, entityId);
+            return entityId;
         }
         return null;
     } catch (error) {
-        console.error(`Failed to fetch watch providers for ${type} ID ${id} in ${countryCode}:`, error);
-        return null; // Return null on error so the UI can handle it gracefully.
+        console.error(`Failed to get ID for ${type} '${name}':`, error);
+        return null;
     }
+};
+
+
+export const discoverMediaFromAi = async (params: AiSearchParams): Promise<MediaDetails[]> => {
+    let endpoint = `/discover/${params.media_type === 'tv' ? 'tv' : 'movie'}?`;
+    const queryParams: string[] = [];
+    
+    if (params.genres && params.genres.length > 0) {
+        const genreIds = (await Promise.all(params.genres.map(g => getEntityId(g, 'genre')))).filter(id => id !== null);
+        if (genreIds.length > 0) queryParams.push(`with_genres=${genreIds.join(',')}`);
+    }
+    if (params.companies && params.companies.length > 0) {
+        const companyIds = (await Promise.all(params.companies.map(c => getEntityId(c, 'company')))).filter(id => id !== null);
+        if (companyIds.length > 0) queryParams.push(`with_companies=${companyIds.join('|')}`);
+    }
+    if (params.actors && params.actors.length > 0) {
+        const actorIds = (await Promise.all(params.actors.map(a => getEntityId(a, 'person')))).filter(id => id !== null);
+        if (actorIds.length > 0) queryParams.push(`with_cast=${actorIds.join(',')}`);
+    }
+    if (params.directors && params.directors.length > 0) {
+        const directorIds = (await Promise.all(params.directors.map(d => getEntityId(d, 'person')))).filter(id => id !== null);
+        if (directorIds.length > 0) queryParams.push(`with_crew=${directorIds.join(',')}`);
+    }
+    if (params.keywords && params.keywords.length > 0) {
+        const keywordIds = (await Promise.all(params.keywords.map(k => getEntityId(k, 'keyword')))).filter(id => id !== null);
+        if (keywordIds.length > 0) queryParams.push(`with_keywords=${keywordIds.join('|')}`);
+    }
+
+    if (params.year_from) queryParams.push(`primary_release_date.gte=${params.year_from}-01-01`);
+    if (params.year_to) queryParams.push(`primary_release_date.lte=${params.year_to}-12-31`);
+
+    queryParams.push(`sort_by=${params.sort_by || 'popularity.desc'}`);
+
+    endpoint += queryParams.join('&');
+    
+    return fetchList(endpoint, params.media_type === 'tv' ? 'tv' : 'movie');
 };
