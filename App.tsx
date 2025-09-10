@@ -439,8 +439,11 @@ const App: React.FC = () => {
     };
 
     const isMedia = selectedItem && 'type' in selectedItem;
-    const backdropUrl = isMedia && (selectedItem as MediaDetails).textlessBackdropUrl
-        ? (selectedItem as MediaDetails).textlessBackdropUrl
+    // FIX: Correctly determine the modal's backdrop URL. This logic handles media items (with/without textless backdrops) and collections, ensuring the background always displays.
+    const backdropUrl = selectedItem 
+        ? (isMedia 
+            ? ((selectedItem as MediaDetails).textlessBackdropUrl || (selectedItem as MediaDetails).backdropUrl) 
+            : (selectedItem as CollectionDetails).backdropUrl) 
         : null;
 
     return (

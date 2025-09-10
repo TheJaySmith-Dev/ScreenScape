@@ -61,7 +61,7 @@ export const findBestTrailer = (videos: any[]): any | null => {
         const dateB = new Date(b.published_at).getTime();
         if (dateA < dateB) {
             scoreA += 1;
-        } else if (dateB < a) {
+        } else if (dateB < dateA) { // FIX: Corrected a typo in the comparison logic.
             scoreB += 1;
         }
         return scoreB - scoreA;
@@ -71,12 +71,12 @@ export const findBestTrailer = (videos: any[]): any | null => {
 };
 
 
-const findBestTextlessPoster = (images: any): string | null => {
-    if (!images?.posters || images.posters.length === 0) return null;
-    const textlessPosters = images.posters.filter((p: any) => p.iso_639_1 === 'xx' || p.iso_639_1 === null);
-    if (textlessPosters.length === 0) return null;
-    textlessPosters.sort((a: any, b: any) => b.vote_average - a.vote_average);
-    return `https://image.tmdb.org/t/p/w780${textlessPosters[0].file_path}`;
+const findBestTextlessBackdrop = (images: any): string | null => {
+    if (!images?.backdrops || images.backdrops.length === 0) return null;
+    const textlessBackdrops = images.backdrops.filter((p: any) => p.iso_639_1 === 'xx' || p.iso_639_1 === null);
+    if (textlessBackdrops.length === 0) return null;
+    textlessBackdrops.sort((a: any, b: any) => b.vote_average - a.vote_average);
+    return `https://image.tmdb.org/t/p/w1280${textlessBackdrops[0].file_path}`;
 };
 
 
@@ -185,7 +185,7 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
           const details = await fetchApi<any>(endpoint);
           
           const baseDetails = formatMediaDetailsFromApiResponse(details, type);
-          const textlessPoster = findBestTextlessPoster(details.images);
+          const textlessBackdrop = findBestTextlessBackdrop(details.images);
 
           const providersData = details['watch/providers']?.results?.[countryCode.toUpperCase()];
           const watchProviders: WatchProviders | null = providersData ? {
@@ -217,7 +217,7 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
   
           const finalDetails = {
               ...baseDetails,
-              textlessPosterUrl: textlessPoster,
+              textlessBackdropUrl: textlessBackdrop,
               cast: formatCast(details.credits),
               related: formatRelated(details.recommendations, type),
               watchProviders,
