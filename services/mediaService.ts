@@ -160,21 +160,40 @@ const formatRelated = (recommendations: any, currentType: 'movie' | 'tv'): Media
 };
 
 const checkIfInTheaters = (releaseDatesData: any, countryCode: string): boolean => {
-    if (!releaseDatesData?.results) return false;
+    if (!releaseDatesData?.results) {
+        return false;
+    }
 
-    const countryReleases = releaseDatesData.results.find((r: any) => r.iso_3166_1 === countryCode.toUpperCase());
-    if (!countryReleases || !countryReleases.release_dates) return false;
+    const countryReleases = releaseDatesData.results.find((r: any) => r && r.iso_3166_1 === countryCode.toUpperCase());
+    if (!countryReleases || !countryReleases.release_dates || !Array.isArray(countryReleases.release_dates)) {
+        return false;
+    }
 
     const today = new Date();
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(today.getMonth() - 3);
 
-    const theatricalRelease = countryReleases.release_dates.find((release: any) => release.type === 3 || release.type === 2);
+    // Find the theatrical release. Type 3 is Theatrical, Type 2 is Limited Theatrical.
+    const theatricalRelease = countryReleases.release_dates.find((release: any) => 
+        release && (release.type === 3 || release.type === 2)
+    );
     
-    if (theatricalRelease) {
-        const releaseDate = new Date(theatricalRelease.release_date);
-        return releaseDate >= threeMonthsAgo && releaseDate <= today;
+    if (theatricalRelease && theatricalRelease.release_date) {
+        try {
+            const releaseDate = new Date(theatricalRelease.release_date);
+            // Check if the date is valid
+            if (isNaN(releaseDate.getTime())) {
+                console.warn("Invalid theatrical release date found:", theatricalRelease.release_date);
+                return false;
+            }
+            // Movie is considered "in theaters" if it was released in the last 3 months up to today.
+            return releaseDate >= threeMonthsAgo && releaseDate <= today;
+        } catch (e) {
+            console.error("Error parsing theatrical release date:", theatricalRelease.release_date, e);
+            return false;
+        }
     }
+
     return false;
 };
   
@@ -200,9 +219,12 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
           const additionalDetails: Partial<MediaDetails> = {};
           if (type === 'movie') {
               additionalDetails.runtime = details.runtime;
-              const usRelease = details.release_dates?.results?.find((r: any) => r.iso_3166_1 === 'US');
-              if (usRelease?.release_dates?.[0]?.certification) {
-                  additionalDetails.rated = usRelease.release_dates[0].certification;
+              const usRelease = details.release_dates?.results?.find((r: any) => r && r.iso_3166_1 === 'US');
+              if (usRelease && Array.isArray(usRelease.release_dates) && usRelease.release_dates[0]?.certification) {
+                  const certification = usRelease.release_dates[0].certification;
+                  if (certification) {
+                      additionalDetails.rated = certification;
+                  }
               }
           } else { // type === 'tv'
               additionalDetails.numberOfSeasons = details.number_of_seasons;

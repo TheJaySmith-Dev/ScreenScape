@@ -124,11 +124,23 @@ const App: React.FC = () => {
     useEffect(() => {
         if (isInitialized && tmdbApiKey) {
             fetchInitialData();
-             // Fetch user location
+            // Fetch user location
             fetch('https://ipinfo.io/json?token=a0c105b32a98f7')
                 .then(res => res.json())
-                .then(data => setUserLocation({ name: data.country, code: data.country }))
-                .catch(() => setUserLocation({ name: 'United States', code: 'US' })); // Fallback
+                .then(data => {
+                    // Defensive check to ensure data.country exists and is a non-empty string
+                    if (data && typeof data.country === 'string' && data.country.trim() !== '') {
+                        setUserLocation({ name: data.country, code: data.country });
+                    } else {
+                        // Fallback if the API response is malformed or missing the country
+                        console.warn("ipinfo.io did not return a valid country. Falling back to US.");
+                        setUserLocation({ name: 'United States', code: 'US' });
+                    }
+                })
+                .catch(error => {
+                    console.error("Failed to fetch user location:", error);
+                    setUserLocation({ name: 'United States', code: 'US' }); // Fallback for network errors
+                });
         }
     }, [isInitialized, tmdbApiKey, fetchInitialData]);
 

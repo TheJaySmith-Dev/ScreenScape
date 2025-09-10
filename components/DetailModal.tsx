@@ -375,7 +375,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                             <CinemaAvailability userLocation={userLocation} movieTitle={item.title} />
                         )}
                         
-                        {isMediaDetails(item) && <StreamingAvailability item={item} userLocation={userLocation} />}
+                        {isMediaDetails(item) && !item.isInTheaters && <StreamingAvailability item={item} userLocation={userLocation} />}
 
                         {aiClient && (
                             <div>
