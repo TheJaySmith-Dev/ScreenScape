@@ -1,13 +1,12 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders, OmdbDetails, FunFact, SeasonDetails, Episode, SeasonSummary } from '../types.ts';
-import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, HomeIcon, SparklesIcon, InfoIcon, ChatBubbleIcon } from './icons.tsx';
+import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, SparklesIcon, InfoIcon, ChatBubbleIcon } from './icons.tsx';
 // FIX: Import `RecommendationGrid` which is used in this component, and remove the unused `RecommendationCard` import.
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
 import { usePreferences } from '../hooks/usePreferences.ts';
-import { Providers } from './Providers.tsx';
 import { CinemaAvailability } from './CinemaAvailability.tsx';
 import { fetchOmdbDetails } from '../services/omdbService.ts';
 import { getFunFactsForMedia } from '../services/aiService.ts';
@@ -16,6 +15,7 @@ import { ChatModal } from './ChatModal.tsx';
 import { useSettings } from '../hooks/useSettings.ts';
 import { fetchSeasonDetails } from '../services/mediaService.ts';
 import { useCountdown } from '../hooks/useCountdown.ts';
+import { StreamingAvailability } from './StreamingAvailability.tsx';
 
 interface DetailModalProps {
   item: MediaDetails | CollectionDetails;
@@ -173,12 +173,6 @@ const CastCard: React.FC<{ member: CastMember; onSelect: (id: number) => void; }
 const isMediaDetails = (item: MediaDetails | CollectionDetails): item is MediaDetails => {
   return 'title' in item && 'type' in item;
 };
-
-const providersExist = (providers: WatchProviders) => {
-    return (providers.flatrate && providers.flatrate.length > 0) ||
-           (providers.rent && providers.rent.length > 0) ||
-           (providers.buy && providers.buy.length > 0);
-}
 
 export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, onSelectActor, userLocation }) => {
     const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
@@ -380,14 +374,9 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                         {userLocation && item.isInTheaters && (
                             <CinemaAvailability userLocation={userLocation} movieTitle={item.title} />
                         )}
-                        {item.watchProviders && providersExist(item.watchProviders) && (
-                          <div>
-                            <h4 className="text-md font-semibold text-white mb-2 flex items-center gap-2">
-                                <HomeIcon className="w-5 h-5"/> Available to Stream
-                            </h4>
-                            <Providers providers={item.watchProviders} />
-                          </div>
-                        )}
+                        
+                        {isMediaDetails(item) && <StreamingAvailability item={item} userLocation={userLocation} />}
+
                         {aiClient && (
                             <div>
                                 <h4 className="text-md font-semibold text-white mb-2 flex items-center gap-2">
