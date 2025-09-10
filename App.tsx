@@ -21,6 +21,7 @@ import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { SearchModal } from './components/SearchModal.tsx';
 import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
 import { BrowseMenuModal } from './components/MobileMenuModal.tsx';
+import { ChatModal } from './components/ChatModal.tsx';
 import { UserIcon, SearchIcon, GridIcon } from './components/icons.tsx';
 
 import * as mediaService from './services/mediaService.ts';
@@ -66,6 +67,8 @@ const App: React.FC = () => {
     const [isAiSearchOpen, setIsAiSearchOpen] = useState(false);
     const [isViewingGuideModalOpen, setIsViewingGuideModalOpen] = useState(false);
     const [isBrowseMenuOpen, setIsBrowseMenuOpen] = useState(false);
+    const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+    const [chatMediaItem, setChatMediaItem] = useState<MediaDetails | null>(null);
     const [brandGuides, setBrandGuides] = useState<ViewingGuide[]>([]);
     const [isGuideLoading, setIsGuideLoading] = useState(false);
     const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
@@ -241,6 +244,7 @@ const App: React.FC = () => {
         setSelectedItem(null);
         setSelectedActor(null);
         setIsViewingGuideModalOpen(false);
+        setIsChatModalOpen(false);
         document.body.classList.remove('modal-open');
     }, []);
 
@@ -335,6 +339,11 @@ const App: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleOpenChatModal = (media: MediaDetails) => {
+        setChatMediaItem(media);
+        setIsChatModalOpen(true);
     };
 
     const renderPage = () => {
@@ -482,7 +491,7 @@ const App: React.FC = () => {
 
                   <div className="flex items-center justify-center min-h-full p-4">
                        {selectedItem && (
-                            <DetailModal item={selectedItem} onClose={handleCloseModal} isLoading={isDetailLoading} onSelectMedia={handleSelectMedia} onSelectActor={handleSelectActor} userLocation={userLocation} />
+                            <DetailModal item={selectedItem} onClose={handleCloseModal} isLoading={isDetailLoading} onSelectMedia={handleSelectMedia} onSelectActor={handleSelectActor} userLocation={userLocation} onOpenChat={handleOpenChatModal} />
                        )}
                        {selectedActor && (
                             <div onClick={(e) => e.stopPropagation()}>
@@ -512,6 +521,14 @@ const App: React.FC = () => {
             guides={brandGuides}
             onSelectMedia={handleSelectMedia}
           />
+
+          {chatMediaItem && (
+              <ChatModal 
+                isOpen={isChatModalOpen}
+                onClose={() => setIsChatModalOpen(false)}
+                media={chatMediaItem}
+              />
+          )}
 
           <nav className="mobile-dock md:hidden">
               <PillNavigation />

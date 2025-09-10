@@ -23,6 +23,13 @@ export interface CastMember {
   profileUrl: string;
 }
 
+export interface CrewMember {
+  id: number;
+  name: string;
+  job: string;
+  profileUrl: string;
+}
+
 export interface SeasonSummary {
     air_date: string | null;
     episode_count: number;
@@ -50,6 +57,7 @@ export interface MediaDetails {
   imdbId?: string | null;
   // Optional detailed properties fetched on demand
   cast?: CastMember[];
+  crew?: CrewMember[];
   related?: MediaDetails[];
   watchProviders?: WatchProviders | null;
   isInTheaters?: boolean;

@@ -2,11 +2,12 @@
 import React, { useState, useEffect, useCallback, FormEvent, useRef } from 'react';
 import type { MediaDetails } from '../types.ts';
 import { getAiRecommendations } from '../services/aiService.ts';
-import { CloseIcon, SearchIcon } from './icons.tsx';
+import { CloseIcon, SearchIcon, HistoryIcon } from './icons.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { RateLimitMessage } from './RateLimitMessage.tsx';
 import { useSettings } from '../hooks/useSettings.ts';
+import { useSearchHistory } from '../hooks/useSearchHistory.ts';
 
 interface AiSearchModalProps {
   isOpen: boolean;
@@ -34,6 +35,7 @@ export const AiSearchModal: React.FC<AiSearchModalProps> = ({ isOpen, onClose, o
     const [loadingMessage, setLoadingMessage] = useState('Thinking...');
     const inputRef = useRef<HTMLInputElement>(null);
     const { aiClient, canMakeRequest, incrementRequestCount } = useSettings();
+    const { history, addSearch, clearHistory } = useSearchHistory();
 
     useEffect(() => {
         if (!isOpen) {
@@ -61,18 +63,8 @@ export const AiSearchModal: React.FC<AiSearchModalProps> = ({ isOpen, onClose, o
         
         const { canRequest } = canMakeRequest();
         if (!canRequest) return;
-
-        const cacheKey = `ai-search-cache-${searchQuery.toLowerCase().trim()}`;
-        try {
-            const cachedResults = localStorage.getItem(cacheKey);
-            if (cachedResults) {
-                const parsed = JSON.parse(cachedResults);
-                setResults(parsed.results);
-                setResultsTitle(parsed.title);
-                setSearchState('results');
-                return;
-            }
-        } catch (e) { console.error("Cache read failed", e); }
+        
+        addSearch(searchQuery);
 
         setSearchState('loading');
         setErrorMessage('');
@@ -90,12 +82,6 @@ export const AiSearchModal: React.FC<AiSearchModalProps> = ({ isOpen, onClose, o
                 setResults(mediaResults);
                 setResultsTitle(response_title);
                 setSearchState('results');
-
-                try {
-                     localStorage.setItem(cacheKey, JSON.stringify({ results: mediaResults, title: response_title }));
-                } catch(e) { 
-                    console.error("Cache write failed", e);
-                }
             }
         } catch (error: any) {
             console.error("AI Search failed:", error);
@@ -104,7 +90,7 @@ export const AiSearchModal: React.FC<AiSearchModalProps> = ({ isOpen, onClose, o
         } finally {
             setQuery('');
         }
-    }, [aiClient, canMakeRequest, incrementRequestCount]);
+    }, [aiClient, canMakeRequest, incrementRequestCount, addSearch]);
     
     const handleFormSubmit = (e: FormEvent) => {
         e.preventDefault();
@@ -196,8 +182,28 @@ export const AiSearchModal: React.FC<AiSearchModalProps> = ({ isOpen, onClose, o
                             <h2 className="text-2xl font-bold">Ask ScapeAI for vibes, themes, titles — <br/> whatever you're craving!</h2>
                             <button onClick={onClose} className="text-sm text-gray-400 hover:text-white transition-colors mt-2">Switch to Standard Search</button>
                         </div>
-                        <div className="p-6 flex-grow flex items-center justify-center">
-                             <div className="flex flex-wrap justify-center gap-3">
+                        <div className="p-6 flex-grow flex flex-col items-center justify-center">
+                            {history.length > 0 && (
+                                <div className="w-full max-w-md mb-8">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Recent Searches</h3>
+                                        <button onClick={clearHistory} className="text-xs text-gray-500 hover:text-red-400 transition-colors">Clear</button>
+                                    </div>
+                                    <div className="space-y-2">
+                                        {history.map((q) => (
+                                            <button 
+                                                key={q} 
+                                                onClick={() => handleSearch(q)} 
+                                                className="w-full text-left flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
+                                            >
+                                                <HistoryIcon className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                                                <span className="text-gray-300 truncate">{q}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            <div className="flex flex-wrap justify-center gap-3">
                                 {suggestionChips.map(chip => (
                                     <button key={chip} onClick={() => handleChipClick(chip)} className="suggestion-chip px-4 py-2 rounded-full text-sm">
                                         {chip}

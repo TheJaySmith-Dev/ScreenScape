@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import type { MediaDetails, CollectionDetails, CastMember, UserLocation, WatchProviders, OmdbDetails, FunFact, SeasonDetails, Episode, SeasonSummary } from '../types.ts';
-import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, SparklesIcon, InfoIcon, ChatBubbleIcon } from './icons.tsx';
+import type { MediaDetails, CollectionDetails, CastMember, CrewMember, UserLocation, WatchProviders, OmdbDetails, FunFact, SeasonDetails, Episode, SeasonSummary } from '../types.ts';
+import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, SparklesIcon, InfoIcon, ChatBubbleIcon, CloseIcon } from './icons.tsx';
 // FIX: Import `RecommendationGrid` which is used in this component, and remove the unused `RecommendationCard` import.
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
@@ -11,7 +11,6 @@ import { CinemaAvailability } from './CinemaAvailability.tsx';
 import { fetchOmdbDetails } from '../services/omdbService.ts';
 import { getFunFactsForMedia } from '../services/aiService.ts';
 import { RateLimitMessage } from './RateLimitMessage.tsx';
-import { ChatModal } from './ChatModal.tsx';
 import { useSettings } from '../hooks/useSettings.ts';
 import { fetchSeasonDetails } from '../services/mediaService.ts';
 import { useCountdown } from '../hooks/useCountdown.ts';
@@ -24,6 +23,7 @@ interface DetailModalProps {
   onSelectMedia: (media: MediaDetails) => void;
   onSelectActor: (actorId: number) => void;
   userLocation: UserLocation | null;
+  onOpenChat: (media: MediaDetails) => void;
 }
 
 const CountdownTimer: React.FC<{ airDate: string }> = ({ airDate }) => {
@@ -169,18 +169,27 @@ const CastCard: React.FC<{ member: CastMember; onSelect: (id: number) => void; }
     </div>
 );
 
+const CrewMemberCard: React.FC<{ member: CrewMember; onSelect: (id: number) => void; }> = ({ member, onSelect }) => (
+    <div className="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-white/5 transition-colors group" onClick={() => onSelect(member.id)}>
+        <img src={member.profileUrl} alt={member.name} className="w-12 h-12 object-cover rounded-full border border-white/10" loading="lazy" />
+        <div>
+            <p className="font-semibold text-sm text-gray-200 group-hover:text-blue-400 transition-colors">{member.name}</p>
+            <p className="text-xs text-gray-400">{member.job}</p>
+        </div>
+    </div>
+);
+
 // Type guard to differentiate between MediaDetails and CollectionDetails
 const isMediaDetails = (item: MediaDetails | CollectionDetails): item is MediaDetails => {
   return 'title' in item && 'type' in item;
 };
 
-export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, onSelectActor, userLocation }) => {
+export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, onSelectActor, userLocation, onOpenChat }) => {
     const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
     const { likeItem, dislikeItem, unlistItem, isLiked, isDisliked } = usePreferences();
     const [omdbDetails, setOmdbDetails] = useState<OmdbDetails | null>(null);
     const [isOmdbLoading, setIsOmdbLoading] = useState(false);
     const [isDetailsVisible, setIsDetailsVisible] = useState(false);
-    const [isChatModalOpen, setIsChatModalOpen] = useState(false);
     const { aiClient, canMakeRequest, incrementRequestCount } = useSettings();
 
     // State for AI-generated Fun Facts
@@ -194,10 +203,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             if (event.key === 'Escape') {
                 if (trailerVideoId) {
                     setTrailerVideoId(null);
-                } else if (isChatModalOpen) {
-                    setIsChatModalOpen(false);
-                }
-                 else {
+                } else {
                     onClose();
                 }
             }
@@ -205,7 +211,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         window.addEventListener('keydown', handleEsc);
         document.querySelector('#root')?.scrollTo(0, 0); // Scroll page view to top on mount
         return () => window.removeEventListener('keydown', handleEsc);
-    }, [onClose, trailerVideoId, isChatModalOpen]);
+    }, [onClose, trailerVideoId]);
 
     // Effect to fetch OMDb data
     useEffect(() => {
@@ -273,7 +279,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
 
     const handleChatClick = () => {
         if (isMediaDetails(item)) {
-            setIsChatModalOpen(true);
+            onOpenChat(item);
         }
     }
 
@@ -291,10 +297,15 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         className="w-full max-w-4xl glass-panel p-0 md:p-1 max-h-[90vh] flex flex-col fade-in-modal relative"
         onClick={(e) => e.stopPropagation()}
       >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2.5 glass-button !rounded-full z-20"
+          aria-label="Close"
+        >
+          <CloseIcon className="w-6 h-6" />
+        </button>
+
         {trailerVideoId && <CustomVideoPlayer videoId={trailerVideoId} onClose={() => setTrailerVideoId(null)} />}
-        {isMediaDetails(item) && (
-            <ChatModal isOpen={isChatModalOpen} onClose={() => setIsChatModalOpen(false)} media={item} />
-        )}
         
         <div className="overflow-y-auto media-row rounded-[24px]">
           <div className="relative min-h-[400px] md:min-h-[500px] flex flex-col justify-end text-white rounded-t-[24px] overflow-hidden p-6 md:p-8">
@@ -368,6 +379,15 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                                 </div>
                             </div>
                           </ModalSection>
+                        )}
+                        {item.crew && item.crew.length > 0 && (
+                            <ModalSection title="Key Crew">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {item.crew.map(member => (
+                                        <CrewMemberCard key={member.id} member={member} onSelect={onSelectActor} />
+                                    ))}
+                                </div>
+                            </ModalSection>
                         )}
                      </div>
                      <div className="md:w-1/3 flex-shrink-0 space-y-6">

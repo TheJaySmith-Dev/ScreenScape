@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { useSettings } from '../hooks/useSettings.ts';
 import { usePreferences } from '../hooks/usePreferences.ts';
@@ -29,6 +27,18 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
         rating: 0,
         trailerUrl: null,
     }));
+    
+    const DAILY_LIMIT = 500;
+    const remainingRequests = Math.max(0, DAILY_LIMIT - rateLimit.count);
+    const usagePercentage = (rateLimit.count / DAILY_LIMIT) * 100;
+
+    let progressBarColor = 'bg-green-500';
+    if (usagePercentage >= 90) {
+        progressBarColor = 'bg-red-500';
+    } else if (usagePercentage >= 75) {
+        progressBarColor = 'bg-yellow-500';
+    }
+
 
     return (
         <>
@@ -92,8 +102,23 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                     <div className="glass-panel p-6 rounded-2xl">
                         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><SparklesIcon className="w-6 h-6 text-indigo-400"/> AI Usage</h2>
                          <div className="text-center">
-                            <p className="text-5xl font-bold text-white">{rateLimit.count}<span className="text-2xl text-gray-400">/500</span></p>
-                            <p className="text-sm text-gray-400 mt-2">requests used today</p>
+                             {remainingRequests > 0 ? (
+                                <>
+                                    <p className="text-5xl font-bold text-white">{remainingRequests}</p>
+                                    <p className="text-sm text-gray-400 mt-2">AI Requests Remaining Today</p>
+                                </>
+                             ) : (
+                                <>
+                                    <p className="text-4xl font-bold text-red-400">Daily Limit Reached</p>
+                                    <p className="text-sm text-gray-400 mt-2">Your AI features will reset tomorrow.</p>
+                                </>
+                             )}
+                             <div className="w-full bg-white/10 rounded-full h-2.5 mt-4">
+                                <div 
+                                    className={`h-2.5 rounded-full transition-all duration-500 ${progressBarColor}`} 
+                                    style={{ width: `${usagePercentage}%` }}
+                                ></div>
+                            </div>
                         </div>
                     </div>
                 </div>

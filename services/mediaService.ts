@@ -1,4 +1,4 @@
-import type { MediaDetails, CastMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor, AiSearchParams, SeasonDetails, Episode } from '../types.ts';
+import type { MediaDetails, CastMember, CrewMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor, AiSearchParams, SeasonDetails, Episode } from '../types.ts';
 import { supportedProviders } from './streamingService.ts';
 import { getTmdbApiKey } from './apiService.ts';
 import { fetchBoxOffice } from './omdbService.ts';
@@ -61,7 +61,7 @@ export const findBestTrailer = (videos: any[]): any | null => {
         const dateB = new Date(b.published_at).getTime();
         if (dateA < dateB) {
             scoreA += 1;
-        } else if (dateB < dateA) {
+        } else if (dateB < a) {
             scoreB += 1;
         }
         return scoreB - scoreA;
@@ -149,6 +149,44 @@ const formatCast = (credits: any): CastMember[] => {
           ? `https://image.tmdb.org/t/p/w185${member.profile_path}`
           : `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=374151&color=fff&size=185`,
       }));
+};
+
+const formatCrew = (crew: any[]): CrewMember[] => {
+    if (!crew) return [];
+
+    const directors = crew.filter(member => member.job === 'Director');
+    const producers = crew.filter(member => member.job === 'Producer' || member.job === 'Executive Producer');
+
+    // Use a Map to get unique crew members by ID, prioritizing directors
+    const memberMap = new Map<number, any>();
+    [...directors, ...producers].forEach(member => {
+        if (!memberMap.has(member.id)) {
+            memberMap.set(member.id, member);
+        } else {
+            const existing = memberMap.get(member.id)!;
+            // If the new role is 'Director' and the old one wasn't, update it.
+            if (existing.job !== 'Director' && member.job === 'Director') {
+                memberMap.set(member.id, member);
+            }
+        }
+    });
+
+    // Sort to show directors first, then producers
+    const sortedCrew = Array.from(memberMap.values()).sort((a, b) => {
+        if (a.job === 'Director' && b.job !== 'Director') return -1;
+        if (a.job !== 'Director' && b.job === 'Director') return 1;
+        return 0; // Keep original order for same-job types
+    });
+
+    return sortedCrew.slice(0, 5) // Limit to 5 key crew members
+        .map((member: any) => ({
+            id: member.id,
+            name: member.name,
+            job: member.job,
+            profileUrl: member.profile_path
+              ? `https://image.tmdb.org/t/p/w185${member.profile_path}`
+              : `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=374151&color=fff&size=185`,
+        }));
 };
   
 const formatRelated = (recommendations: any, currentType: 'movie' | 'tv'): MediaDetails[] => {
@@ -241,6 +279,7 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
               ...baseDetails,
               textlessBackdropUrl: textlessBackdrop,
               cast: formatCast(details.credits),
+              crew: formatCrew(details.credits.crew),
               related: formatRelated(details.recommendations, type),
               watchProviders,
               isInTheaters,
@@ -253,7 +292,7 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
       } catch (error) {
           console.error(`Failed to fetch modal details for ${type} ID ${id}:`, error);
           return {
-              trailerUrl: null, cast: [], related: [], watchProviders: null, isInTheaters: false, imdbId: null,
+              trailerUrl: null, cast: [], crew: [], related: [], watchProviders: null, isInTheaters: false, imdbId: null,
           };
       }
 };
