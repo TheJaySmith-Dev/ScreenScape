@@ -61,7 +61,7 @@ export const findBestTrailer = (videos: any[]): any | null => {
         const dateB = new Date(b.published_at).getTime();
         if (dateA < dateB) {
             scoreA += 1;
-        } else if (dateB < dateA) {
+        } else if (dateB < a) {
             scoreB += 1;
         }
         return scoreB - scoreA;
@@ -162,7 +162,7 @@ const formatRelated = (recommendations: any, currentType: 'movie' | 'tv'): Media
 const checkIfInTheaters = (releaseDatesData: any, countryCode: string): boolean => {
     if (!releaseDatesData?.results) return false;
 
-    const countryReleases = releaseDatesData.results.find((r: any) => r.iso_31_6_1 === countryCode.toUpperCase());
+    const countryReleases = releaseDatesData.results.find((r: any) => r.iso_3166_1 === countryCode.toUpperCase());
     if (!countryReleases || !countryReleases.release_dates) return false;
 
     const today = new Date();
@@ -705,5 +705,26 @@ export const fetchActorsForAgeGame = async (page: number = 1): Promise<GameActor
     } catch (error) {
         console.error(`Failed to fetch actors for age game on page ${page}:`, error);
         throw error;
+    }
+};
+
+export const fetchWatchProviders = async (id: number, type: 'movie' | 'tv', countryCode: string): Promise<WatchProviders | null> => {
+    try {
+        const endpoint = `/${type}/${id}/watch/providers`;
+        const data = await fetchApi<any>(endpoint);
+        
+        const providersData = data?.results?.[countryCode.toUpperCase()];
+        if (providersData) {
+            return {
+                link: providersData.link,
+                flatrate: providersData.flatrate,
+                rent: providersData.rent,
+                buy: providersData.buy,
+            };
+        }
+        return null;
+    } catch (error) {
+        console.error(`Failed to fetch watch providers for ${type} ID ${id} in ${countryCode}:`, error);
+        return null; // Return null on error so the UI can handle it gracefully.
     }
 };
