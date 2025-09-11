@@ -1,13 +1,9 @@
-import React from 'react';
-// FIX: Import correct and consistent types from the central types file.
+import React, { useMemo } from 'react';
 import type { Brand, MediaDetails, Collection, MediaTypeFilter, SortBy } from '../types.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { StudioFilters } from './StudioFilters.tsx';
 import { CollectionCard } from './CollectionCard.tsx';
-
-// FIX: Removed incorrect local type definitions that were too restrictive.
-// type MediaTypeFilter = 'all' | 'movie' | 'show' | 'short';
-// type SortBy = 'trending' | 'newest';
+import { SparklesIcon } from './icons.tsx';
 
 interface BrandDetailProps {
     brand: Brand;
@@ -19,6 +15,7 @@ interface BrandDetailProps {
     onBack: () => void;
     onSelectMedia: (media: MediaDetails) => void;
     onSelectCollection: (collection: Collection) => void;
+    onGenerateGuides: (brand: Brand, media: MediaDetails[]) => void;
 }
 
 export const BrandDetail: React.FC<BrandDetailProps> = ({
@@ -31,7 +28,38 @@ export const BrandDetail: React.FC<BrandDetailProps> = ({
     onBack,
     onSelectMedia,
     onSelectCollection,
+    onGenerateGuides,
 }) => {
+    const filteredAndSortedMedia = useMemo(() => {
+        let processedMedia = [...media];
+
+        // Filter
+        if (mediaTypeFilter !== 'all') {
+            processedMedia = processedMedia.filter(item => {
+                if (mediaTypeFilter === 'movie') return item.type === 'movie' && item.mediaSubType !== 'short';
+                if (mediaTypeFilter === 'show') return item.type === 'tv';
+                if (mediaTypeFilter === 'short') return item.mediaSubType === 'short';
+                return true;
+            });
+        }
+
+        // Sort
+        switch (sortBy) {
+            case 'newest':
+                processedMedia.sort((a, b) => new Date(b.releaseDate || 0).getTime() - new Date(a.releaseDate || 0).getTime());
+                break;
+            case 'timeline':
+                processedMedia.sort((a, b) => new Date(a.releaseDate || 0).getTime() - new Date(b.releaseDate || 0).getTime());
+                break;
+            case 'trending':
+            default:
+                processedMedia.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+                break;
+        }
+
+        return processedMedia;
+    }, [media, mediaTypeFilter, sortBy]);
+
     return (
         <>
             {brand.backdropUrl && (
@@ -47,9 +75,17 @@ export const BrandDetail: React.FC<BrandDetailProps> = ({
                 </div>
             )}
             <div className="relative z-10 w-full max-w-7xl fade-in">
-                <div className="flex items-center gap-4 mb-8">
+                <div className="flex items-center gap-4 mb-8 flex-wrap">
                     <button onClick={onBack} className="px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">&larr; Back to Brands</button>
                     <h2 className="text-3xl font-bold text-white">{brand.name}</h2>
+                    <button
+                        onClick={() => onGenerateGuides(brand, media)}
+                        className="glass-button text-sm"
+                        aria-label={`Generate AI viewing guides for ${brand.name}`}
+                    >
+                        <SparklesIcon className="w-5 h-5 text-indigo-400" />
+                        <span>AI Viewing Guides</span>
+                    </button>
                 </div>
 
                 {brand.characterCollections.length > 0 && (
@@ -72,10 +108,9 @@ export const BrandDetail: React.FC<BrandDetailProps> = ({
                   setMediaTypeFilter={setMediaTypeFilter}
                   sortBy={sortBy}
                   setSortBy={setSortBy}
-                  // FIX: Pass prop to enable timeline sort for brand pages.
                   showTimelineSort
                 />
-                <RecommendationGrid recommendations={media} onSelect={onSelectMedia} />
+                <RecommendationGrid recommendations={filteredAndSortedMedia} onSelect={onSelectMedia} />
             </div>
         </>
     );

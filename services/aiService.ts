@@ -1,6 +1,6 @@
 import type { GoogleGenAI } from "@google/genai";
 import { Type, GenerateContentResponse, Chat } from "@google/genai";
-import type { MediaDetails, ViewingGuide, FunFact, AiSearchParams } from '../types.ts';
+import type { MediaDetails, ViewingGuide, FunFact, AiSearchParams, LikedItem, AiCuratedCarousel } from '../types.ts';
 import { searchMedia, discoverMediaFromAi } from './mediaService.ts';
 
 const model = 'gemini-2.5-flash';
@@ -295,4 +295,178 @@ export const startChatForMedia = (media: MediaDetails, aiClient: GoogleGenAI): C
         }
     });
     return chat;
+};
+
+const curatedRecommendationsSchema = {
+    type: Type.OBJECT,
+    properties: {
+        carousels: {
+            type: Type.ARRAY,
+            description: "A list of curated carousels with themed recommendations.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    title: {
+                        type: Type.STRING,
+                        description: "A creative and engaging title for the carousel (e.g., 'Because You Like Mind-Bending Sci-Fi', 'More from Director Christopher Nolan')."
+                    },
+                    recommendations: {
+                        type: Type.ARRAY,
+                        description: "A list of 5-7 recommended movies or TV shows for this carousel.",
+                        items: {
+                            type: Type.OBJECT,
+                            properties: {
+                                title: { type: Type.STRING, description: "The exact title of the movie or TV show." },
+                                year: { type: Type.INTEGER, description: "The release year of the media." },
+                                type: { type: Type.STRING, description: "The type of media, either 'movie' or 'tv'." },
+                                reasoning: { type: Type.STRING, description: "A very brief, one-sentence reason why this was recommended based on the user's tastes." }
+                            },
+                            required: ["title", "year", "type", "reasoning"]
+                        }
+                    }
+                },
+                required: ["title", "recommendations"]
+            }
+        }
+    },
+    required: ["carousels"]
+};
+
+/**
+ * Generates personalized, themed carousels of recommendations based on user's liked items.
+ */
+export const getAiCuratedRecommendations = async (
+    likedItems: LikedItem[],
+    aiClient: GoogleGenAI
+): Promise<AiCuratedCarousel[]> => {
+    if (likedItems.length === 0) return [];
+
+    const likedItemsString = likedItems.map(item => `- ${item.title} (${item.releaseYear})`).join('\n');
+
+    try {
+        const response = await aiClient.models.generateContent({
+            model,
+            contents: `Based on the user's liked items below, generate 3-5 themed carousels of movie and TV show recommendations.
+
+User's Liked Items:
+${likedItemsString}
+
+For each carousel, provide a creative title and a list of 5-7 recommendations. Each recommendation must include the title, release year, type ('movie' or 'tv'), and a brief reasoning. Do not recommend items that are already in the user's liked list.`,
+            config: {
+                systemInstruction: "You are a personalized movie and TV show recommendation expert. Your goal is to analyze a user's tastes and provide curated, themed lists of media they might enjoy. Your output must be a JSON object.",
+                responseMimeType: "application/json",
+                responseSchema: curatedRecommendationsSchema,
+            }
+        });
+
+        const aiResult = JSON.parse(response.text.trim());
+
+        if (!aiResult.carousels || aiResult.carousels.length === 0) {
+            throw new Error("AI did not return any carousels.");
+        }
+
+        const curatedCarousels: AiCuratedCarousel[] = [];
+
+        // Use Promise.all to fetch details for all recommendations in parallel
+        await Promise.all(
+            aiResult.carousels.map(async (carousel: any) => {
+                const searchPromises = carousel.recommendations.map((rec: any) =>
+                    // Search for each title to get accurate, full media details from TMDb
+                    searchMedia(`${rec.title} year ${rec.year}`).then(results => {
+                        // Find the best match, preferably matching type as well
+                        const bestMatch = results.find(r => r.type === rec.type && r.releaseYear === String(rec.year)) || results[0];
+                        return bestMatch;
+                    })
+                );
+
+                const mediaDetails = (await Promise.all(searchPromises)).filter(Boolean) as MediaDetails[];
+                
+                if (mediaDetails.length > 0) {
+                    // Remove duplicates
+                    const uniqueMediaDetails = Array.from(new Map(mediaDetails.map(item => [item.id, item])).values());
+                    curatedCarousels.push({
+                        title: carousel.title,
+                        items: uniqueMediaDetails,
+                    });
+                }
+            })
+        );
+
+        return curatedCarousels;
+
+    } catch (error) {
+        console.error("Error getting AI curated recommendations:", error);
+        throw new Error("ScapeAI couldn't curate recommendations. Please try again later.");
+    }
+};
+
+const imageRecsSchema = {
+    type: Type.OBJECT,
+    properties: {
+        title: {
+            type: Type.STRING,
+            description: "A creative title for the recommendation list based on the image."
+        },
+        recommendations: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    title: { type: Type.STRING, description: "The exact title of the movie or TV show." },
+                    year: { type: Type.INTEGER, description: "The release year." },
+                    type: { type: Type.STRING, description: "The type of media, either 'movie' or 'tv'." },
+                },
+                required: ["title", "year", "type"]
+            }
+        }
+    },
+    required: ["title", "recommendations"]
+};
+
+/**
+ * Analyzes an image to identify a movie/show or its themes, then returns similar media recommendations.
+ */
+export const getAiRecommendationsFromImage = async (
+    imageData: { data: string, mimeType: string },
+    aiClient: GoogleGenAI
+): Promise<{ results: MediaDetails[], title: string }> => {
+    try {
+        const imagePart = { inlineData: imageData };
+        const textPart = { text: "Analyze the provided image and recommend similar movies or TV shows." };
+
+        const response = await aiClient.models.generateContent({
+            model,
+            contents: { parts: [imagePart, textPart] },
+            config: {
+                systemInstruction: `You are a movie and TV show recommendation expert with an amazing ability to analyze images. Your job is to identify media or infer themes from an image and suggest similar content, returning the result in a strict JSON format.
+                1. **Identify Content:** If it's a poster/scene, identify the media. If generic, describe the genre, mood, and style.
+                2. **Generate Title:** Create a title like "More like [Identified Movie]" or "For Fans of [Vibe/Genre]".
+                3. **Find Recommendations:** Provide a list of 5-7 similar movies or TV shows with exact title, release year, and type ('movie' or 'tv').
+                4. **Output:** Respond with ONLY the raw JSON object matching the schema.`,
+                responseMimeType: "application/json",
+                responseSchema: imageRecsSchema
+            }
+        });
+
+        const aiResult = JSON.parse(response.text.trim());
+        if (!aiResult.recommendations || aiResult.recommendations.length === 0) {
+            throw new Error("AI could not find recommendations for this image.");
+        }
+
+        const searchPromises = aiResult.recommendations.map((rec: any) =>
+            searchMedia(`${rec.title} year ${rec.year}`).then(results => results[0])
+        );
+
+        const mediaDetails = (await Promise.all(searchPromises)).filter(Boolean) as MediaDetails[];
+        if (mediaDetails.length === 0) {
+            throw new Error("Could not find detailed information for the recommended titles.");
+        }
+
+        const uniqueMediaDetails = Array.from(new Map(mediaDetails.map(item => [item.id, item])).values());
+        return { results: uniqueMediaDetails, title: aiResult.title };
+
+    } catch (error) {
+        console.error("Error getting AI recommendations from image:", error);
+        throw new Error("Scape Vision couldn't analyze the image. Please try a different one.");
+    }
 };

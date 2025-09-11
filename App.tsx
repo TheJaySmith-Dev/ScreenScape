@@ -20,11 +20,12 @@ import { ComingSoonPage } from './components/ComingSoonPage.tsx';
 import { ApiKeyModal } from './components/ApiKeyModal.tsx';
 import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { SearchModal } from './components/SearchModal.tsx';
+import { VisionSearchModal } from './components/VisionSearchModal.tsx';
 import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
 import { BrowseMenuModal } from './components/MobileMenuModal.tsx';
 import { ChatModal } from './components/ChatModal.tsx';
 import { AiDescriptionModal } from './components/AiDescriptionModal.tsx';
-import { UserIcon, SearchIcon, GridIcon } from './components/icons.tsx';
+import { UserIcon, SearchIcon, GridIcon, CameraIcon } from './components/icons.tsx';
 
 import * as mediaService from './services/mediaService.ts';
 import { popularStudios } from './services/studioService.ts';
@@ -67,6 +68,7 @@ const App: React.FC = () => {
     const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isAiSearchOpen, setIsAiSearchOpen] = useState(false);
+    const [isVisionSearchOpen, setIsVisionSearchOpen] = useState(false);
     const [isViewingGuideModalOpen, setIsViewingGuideModalOpen] = useState(false);
     const [isBrowseMenuOpen, setIsBrowseMenuOpen] = useState(false);
     const [isChatModalOpen, setIsChatModalOpen] = useState(false);
@@ -439,7 +441,7 @@ const App: React.FC = () => {
                     return <RecommendationGrid recommendations={searchResults} onSelect={handleSelectMedia} />;
                 case 'brand':
                     if (selectedBrand) {
-                        return <BrandDetail brand={selectedBrand} media={brandContent} onBack={() => window.location.hash = '/brands'} onSelectMedia={handleSelectMedia} onSelectCollection={handleSelectCollection} mediaTypeFilter={mediaTypeFilter} setMediaTypeFilter={setMediaTypeFilter} sortBy={sortBy} setSortBy={setSortBy} />;
+                        return <BrandDetail brand={selectedBrand} media={brandContent} onBack={() => window.location.hash = '/brands'} onSelectMedia={handleSelectMedia} onSelectCollection={handleSelectCollection} mediaTypeFilter={mediaTypeFilter} setMediaTypeFilter={setMediaTypeFilter} sortBy={sortBy} setSortBy={setSortBy} onGenerateGuides={handleGenerateGuides} />;
                     }
                     return <div className="text-center">Loading brand...</div>;
                 case 'studio':
@@ -487,6 +489,9 @@ const App: React.FC = () => {
                     <button onClick={() => setIsAiSearchOpen(true)} className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-semibold text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-full transition-colors" aria-label="Open ScapeAI Search">
                         <img src="https://img.icons8.com/?size=100&id=eoxMN35Z6JKg&format=png&color=FFFFFF" alt="ScapeAI logo" className="w-5 h-5" />
                         <span>ScapeAI</span>
+                    </button>
+                    <button onClick={() => setIsVisionSearchOpen(true)} className="p-2.5 rounded-full hover:bg-white/5 transition-colors" aria-label="Open Vision Search">
+                        <CameraIcon className="w-5 h-5" />
                     </button>
                      <button onClick={() => setIsBrowseMenuOpen(true)} className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-semibold text-gray-300 hover:bg-white/5 rounded-full transition-colors" aria-label="Open Browse Menu">
                         <GridIcon className="w-5 h-5" />
@@ -554,6 +559,11 @@ const App: React.FC = () => {
           <AiSearchModal 
             isOpen={isAiSearchOpen}
             onClose={() => setIsAiSearchOpen(false)}
+            onSelectMedia={handleSelectMedia}
+          />
+          <VisionSearchModal
+            isOpen={isVisionSearchOpen}
+            onClose={() => setIsVisionSearchOpen(false)}
             onSelectMedia={handleSelectMedia}
           />
           <ViewingGuideModal 

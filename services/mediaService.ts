@@ -368,36 +368,6 @@ export const fetchCollectionDetails = async (collectionId: number): Promise<Coll
     };
 };
 
-export const getRecommendationsFromTastes = async (likes: LikedItem[], dislikes: DislikedItem[]): Promise<MediaDetails[]> => {
-    if (likes.length === 0) return [];
-
-    const seedItems = likes.slice(-3); // Use the 3 most recent likes for seeding
-    const recommendations: MediaDetails[] = [];
-    const recommendedIds = new Set<number>();
-    const dislikedIds = new Set(dislikes.map(d => d.id));
-
-    for (const item of seedItems) {
-        if (recommendations.length >= 20) break;
-        const endpoint = `/${item.type}/${item.id}/recommendations`;
-        try {
-            const data = await fetchApi<{ results: any[] }>(endpoint);
-            for (const rec of data.results) {
-                if (recommendations.length >= 20) break;
-                if (!recommendedIds.has(rec.id) && !dislikedIds.has(rec.id)) {
-                    const formatted = formatMediaListItem(rec, rec.media_type);
-                    if (formatted) {
-                        recommendations.push(formatted);
-                        recommendedIds.add(rec.id);
-                    }
-                }
-            }
-        } catch (error) {
-            console.warn(`Could not fetch recommendations for ${item.title}:`, error);
-        }
-    }
-    return recommendations;
-};
-
 export const fetchMediaByIds = async (ids: { id: number; type: 'movie' | 'tv' }[]): Promise<MediaDetails[]> => {
     const promises = ids.map(item =>
         fetchApi<any>(`/${item.type}/${item.id}`).then(details =>

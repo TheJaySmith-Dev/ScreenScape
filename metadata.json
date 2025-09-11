@@ -1,5 +1,7 @@
 {
   "name": "ScreenScape",
   "description": "ScreenScape is your ultimate destination for discovering movies and TV shows, offering a curated, immersive experience tailored to modern streaming enthusiasts. With a sleek, Apple-inspired design, ScreenScape delivers personalized recommendations, the latest trailers, and up-to-date streaming platform information, all in one dynamic hub. The name evokes a vast, vibrant landscape of screens—where every click opens a new world of entertainment. Whether you’re a casual viewer or a dedicated cinephile, ScreenScape makes finding your next binge effortless and exciting, all within a visually stunning, user-friendly platform. Dive into the future of media discovery with ScreenScape.Space",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera"
+  ]
 }

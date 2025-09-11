@@ -337,3 +337,8 @@ export interface SettingsContextType {
   saveApiKeys: (keys: { tmdbKey: string; geminiKey: string }) => void;
   clearAllSettings: () => void;
 }
+
+export interface AiCuratedCarousel {
+  title: string;
+  items: MediaDetails[];
+}
