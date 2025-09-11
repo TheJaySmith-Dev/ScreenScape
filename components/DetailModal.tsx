@@ -150,6 +150,12 @@ const getTvDateRange = (firstAirDate: string | undefined, lastAirDate: string | 
     return '';
 };
 
+const formatAiText = (text: string): { __html: string } => {
+    // Sanitize and format basic markdown.
+    const formattedContent = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // Bold
+    return { __html: formattedContent };
+};
+
 
 const ModalSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <div className="mt-12">
@@ -423,7 +429,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                         {funFacts.map((fact, index) => (
                            <div key={index} className="fun-fact-card" style={{ borderLeftColor: `hsl(${index * 60 + 220}, 70%, 60%)` }}>
                              <p className="fun-fact-category" style={{ color: `hsl(${index * 60 + 220}, 70%, 70%)` }}>{fact.category}</p>
-                             <p className="text-sm text-gray-300 mt-1">{fact.fact}</p>
+                             <p className="text-sm text-gray-300 mt-1" dangerouslySetInnerHTML={formatAiText(fact.fact)}></p>
                            </div>
                         ))}
                     </div>

@@ -11,6 +11,14 @@ interface AiDescriptionModalProps {
   error: string | null;
 }
 
+const formatDescription = (text: string): { __html: string } => {
+    // Sanitize and format basic markdown.
+    const formattedText = text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+        .replace(/\n/g, '<br />'); // Newlines
+    return { __html: formattedText };
+};
+
 export const AiDescriptionModal: React.FC<AiDescriptionModalProps> = ({
   isOpen,
   onClose,
@@ -74,7 +82,7 @@ export const AiDescriptionModal: React.FC<AiDescriptionModalProps> = ({
           ) : error ? (
             <p className="text-red-400">{error}</p>
           ) : (
-            <p className="text-gray-200 leading-relaxed whitespace-pre-wrap">{description}</p>
+            <p className="text-gray-200 leading-relaxed" dangerouslySetInnerHTML={formatDescription(description || '')}></p>
           )}
         </div>
       </div>

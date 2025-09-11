@@ -14,6 +14,14 @@ interface ChatModalProps {
   brand?: Brand;
 }
 
+const formatMessageContent = (content: string): { __html: string } => {
+    // Sanitize and format basic markdown.
+    const formattedContent = content
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+        .replace(/\n/g, '<br />'); // Newlines
+    return { __html: formattedContent };
+};
+
 export const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, media, brand }) => {
     const [chatSession, setChatSession] = useState<Chat | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -116,9 +124,10 @@ export const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, media, br
 
                 <div className="flex-grow overflow-y-auto p-4 chat-messages">
                     {messages.map((msg, index) => (
-                        <div key={index} className={`chat-bubble ${msg.role}`}>
-                            {msg.content}
-                        </div>
+                        <div 
+                            key={index} 
+                            className={`chat-bubble ${msg.role}`}
+                            dangerouslySetInnerHTML={formatMessageContent(msg.content)} />
                     ))}
                     {isLoading && (
                         <div className="chat-bubble model">
@@ -148,10 +157,8 @@ export const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, media, br
                                     disabled={isLoading}
                                     autoFocus
                                 />
-                                <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 p-2" aria-label="Send message" disabled={isLoading || !userInput.trim()}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6 text-white">
-                                      <path d="M3.105 3.105a.75.75 0 0 1 .813-.292l13.58 4.527a.75.75 0 0 1 0 1.32l-13.58 4.527a.75.75 0 0 1-1.05-.813l2.25-6.75L3.105 3.105Z" />
-                                    </svg>
+                                <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 p-2 disabled:opacity-50 transition-opacity" aria-label="Send message" disabled={isLoading || !userInput.trim()}>
+                                    <img src="https://img.icons8.com/?size=100&id=s43tCjA52p5j&format=png&color=FFFFFF" alt="Send" className="w-6 h-6" />
                                 </button>
                             </div>
                         </form>
