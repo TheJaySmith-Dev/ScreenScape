@@ -1,4 +1,5 @@
 
+
 // FIX: Correctly import React hooks (useState, useEffect, useCallback) to resolve 'Cannot find name' errors.
 import React, { useState, useEffect, useCallback } from 'react';
 import { HeroSection } from './components/HeroSection.tsx';
@@ -22,6 +23,7 @@ import { SearchModal } from './components/SearchModal.tsx';
 import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
 import { BrowseMenuModal } from './components/MobileMenuModal.tsx';
 import { ChatModal } from './components/ChatModal.tsx';
+import { AiDescriptionModal } from './components/AiDescriptionModal.tsx';
 import { UserIcon, SearchIcon, GridIcon } from './components/icons.tsx';
 
 import * as mediaService from './services/mediaService.ts';
@@ -32,13 +34,13 @@ import { popularNetworks } from './services/networkService.ts';
 import { people } from './services/peopleService.ts';
 
 import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Person, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy } from './types.ts';
-import { getViewingGuidesForBrand } from './services/aiService.ts';
+import { getViewingGuidesForBrand, getAiDescriptionForBrand } from './services/aiService.ts';
 import { useSettings } from './hooks/useSettings.ts';
 
 const getHashRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
 
 const App: React.FC = () => {
-    const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient, isAllClearMode } = useSettings();
+    const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount } = useSettings();
     const [route, setRoute] = useState<string[]>(getHashRoute());
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -72,6 +74,13 @@ const App: React.FC = () => {
     const [brandGuides, setBrandGuides] = useState<ViewingGuide[]>([]);
     const [isGuideLoading, setIsGuideLoading] = useState(false);
     const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+    
+    // AI Description Modal state
+    const [isAiDescriptionModalOpen, setIsAiDescriptionModalOpen] = useState(false);
+    const [selectedBrandForDescription, setSelectedBrandForDescription] = useState<Brand | null>(null);
+    const [aiDescription, setAiDescription] = useState<string | null>(null);
+    const [isAiDescriptionLoading, setIsAiDescriptionLoading] = useState(false);
+    const [aiDescriptionError, setAiDescriptionError] = useState<string | null>(null);
 
     // Filter states
     const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaTypeFilter>('all');
@@ -285,6 +294,40 @@ const App: React.FC = () => {
         setIsGuideLoading(false);
       }
     };
+    
+    const handleOpenAiDescription = useCallback(async (brand: Brand) => {
+        if (!aiClient) return;
+        const { canRequest } = canMakeRequest();
+        if (!canRequest) {
+            console.warn("Rate limit reached, cannot fetch AI description.");
+            return;
+        }
+
+        setSelectedBrandForDescription(brand);
+        setIsAiDescriptionModalOpen(true);
+        setIsAiDescriptionLoading(true);
+        setAiDescription(null);
+        setAiDescriptionError(null);
+
+        try {
+            const description = await getAiDescriptionForBrand(brand.name, aiClient);
+            incrementRequestCount();
+            setAiDescription(description);
+        } catch (e: any) {
+            setAiDescriptionError(e.message || "Failed to generate description.");
+        } finally {
+            setIsAiDescriptionLoading(false);
+        }
+    }, [aiClient, canMakeRequest, incrementRequestCount]);
+
+    const handleCloseAiDescriptionModal = useCallback(() => {
+        setIsAiDescriptionModalOpen(false);
+        setTimeout(() => {
+            setSelectedBrandForDescription(null);
+            setAiDescription(null);
+            setAiDescriptionError(null);
+        }, 300);
+    }, []);
 
     const handleSelectStudio = async (studio: Studio) => {
         setIsLoading(true);
@@ -381,7 +424,7 @@ const App: React.FC = () => {
                 case 'collections': return <ComingSoonPage media={comingSoonContent} onSelectMedia={handleSelectMedia} />;
                 case 'studios': return <StudioGrid studios={popularStudios} onSelect={handleSelectStudio} />;
                 case 'brands':
-                    return <BrandGrid brands={brands} onSelect={openBrandDetail} />;
+                    return <BrandGrid brands={brands} onSelect={openBrandDetail} onAiInfoClick={handleOpenAiDescription} />;
                 case 'streaming':
                     if (id) {
                         return <RecommendationGrid recommendations={streamingContent} onSelect={handleSelectMedia} />;
@@ -529,6 +572,15 @@ const App: React.FC = () => {
                 media={chatMediaItem}
               />
           )}
+
+          <AiDescriptionModal
+            isOpen={isAiDescriptionModalOpen}
+            onClose={handleCloseAiDescriptionModal}
+            isLoading={isAiDescriptionLoading}
+            title={selectedBrandForDescription?.name || ''}
+            description={aiDescription}
+            error={aiDescriptionError}
+          />
 
           <nav className="mobile-dock md:hidden">
               <PillNavigation />

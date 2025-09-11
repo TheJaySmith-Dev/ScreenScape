@@ -152,6 +152,25 @@ const viewingGuideSchema = {
 };
 
 /**
+ * Generates an AI-powered description for a given brand or franchise.
+ */
+export const getAiDescriptionForBrand = async (brandName: string, aiClient: GoogleGenAI): Promise<string> => {
+    try {
+        const response: GenerateContentResponse = await aiClient.models.generateContent({
+            model,
+            contents: `Generate a concise, engaging, one-paragraph description for the brand or franchise known as "${brandName}". Focus on its cultural impact, key themes, and what makes it unique. The tone should be exciting and suitable for a movie discovery app.`,
+            config: {
+                 systemInstruction: "You are a film and pop culture expert. Your task is to write a short, compelling summary for a media franchise.",
+            }
+        });
+        return response.text;
+    } catch (error) {
+        console.error(`Error getting AI description for ${brandName}:`, error);
+        throw new Error(`Could not generate a description for ${brandName}. The AI may be temporarily unavailable.`);
+    }
+};
+
+/**
  * Generates curated viewing guides for a franchise.
  */
 export const getViewingGuidesForBrand = async (brandName: string, mediaList: MediaDetails[], aiClient: GoogleGenAI): Promise<{ guides: ViewingGuide[] }> => {

@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { BrandCard } from './BrandCard.tsx';
 import type { Brand } from '../types.ts';
@@ -6,9 +7,10 @@ import type { Brand } from '../types.ts';
 interface BrandGridProps {
   brands: Brand[];
   onSelect: (brand: Brand) => void;
+  onAiInfoClick: (brand: Brand) => void;
 }
 
-export const BrandGrid: React.FC<BrandGridProps> = ({ brands, onSelect }) => {
+export const BrandGrid: React.FC<BrandGridProps> = ({ brands, onSelect, onAiInfoClick }) => {
   if (brands.length === 0) {
     return <p className="text-gray-400">No brands found.</p>;
   }
@@ -21,7 +23,7 @@ export const BrandGrid: React.FC<BrandGridProps> = ({ brands, onSelect }) => {
           className="fade-in" 
           style={{ animationDelay: `${index * 100}ms`, opacity: 0 }}
         >
-          <BrandCard brand={brand} onSelect={() => onSelect(brand)} />
+          <BrandCard brand={brand} onSelect={() => onSelect(brand)} onAiInfoClick={() => onAiInfoClick(brand)} />
         </div>
       ))}
     </div>
