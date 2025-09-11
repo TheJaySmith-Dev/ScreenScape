@@ -3,7 +3,7 @@ import type { Brand, MediaDetails, Collection, MediaTypeFilter, SortBy } from '.
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { StudioFilters } from './StudioFilters.tsx';
 import { CollectionCard } from './CollectionCard.tsx';
-import { SparklesIcon } from './icons.tsx';
+import { SparklesIcon, ChatBubbleIcon } from './icons.tsx';
 
 interface BrandDetailProps {
     brand: Brand;
@@ -16,6 +16,7 @@ interface BrandDetailProps {
     onSelectMedia: (media: MediaDetails) => void;
     onSelectCollection: (collection: Collection) => void;
     onGenerateGuides: (brand: Brand, media: MediaDetails[]) => void;
+    onOpenChat: (brand: Brand) => void;
 }
 
 export const BrandDetail: React.FC<BrandDetailProps> = ({
@@ -29,6 +30,7 @@ export const BrandDetail: React.FC<BrandDetailProps> = ({
     onSelectMedia,
     onSelectCollection,
     onGenerateGuides,
+    onOpenChat,
 }) => {
     const filteredAndSortedMedia = useMemo(() => {
         let processedMedia = [...media];
@@ -85,6 +87,14 @@ export const BrandDetail: React.FC<BrandDetailProps> = ({
                     >
                         <SparklesIcon className="w-5 h-5 text-indigo-400" />
                         <span>AI Viewing Guides</span>
+                    </button>
+                    <button
+                        onClick={() => onOpenChat(brand)}
+                        className="glass-button text-sm"
+                        aria-label={`Chat with ScapeAI about ${brand.name}`}
+                    >
+                        <ChatBubbleIcon className="w-5 h-5"/>
+                        <span>Chat with ScapeAI</span>
                     </button>
                 </div>
 

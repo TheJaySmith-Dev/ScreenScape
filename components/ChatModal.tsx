@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import type { MediaDetails, ChatMessage } from '../types.ts';
+import type { MediaDetails, ChatMessage, Brand } from '../types.ts';
 import { CloseIcon } from './icons.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
-import { startChatForMedia } from '../services/aiService.ts';
+import { startChatForMedia, startChatForBrand } from '../services/aiService.ts';
 import { RateLimitMessage } from './RateLimitMessage.tsx';
 import type { Chat } from '@google/genai';
 import { useSettings } from '../hooks/useSettings.ts';
@@ -11,10 +10,11 @@ import { useSettings } from '../hooks/useSettings.ts';
 interface ChatModalProps {
   isOpen: boolean;
   onClose: () => void;
-  media: MediaDetails;
+  media?: MediaDetails;
+  brand?: Brand;
 }
 
-export const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, media }) => {
+export const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, media, brand }) => {
     const [chatSession, setChatSession] = useState<Chat | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -24,12 +24,25 @@ export const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, media }) 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (isOpen && aiClient) {
-            const session = startChatForMedia(media, aiClient);
-            setChatSession(session);
-            setMessages([{ role: 'model', content: `Hi! I'm ScapeAI. I can answer any questions you have about "${media.title}" (${media.releaseYear}). What would you like to know?` }]);
+        if (!isOpen || !aiClient) return;
+
+        let session: Chat;
+        let initialMessage: ChatMessage;
+
+        if (brand) {
+            session = startChatForBrand(brand, aiClient);
+            initialMessage = { role: 'model', content: `Hi! I'm ScapeAI. I can answer any questions you have about the "${brand.name}" franchise. What would you like to know?` };
+        } else if (media) {
+            session = startChatForMedia(media, aiClient);
+            initialMessage = { role: 'model', content: `Hi! I'm ScapeAI. I can answer any questions you have about "${media.title}" (${media.releaseYear}). What would you like to know?` };
+        } else {
+            return; // Don't open if no media or brand is provided
         }
-    }, [isOpen, media, aiClient]);
+
+        setChatSession(session);
+        setMessages([initialMessage]);
+
+    }, [isOpen, media, brand, aiClient]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -72,7 +85,7 @@ export const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, media }) 
         }
     };
 
-    if (!isOpen) return null;
+    if (!isOpen || (!media && !brand)) return null;
     
     const { canRequest, resetTime } = canMakeRequest();
 

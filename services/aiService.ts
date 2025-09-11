@@ -1,6 +1,6 @@
 import type { GoogleGenAI } from "@google/genai";
 import { Type, GenerateContentResponse, Chat } from "@google/genai";
-import type { MediaDetails, ViewingGuide, FunFact, AiSearchParams, LikedItem, AiCuratedCarousel } from '../types.ts';
+import type { MediaDetails, ViewingGuide, FunFact, AiSearchParams, LikedItem, AiCuratedCarousel, Brand } from '../types.ts';
 import { searchMedia, discoverMediaFromAi } from './mediaService.ts';
 
 const model = 'gemini-2.5-flash';
@@ -297,6 +297,22 @@ export const startChatForMedia = (media: MediaDetails, aiClient: GoogleGenAI): C
     return chat;
 };
 
+/**
+ * Initializes a new conversational chat session for a specific brand/franchise.
+ * @param brand The brand to chat about.
+ * @returns An initialized `Chat` object from the Gemini SDK.
+ */
+export const startChatForBrand = (brand: Brand, aiClient: GoogleGenAI): Chat => {
+    const chat = aiClient.chats.create({
+        model,
+        config: {
+            systemInstruction: `You are a friendly, conversational expert on media franchises. The user is asking you questions about the "${brand.name}" franchise.
+            Use your vast knowledge to answer their questions about characters, storylines, behind-the-scenes facts, and the overall universe. Keep your answers concise and engaging. Do not answer questions that are not related to this specific franchise or the film/TV industry in general.`
+        }
+    });
+    return chat;
+};
+
 const curatedRecommendationsSchema = {
     type: Type.OBJECT,
     properties: {
@@ -397,76 +413,5 @@ For each carousel, provide a creative title and a list of 5-7 recommendations. E
     } catch (error) {
         console.error("Error getting AI curated recommendations:", error);
         throw new Error("ScapeAI couldn't curate recommendations. Please try again later.");
-    }
-};
-
-const imageRecsSchema = {
-    type: Type.OBJECT,
-    properties: {
-        title: {
-            type: Type.STRING,
-            description: "A creative title for the recommendation list based on the image."
-        },
-        recommendations: {
-            type: Type.ARRAY,
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    title: { type: Type.STRING, description: "The exact title of the movie or TV show." },
-                    year: { type: Type.INTEGER, description: "The release year." },
-                    type: { type: Type.STRING, description: "The type of media, either 'movie' or 'tv'." },
-                },
-                required: ["title", "year", "type"]
-            }
-        }
-    },
-    required: ["title", "recommendations"]
-};
-
-/**
- * Analyzes an image to identify a movie/show or its themes, then returns similar media recommendations.
- */
-export const getAiRecommendationsFromImage = async (
-    imageData: { data: string, mimeType: string },
-    aiClient: GoogleGenAI
-): Promise<{ results: MediaDetails[], title: string }> => {
-    try {
-        const imagePart = { inlineData: imageData };
-        const textPart = { text: "Analyze the provided image and recommend similar movies or TV shows." };
-
-        const response = await aiClient.models.generateContent({
-            model,
-            contents: { parts: [imagePart, textPart] },
-            config: {
-                systemInstruction: `You are a movie and TV show recommendation expert with an amazing ability to analyze images. Your job is to identify media or infer themes from an image and suggest similar content, returning the result in a strict JSON format.
-                1. **Identify Content:** If it's a poster/scene, identify the media. If generic, describe the genre, mood, and style.
-                2. **Generate Title:** Create a title like "More like [Identified Movie]" or "For Fans of [Vibe/Genre]".
-                3. **Find Recommendations:** Provide a list of 5-7 similar movies or TV shows with exact title, release year, and type ('movie' or 'tv').
-                4. **Output:** Respond with ONLY the raw JSON object matching the schema.`,
-                responseMimeType: "application/json",
-                responseSchema: imageRecsSchema
-            }
-        });
-
-        const aiResult = JSON.parse(response.text.trim());
-        if (!aiResult.recommendations || aiResult.recommendations.length === 0) {
-            throw new Error("AI could not find recommendations for this image.");
-        }
-
-        const searchPromises = aiResult.recommendations.map((rec: any) =>
-            searchMedia(`${rec.title} year ${rec.year}`).then(results => results[0])
-        );
-
-        const mediaDetails = (await Promise.all(searchPromises)).filter(Boolean) as MediaDetails[];
-        if (mediaDetails.length === 0) {
-            throw new Error("Could not find detailed information for the recommended titles.");
-        }
-
-        const uniqueMediaDetails = Array.from(new Map(mediaDetails.map(item => [item.id, item])).values());
-        return { results: uniqueMediaDetails, title: aiResult.title };
-
-    } catch (error) {
-        console.error("Error getting AI recommendations from image:", error);
-        throw new Error("Scape Vision couldn't analyze the image. Please try a different one.");
     }
 };
