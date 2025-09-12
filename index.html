@@ -70,31 +70,6 @@
         .glass-panel:hover::before {
             opacity: 0.5;
         }
-
-        /* LIQUID GLASS - ANIMATED REFLECTION (v5 - Fluid & Organic) */
-        @keyframes liquid-reflection {
-            0% { transform: translate(-150%, -50%) rotate(25deg); opacity: 0.3; }
-            50% { transform: translate(150%, 50%) rotate(25deg); opacity: 0.5; }
-            100% { transform: translate(-150%, -50%) rotate(25deg); opacity: 0.3; }
-        }
-        .glass-panel::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 70%;
-            height: 150%;
-            /* Softer, more organic radial glint */
-            background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.35) 0%, transparent 60%);
-            animation: liquid-reflection 11s ease-in-out infinite;
-            animation-delay: 1s;
-            pointer-events: none;
-            transition: all 0.5s ease;
-        }
-        .glass-panel:hover::after {
-            animation-duration: 9s;
-            transform: scale(1.1);
-        }
         
         /* ACCESSIBILITY - ALL CLEAR MODE (v4 - Crystal Clear) */
         .all-clear-mode .glass-panel {
