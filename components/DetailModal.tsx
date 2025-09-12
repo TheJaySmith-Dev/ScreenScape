@@ -370,7 +370,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             </div>
           </div>
           
-          <div className="p-6 md:p-8 bg-[#151517]">
+          <div className="p-6 md:p-8">
              {isMediaDetails(item) && (
                 <>
                   <p className="text-gray-300 leading-relaxed mb-8">{item.overview}</p>
