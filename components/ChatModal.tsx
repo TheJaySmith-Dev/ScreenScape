@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { MediaDetails, ChatMessage, Brand } from '../types.ts';
-import { CloseIcon } from './icons.tsx';
+import { CloseIcon, SendIcon } from './icons.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { startChatForMedia, startChatForBrand } from '../services/aiService.ts';
 import { RateLimitMessage } from './RateLimitMessage.tsx';
@@ -158,7 +158,7 @@ export const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, media, br
                                     autoFocus
                                 />
                                 <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 p-2 disabled:opacity-50 transition-opacity" aria-label="Send message" disabled={isLoading || !userInput.trim()}>
-                                    <img src="https://img.icons8.com/?size=100&id=s43tCjA52p5j&format=png&color=FFFFFF" alt="Send" className="w-6 h-6" />
+                                    <SendIcon className="w-6 h-6" />
                                 </button>
                             </div>
                         </form>
