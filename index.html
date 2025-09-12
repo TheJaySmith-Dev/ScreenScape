@@ -237,34 +237,77 @@
             letter-spacing: 0.05em;
         }
         
-        /* Video Player Styling v2 - Liquified Glass Sliders */
-        .video-slider, .volume-slider {
-          -webkit-appearance: none;
-          width: 100%;
-          height: 6px;
-          border-radius: 3px;
-          outline: none;
-          transition: all .2s;
-          background: linear-gradient(to right, #818cf8 0%, rgba(255, 255, 255, 0.2) 0%); /* Will be updated by JS */
+        /* Custom Video Player - Liquid Glass UI */
+        .player-glass-container {
+            position: relative;
+            aspect-ratio: 16 / 9;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
         }
-        .video-slider::-webkit-slider-thumb, .volume-slider::-webkit-slider-thumb {
-          -webkit-appearance: none;
-          appearance: none;
-          width: 18px;
-          height: 18px;
-          margin-top: -6px;
-          border-radius: 50%;
-          background: #ffffff;
-          cursor: pointer;
-          box-shadow: 0 0 1px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3);
-          transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+        .player-glass-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
         }
-        .video-slider:hover::-webkit-slider-thumb, .volume-slider:hover::-webkit-slider-thumb {
-          transform: scale(1.2);
-          box-shadow: 0 0 8px 2px rgba(129, 140, 248, 0.5);
+
+        .player-controls {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 10px;
         }
-        .volume-slider {
-            width: 100px;
+
+        .player-btn {
+            background: rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+            /* For emoji rendering */
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .player-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        .player-progress-container {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .player-progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00c6ff, #0072ff);
+            border-radius: 3px;
         }
 
         /* AI Search Modal */
