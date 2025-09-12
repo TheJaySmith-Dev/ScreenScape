@@ -36,14 +36,6 @@
         .glass-panel {
             backdrop-filter: blur(20px) saturate(1.6);
             -webkit-backdrop-filter: blur(20px) saturate(1.6);
-            /* Layered background for a liquid, pooled light effect */
-            background-image:
-                /* 1. Base liquid color */
-                linear-gradient(135deg, rgba(40, 40, 42, 0.35), rgba(25, 25, 27, 0.45)),
-                /* 2. Top-left liquid highlight */
-                radial-gradient(ellipse at top left, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-                /* 3. Bottom-right subtle colored glow */
-                radial-gradient(ellipse at bottom right, rgba(100, 120, 255, 0.05) 0%, transparent 60%);
             /* Deeper, more refractive edge */
             border: 1px solid rgba(255, 255, 255, 0.2);
             /* Multi-layered beveled edge effect for thickness */
@@ -471,9 +463,6 @@
         .page-container {
             backdrop-filter: blur(20px) saturate(1.6);
             -webkit-backdrop-filter: blur(20px) saturate(1.6);
-            background-image:
-                linear-gradient(135deg, rgba(30, 32, 35, 0.4), rgba(20, 21, 23, 0.5)),
-                radial-gradient(ellipse at top left, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 20px 50px rgba(0,0,0,0.4);
             border-radius: 44px;
