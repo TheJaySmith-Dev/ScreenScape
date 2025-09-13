@@ -22,7 +22,7 @@ import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
 import { BrowseMenuModal } from './components/MobileMenuModal.tsx';
 import { ChatModal } from './components/ChatModal.tsx';
 import { AiDescriptionModal } from './components/AiDescriptionModal.tsx';
-import { UserIcon, SearchIcon, GridIcon } from './components/icons.tsx';
+import { UserIcon, SearchIcon, GridIcon, DiscordIcon } from './components/icons.tsx';
 
 import * as mediaService from './services/mediaService.ts';
 import { popularStudios } from './services/studioService.ts';
@@ -507,6 +507,10 @@ const App: React.FC = () => {
                     <div className="w-px h-6 bg-white/10 mx-1"></div>
                     <a href="#/myscape" className={`p-2.5 rounded-full transition-colors ${activeRoute === 'myscape' ? 'bg-white/10' : 'hover:bg-white/5'}`} aria-label="MyScape">
                         <UserIcon className="w-6 h-6" />
+                    </a>
+                    <div className="w-px h-6 bg-white/10 mx-1"></div>
+                    <a href="https://discord.gg/VqfzVh5kzT" target="_blank" rel="noopener noreferrer" className="p-2.5 rounded-full hover:bg-white/5 transition-colors" aria-label="Join our Discord">
+                        <DiscordIcon className="w-6 h-6 text-gray-300" />
                     </a>
                 </div>
             </div>
