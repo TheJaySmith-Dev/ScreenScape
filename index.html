@@ -28,30 +28,68 @@
             background-position: center;
             background-attachment: fixed;
             min-height: 100vh;
+            --liquid-blur: 20px;
+            --liquid-saturate: 1.6;
+            --liquid-bg-start: rgba(255, 255, 255, 0.05);
+            --liquid-bg-end: rgba(255, 255, 255, 0);
+            --liquid-shadow-outer: rgba(0, 0, 0, 0.5);
+            --liquid-shadow-inner-light: rgba(255, 255, 255, 0.15);
+            --liquid-shadow-inner-dark: rgba(0, 0, 0, 0.25);
+            --liquid-glow: rgba(100, 120, 255, 0.1);
+            --liquid-light-x: 50%;
+            --liquid-light-y: 50%;
+            --liquid-light-color: rgba(100, 120, 255, 0.15);
+            --liquid-transform: scale(1);
+            --liquid-border-color: transparent;
         }
         .container {
           max-width: 1280px;
         }
-        /* LIQUID GLASS - CORE MATERIAL (v5 - Deep & Refractive) */
+        /* LIQUID GLASS - CORE MATERIAL (v6 - Dynamic & Interactive) */
         .glass-panel {
-            backdrop-filter: blur(20px) saturate(1.6);
-            -webkit-backdrop-filter: blur(20px) saturate(1.6);
-            background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
-            border: 1px solid transparent;
-            /* Multi-layered beveled edge effect for thickness */
+            backdrop-filter: blur(var(--liquid-blur)) saturate(var(--liquid-saturate));
+            -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(var(--liquid-saturate));
+            background-image:
+                /* Interactive light source, controlled by JS */
+                radial-gradient(
+                    circle at var(--liquid-light-x) var(--liquid-light-y),
+                    var(--liquid-light-color) 0%,
+                    transparent 40%
+                ),
+                /* Base glass texture */
+                linear-gradient(135deg, var(--liquid-bg-start), var(--liquid-bg-end));
+            border: 1px solid var(--liquid-border-color);
             box-shadow:
-                /* Outer shadow for floating effect */
-                0 20px 50px rgba(0, 0, 0, 0.5),
-                /* Inner light source from top-left */
-                inset 1px 1px 1px rgba(255, 255, 255, 0.15),
-                /* Deeper inner shadow for depth */
-                inset -3px -3px 2px rgba(0, 0, 0, 0.25),
-                /* Faint inner colored glow for atmosphere */
-                inset 0 0 20px rgba(100, 120, 255, 0.1);
+                0 20px 50px var(--liquid-shadow-outer),
+                inset 1px 1px 1px var(--liquid-shadow-inner-light),
+                inset -3px -3px 2px var(--liquid-shadow-inner-dark),
+                inset 0 0 20px var(--liquid-glow);
             border-radius: 32px;
             position: relative;
             overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: var(--liquid-transform);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: liquid-breathe 8s ease-in-out infinite;
+        }
+
+        @keyframes liquid-breathe {
+            0%, 100% {
+                box-shadow:
+                    0 20px 50px var(--liquid-shadow-outer),
+                    inset 1px 1px 1px var(--liquid-shadow-inner-light),
+                    inset -3px -3px 2px var(--liquid-shadow-inner-dark),
+                    inset 0 0 20px var(--liquid-glow);
+                --liquid-border-color: transparent;
+            }
+            50% {
+                box-shadow:
+                    0 20px 50px var(--liquid-shadow-outer),
+                    inset 1px 1px 1px var(--liquid-shadow-inner-light),
+                    inset -3px -3px 2px var(--liquid-shadow-inner-dark),
+                    inset 0 0 25px var(--liquid-glow);
+                --liquid-border-color: rgba(255, 255, 255, 0.05);
+            }
         }
 
         /* LIQUID GLASS - STATIC HIGHLIGHT (v5 - For constant depth) */

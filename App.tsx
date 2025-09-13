@@ -98,6 +98,58 @@ const App: React.FC = () => {
         };
     }, []);
 
+    // LIQUID GLASS - Interactive light effect
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            const panels = document.querySelectorAll<HTMLElement>('.glass-panel');
+            for (const panel of panels) {
+                const rect = panel.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                panel.style.setProperty('--liquid-light-x', `${x}px`);
+                panel.style.setProperty('--liquid-light-y', `${y}px`);
+            }
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+        };
+    }, []);
+
+    // LIQUID GLASS - Hover effect for panels
+    useEffect(() => {
+        const handleMouseOver = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            const panel = target.closest('.glass-panel') as HTMLElement;
+            if (panel) {
+                panel.style.setProperty('--liquid-light-color', 'rgba(120, 140, 255, 0.25)');
+                panel.style.setProperty('--liquid-saturate', '1.8');
+                panel.style.setProperty('--liquid-transform', 'scale(1.02)');
+            }
+        };
+
+        const handleMouseOut = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            const panel = target.closest('.glass-panel') as HTMLElement;
+            if (panel) {
+                // Revert to the default values from the stylesheet
+                panel.style.removeProperty('--liquid-light-color');
+                panel.style.removeProperty('--liquid-saturate');
+                panel.style.removeProperty('--liquid-transform');
+            }
+        };
+
+        document.body.addEventListener('mouseover', handleMouseOver);
+        document.body.addEventListener('mouseout', handleMouseOut);
+
+        return () => {
+            document.body.removeEventListener('mouseover', handleMouseOver);
+            document.body.removeEventListener('mouseout', handleMouseOut);
+        };
+    }, []);
+
     useEffect(() => {
         if (isAllClearMode) {
             document.body.classList.add('all-clear-mode');
