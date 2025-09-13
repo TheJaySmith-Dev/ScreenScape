@@ -415,3 +415,73 @@ For each carousel, provide a creative title and a list of 5-7 recommendations. E
         throw new Error("ScapeAI couldn't curate recommendations. Please try again later.");
     }
 };
+
+const boxOfficeAnalysisSchema = {
+    type: Type.OBJECT,
+    properties: {
+        headline: {
+            type: Type.STRING,
+            description: "A catchy, one-sentence headline summarizing the movie's box office performance (e.g., 'Unexpected Blockbuster Hit' or 'Critically Acclaimed but a Box Office Flop')."
+        },
+        report: {
+            type: Type.STRING,
+            description: "A concise, one-paragraph analysis of the movie's financial performance. Compare the revenue to the budget, mention the approximate profit or loss, and provide context on whether it was a success, a disappointment, or met expectations. Use a knowledgeable yet accessible tone."
+        }
+    },
+    required: ['headline', 'report']
+};
+
+/**
+ * Generates an AI-powered analysis of a movie's box office performance.
+ */
+export const getAiBoxOfficeAnalysis = async (
+    title: string,
+    budget: number,
+    revenue: number,
+    aiClient: GoogleGenAI
+): Promise<{ headline: string; report: string }> => {
+    const cacheKey = `box-office-analysis-cache-${title.toLowerCase().replace(/\s/g, '-')}`;
+
+    try {
+        const cachedAnalysis = localStorage.getItem(cacheKey);
+        if (cachedAnalysis) {
+            return JSON.parse(cachedAnalysis);
+        }
+    } catch (e) {
+        console.error("Failed to read from cache", e);
+    }
+
+    const formattedBudget = budget.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 });
+    const formattedRevenue = revenue.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 });
+
+    try {
+        const response: GenerateContentResponse = await aiClient.models.generateContent({
+            model,
+            contents: `Analyze the financial performance of the movie "${title}".
+- Budget: ${formattedBudget}
+- Worldwide Box Office Revenue: ${formattedRevenue}
+Provide a headline and a short report in JSON format.`,
+            config: {
+                systemInstruction: "You are a box office analyst for a movie discovery app. Your task is to provide a clear, concise financial summary for a given movie based on its budget and revenue. The tone should be informative and engaging for a general audience. Respond with ONLY a JSON object matching the provided schema.",
+                responseMimeType: "application/json",
+                responseSchema: boxOfficeAnalysisSchema,
+            }
+        });
+
+        const result = JSON.parse(response.text);
+        if (result && result.headline && result.report) {
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify(result));
+            } catch (e) {
+                console.error("Failed to write to cache", e);
+            }
+            return result;
+        } else {
+            throw new Error("AI response did not contain the required fields.");
+        }
+
+    } catch (error) {
+        console.error(`Error getting box office analysis for ${title}:`, error);
+        throw new Error("ScapeAI couldn't analyze the box office data right now.");
+    }
+};
