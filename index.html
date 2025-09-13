@@ -308,39 +308,55 @@
 
         .player-controls {
             position: absolute;
-            bottom: 15px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            width: 90%;
+            width: 95%;
+            max-width: 800px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border-radius: 15px;
-            padding: 10px;
+            gap: 12px;
+            padding: 12px;
+            /* Inherit from glass-panel */
+            backdrop-filter: blur(var(--liquid-blur)) saturate(var(--liquid-saturate));
+            -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(var(--liquid-saturate));
+            background-image:
+                radial-gradient(
+                    circle at var(--liquid-light-x) var(--liquid-light-y),
+                    var(--liquid-light-color) 0%,
+                    transparent 40%
+                ),
+                linear-gradient(135deg, var(--liquid-bg-start), var(--liquid-bg-end));
+            border: 1px solid var(--liquid-border-color);
+            box-shadow:
+                0 10px 30px rgba(0,0,0,0.3),
+                inset 1px 1px 1px var(--liquid-shadow-inner-light),
+                inset -2px -2px 1px var(--liquid-shadow-inner-dark);
+            border-radius: 9999px; /* Pill shape */
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .player-btn {
-            background: rgba(255, 255, 255, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            transition: 0.2s;
-            /* For emoji rendering */
-            font-size: 1.2rem;
+            width: 44px;
+            height: 44px;
+            flex-shrink: 0;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
             color: white;
+            backdrop-filter: blur(8px);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.1);
+            cursor: pointer;
         }
 
         .player-btn:hover {
-            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+            background-image: linear-gradient(rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.1));
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
         }
 
         .player-progress-container {

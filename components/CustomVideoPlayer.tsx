@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CloseIcon } from './icons.tsx';
+import { CloseIcon, PauseIcon, PlaySolidIcon, VolumeOffIcon, VolumeUpIcon } from './icons.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 
 // Add type declarations for the YouTube IFrame API to the global window object
@@ -148,16 +148,16 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId, o
             </div>
         )}
 
-        <div className="player-controls">
-            <div className="player-btn" onClick={togglePlay}>
-                {isPlaying ? '⏸️' : '▶️'}
-            </div>
+        <div className="player-controls glass-panel">
+            <button className="player-btn" onClick={togglePlay} aria-label={isPlaying ? "Pause" : "Play"}>
+                {isPlaying ? <PauseIcon className="w-6 h-6" /> : <PlaySolidIcon className="w-6 h-6" />}
+            </button>
             <div className="player-progress-container" ref={progressContainerRef} onClick={handleSeekClick}>
                 <div className="player-progress" style={{ width: `${progress}%` }}></div>
             </div>
-            <div className="player-btn" onClick={toggleMute}>
-                {isMuted ? '🔇' : '🔊'}
-            </div>
+            <button className="player-btn" onClick={toggleMute} aria-label={isMuted ? "Unmute" : "Mute"}>
+                {isMuted ? <VolumeOffIcon className="w-6 h-6" /> : <VolumeUpIcon className="w-6 h-6" />}
+            </button>
         </div>
 
         <button
