@@ -42,6 +42,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId, o
                   iv_load_policy: 3,
                   showinfo: 0,
                   disablekb: 1,
+                  wmode: 'transparent',
                 },
                 events: {
                   onReady: onPlayerReady,
@@ -162,7 +163,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId, o
 
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 z-10 p-2 glass-button !rounded-full opacity-80 hover:opacity-100"
+          className="absolute top-4 right-4 z-10 player-btn"
           aria-label="Close player"
         >
           <CloseIcon className="w-5 h-5" />
