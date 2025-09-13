@@ -67,6 +67,8 @@ export interface MediaDetails {
   status?: string; // For TV shows, e.g. "Ended", "Returning Series"
   rated?: string; // MPAA rating from TMDb
   seasons?: SeasonSummary[];
+  budget?: number;
+  revenue?: number;
 }
 
 export interface Collection {

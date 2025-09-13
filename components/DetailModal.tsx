@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, CrewMember, UserLocation, WatchProviders, OmdbDetails, FunFact, SeasonDetails, Episode, SeasonSummary } from '../types.ts';
-import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, SparklesIcon, InfoIcon, ChatBubbleIcon, CloseIcon } from './icons.tsx';
+import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, SparklesIcon, InfoIcon, ChatBubbleIcon, CloseIcon, MoneyIcon } from './icons.tsx';
 // FIX: Import `RecommendationGrid` which is used in this component, and remove the unused `RecommendationCard` import.
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
@@ -9,12 +9,13 @@ import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
 import { usePreferences } from '../hooks/usePreferences.ts';
 import { CinemaAvailability } from './CinemaAvailability.tsx';
 import { fetchOmdbDetails } from '../services/omdbService.ts';
-import { getFunFactsForMedia } from '../services/aiService.ts';
+import { getFunFactsForMedia, getAiBoxOfficeAnalysis } from '../services/aiService.ts';
 import { RateLimitMessage } from './RateLimitMessage.tsx';
 import { useSettings } from '../hooks/useSettings.ts';
 import { fetchSeasonDetails } from '../services/mediaService.ts';
 import { useCountdown } from '../hooks/useCountdown.ts';
 import { StreamingAvailability } from './StreamingAvailability.tsx';
+import { BoxOfficeAnalysisModal } from './BoxOfficeAnalysisModal.tsx';
 
 interface DetailModalProps {
   item: MediaDetails | CollectionDetails;
@@ -203,6 +204,12 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
     const [isFactsLoading, setIsFactsLoading] = useState(false);
     const [factsError, setFactsError] = useState<string | null>(null);
 
+    // State for Box Office Analysis Modal
+    const [isBoxOfficeModalOpen, setIsBoxOfficeModalOpen] = useState(false);
+    const [boxOfficeAnalysis, setBoxOfficeAnalysis] = useState<{ headline: string; report: string } | null>(null);
+    const [isBoxOfficeLoading, setIsBoxOfficeLoading] = useState(false);
+    const [boxOfficeError, setBoxOfficeError] = useState<string | null>(null);
+
     // Effect for keyboard shortcuts and scrolling to top
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
@@ -289,6 +296,32 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         }
     }
 
+    const handleAnalyseBoxOffice = async () => {
+        if (!aiClient || !isMediaDetails(item) || !item.budget || !item.revenue) return;
+
+        const { canRequest } = canMakeRequest();
+        if (!canRequest) {
+            setBoxOfficeError("You've exceeded your daily limit for AI features.");
+            setIsBoxOfficeModalOpen(true);
+            return;
+        }
+
+        setIsBoxOfficeLoading(true);
+        setBoxOfficeError(null);
+        setBoxOfficeAnalysis(null);
+        setIsBoxOfficeModalOpen(true);
+
+        try {
+            incrementRequestCount();
+            const result = await getAiBoxOfficeAnalysis(item.title, item.budget, item.revenue, aiClient);
+            setBoxOfficeAnalysis(result);
+        } catch (e: any) {
+            setBoxOfficeError(e.message || "An unexpected error occurred.");
+        } finally {
+            setIsBoxOfficeLoading(false);
+        }
+    };
+
     const itemIsLiked = isMediaDetails(item) && isLiked(item.id);
     const itemIsDisliked = isMediaDetails(item) && isDisliked(item.id);
 
@@ -362,6 +395,11 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                         <button onClick={handleChatClick} className="glass-button !p-3" aria-label="Chat with AI">
                             <ChatBubbleIcon className="w-5 h-5"/>
                         </button>
+                        {item.type === 'movie' && item.budget && item.revenue && (
+                            <button onClick={handleAnalyseBoxOffice} className="glass-button !p-3" aria-label="Analyze Box Office">
+                                <MoneyIcon className="w-5 h-5 text-green-400"/>
+                            </button>
+                        )}
                       </>
                     )}
                   </div>
@@ -373,6 +411,14 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
           <div className="p-6 md:p-8">
              {isMediaDetails(item) && (
                 <>
+                  <BoxOfficeAnalysisModal
+                      isOpen={isBoxOfficeModalOpen}
+                      onClose={() => setIsBoxOfficeModalOpen(false)}
+                      media={item}
+                      analysis={boxOfficeAnalysis}
+                      isLoading={isBoxOfficeLoading}
+                      error={boxOfficeError}
+                  />
                   <p className="text-gray-300 leading-relaxed mb-8">{item.overview}</p>
 
                   <div className="flex flex-col md:flex-row gap-8">
