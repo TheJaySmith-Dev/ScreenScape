@@ -274,15 +274,6 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
               }
               additionalDetails.seasons = details.seasons;
           }
-
-      if (type === 'movie') {
-        if (details.budget > 0) {
-            additionalDetails.budget = details.budget;
-        }
-        if (details.revenue > 0) {
-            additionalDetails.revenue = details.revenue;
-        }
-      }
   
           const finalDetails = {
               ...baseDetails,
