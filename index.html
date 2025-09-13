@@ -38,7 +38,6 @@
             -webkit-backdrop-filter: blur(20px) saturate(1.6);
             background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
             border: 1px solid transparent;
-            border-image: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1)) 1;
             /* Multi-layered beveled edge effect for thickness */
             box-shadow:
                 /* Outer shadow for floating effect */
@@ -70,6 +69,18 @@
         }
         .glass-panel:hover::before {
             opacity: 0.5;
+        }
+
+        .glass-panel::after {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            width: calc(100% + 2px);
+            height: calc(100% + 2px);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1));
+            border-radius: inherit; /* Inherit border-radius from parent */
+            z-index: -1;
         }
         
         /* ACCESSIBILITY - ALL CLEAR MODE (v4 - Crystal Clear) */
