@@ -13,6 +13,7 @@ import { getFunFactsForMedia } from '../services/aiService.ts';
 import { RateLimitMessage } from './RateLimitMessage.tsx';
 import { useSettings } from '../hooks/useSettings.ts';
 import { fetchSeasonDetails } from '../services/mediaService.ts';
+import { getKinoCheckTrailer } from '../services/kinocheckService.ts';
 import { useCountdown } from '../hooks/useCountdown.ts';
 import { StreamingAvailability } from './StreamingAvailability.tsx';
 
@@ -196,7 +197,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
     const [omdbDetails, setOmdbDetails] = useState<OmdbDetails | null>(null);
     const [isOmdbLoading, setIsOmdbLoading] = useState(false);
     const [isDetailsVisible, setIsDetailsVisible] = useState(false);
-    const { aiClient, canMakeRequest, incrementRequestCount } = useSettings();
+    const { aiClient, canMakeRequest, incrementRequestCount, kinocheckApiKey } = useSettings();
 
     // State for AI-generated Fun Facts
     const [funFacts, setFunFacts] = useState<FunFact[] | null>(null);
@@ -240,8 +241,23 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         }
     }, [item.id, item]);
 
-    const handleWatchTrailer = () => {
-        if (isMediaDetails(item) && item.trailerUrl) {
+    const handleWatchTrailer = async () => {
+        if (isMediaDetails(item) && kinocheckApiKey) {
+            const trailerUrl = await getKinoCheckTrailer(item.id, kinocheckApiKey);
+            if (trailerUrl) {
+                const videoId = trailerUrl.split('embed/')[1];
+                setTrailerVideoId(videoId);
+            } else {
+                // Fallback to TMDB trailer if KinoCheck fails
+                if (item.trailerUrl) {
+                    const videoId = item.trailerUrl.split('embed/')[1];
+                    setTrailerVideoId(videoId);
+                } else {
+                    alert("No trailer found for this title.");
+                }
+            }
+        } else if (isMediaDetails(item) && item.trailerUrl) {
+            // Fallback for when kinocheckApiKey is not available
             const videoId = item.trailerUrl.split('embed/')[1];
             setTrailerVideoId(videoId);
         }
@@ -341,7 +357,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                   )}
 
                   <div className="flex flex-wrap items-center gap-3">
-                    {isMediaDetails(item) && item.trailerUrl && (
+                    {isMediaDetails(item) && (
                       <button onClick={handleWatchTrailer} className="glass-button primary text-sm">
                         <PlayIcon className="w-5 h-5" />
                         <span>Trailer</span>

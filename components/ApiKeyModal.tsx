@@ -9,19 +9,21 @@ interface ApiKeyModalProps {
 export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onSave, onClose }) => {
     const [tmdbKey, setTmdbKey] = useState('');
     const [geminiKey, setGeminiKey] = useState('');
+    const [kinocheckKey, setKinocheckKey] = useState('');
     const [error, setError] = useState('');
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (tmdbKey.trim().length < 20 || geminiKey.trim().length < 20) { 
-            setError('Please enter valid API keys for both TMDb and Gemini.');
+        if (tmdbKey.trim().length < 20 || geminiKey.trim().length < 20 || kinocheckKey.trim().length < 20) {
+            setError('Please enter valid API keys for TMDb, Gemini, and KinoCheck.');
             return;
         }
         setError('');
         onSave({ 
             tmdbKey: tmdbKey.trim(),
             geminiKey: geminiKey.trim(),
+            kinocheckKey: kinocheckKey.trim(),
         });
     };
 
@@ -63,6 +65,18 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onSave, onClose }) => 
                         </div>
                          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-400 hover:underline -mt-2 text-left">
                             Get a Gemini API key from Google AI Studio.
+                        </a>
+
+                        <input
+                            type="password"
+                            value={kinocheckKey}
+                            onChange={(e) => setKinocheckKey(e.target.value)}
+                            placeholder="Enter your KinoCheck API Key"
+                            className="w-full px-4 py-3 text-white bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/80 focus:outline-none transition-colors placeholder-gray-400"
+                            aria-label="KinoCheck API Key"
+                        />
+                        <a href="https://api.kinocheck.com/register" target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-400 hover:underline -mt-2 text-left">
+                            Get a KinoCheck API key.
                         </a>
 
                         {error && <p className="text-red-400 text-sm mt-2">{error}</p>}

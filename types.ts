@@ -319,6 +319,7 @@ export interface RateLimitState {
 export interface SettingsContextType {
   tmdbApiKey: string | null;
   geminiApiKey: string | null;
+  kinocheckApiKey: string | null;
   aiClient: GoogleGenAI | null;
   rateLimit: RateLimitState;
   isInitialized: boolean;
@@ -326,7 +327,7 @@ export interface SettingsContextType {
   toggleAllClearMode: () => void;
   canMakeRequest: () => { canRequest: boolean; resetTime: number | null };
   incrementRequestCount: () => void;
-  saveApiKeys: (keys: { tmdbKey: string; geminiKey: string }) => void;
+  saveApiKeys: (keys: { tmdbKey: string; geminiKey: string; kinocheckKey: string }) => void;
   clearAllSettings: () => void;
 }
 
