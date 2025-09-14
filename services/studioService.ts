@@ -87,4 +87,11 @@ export const popularStudios: Studio[] = [
     hoverGifUrl: 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExNDAxeDR6eGRteXQwYTdvdWw1ZjFubjhvMWJuaGZsdzBoaGN6azVkdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/PZfAdZzYByppxJ4uMi/giphy.gif',
     companyIds: [8411, 60, 21, 7576, 2736], // Includes MGM, United Artists, MGM TV, Eon, Danjaq for Bond
   },
+  {
+    id: 1632,
+    name: 'Lionsgate',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/6f/Lions-Gate-Logo.svg',
+    bgColor: '#000000',
+    forceWhiteLogo: true,
+  },
 ];
