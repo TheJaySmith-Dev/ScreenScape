@@ -344,6 +344,28 @@ export const getNowPlayingMovies = (): Promise<MediaDetails[]> => fetchList('/mo
 export const getTopRatedMovies = (): Promise<MediaDetails[]> => fetchList('/movie/top_rated', 'movie');
 export const getTopRatedTv = (): Promise<MediaDetails[]> => fetchList('/tv/top_rated', 'tv');
 
+export const getMoviesReleasedOn = (month: number, day: number): Promise<MediaDetails[]> => {
+    // TMDb API's /discover endpoint doesn't directly support filtering by month/day across all years.
+    // As a workaround, we can fetch movies from the last few decades on this day.
+    // This is not exhaustive but provides a good sample.
+    const currentYear = new Date().getFullYear();
+    const years = [currentYear, currentYear - 10, currentYear - 20, currentYear - 30, currentYear - 40];
+
+    const promises = years.map(year => {
+        const date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        return fetchList(`/discover/movie?primary_release_date.gte=${date}&primary_release_date.lte=${date}`, 'movie');
+    });
+
+    return Promise.all(promises).then(results => results.flat());
+};
+
+export const getPeopleBornOn = (month: number, day: number): Promise<any[]> => {
+    // TMDb API doesn't support searching for people by birthday.
+    // This is a placeholder for a potential future implementation.
+    console.log(`Fetching people born on ${month}/${day} - not yet implemented.`);
+    return Promise.resolve([]);
+};
+
 export const getComingSoonMedia = async (): Promise<MediaDetails[]> => {
     const upcomingMovies = await fetchList('/movie/upcoming', 'movie');
     const onTheAirTv = await fetchList('/tv/on_the_air', 'tv');

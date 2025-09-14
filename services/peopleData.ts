@@ -1,0 +1,23 @@
+// Note: TMDb IDs are placeholders and would need to be replaced with real IDs.
+export const popularActors = [
+    { id: 1, name: "Tom Hanks", birthday: "1956-07-09" },
+    { id: 2, name: "Zendaya", birthday: "1996-09-01" },
+    { id: 3, name: "Timothée Chalamet", birthday: "1995-12-27" },
+    { id: 4, name: "Florence Pugh", birthday: "1996-01-03" },
+    { id: 5, name: "Dwayne Johnson", birthday: "1972-05-02" },
+    { id: 6, name: "Scarlett Johansson", birthday: "1984-11-22" },
+    { id: 7, name: "Leonardo DiCaprio", birthday: "1974-11-11" },
+    { id: 8, name: "Margot Robbie", birthday: "1990-07-02" },
+    { id: 9, name: "Robert Downey Jr.", birthday: "1965-04-04" },
+    { id: 10, name: "Chris Evans", birthday: "1981-06-13" },
+    { id: 11, name: "Chris Hemsworth", birthday: "1983-08-11" },
+    { id: 12, name: "Tom Holland", birthday: "1996-06-01" },
+    { id: 13, name: "Ryan Reynolds", birthday: "1976-10-23" },
+    { id: 14, name: "Jennifer Lawrence", birthday: "1990-08-15" },
+    { id: 15, name: "Emma Stone", birthday: "1988-11-06" },
+    { id: 16, name: "Brad Pitt", birthday: "1963-12-18" },
+    { id: 17, name: "Angelina Jolie", birthday: "1975-06-04" },
+    { id: 18, name: "Johnny Depp", birthday: "1963-06-09" },
+    { id: 19, name: "Will Smith", birthday: "1968-09-25" },
+    { id: 20, name: "Meryl Streep", birthday: "1949-06-22" },
+];
