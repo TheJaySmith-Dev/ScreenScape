@@ -491,7 +491,7 @@ const App: React.FC = () => {
                             <div className="space-y-12 md:space-y-16 mt-8">
                                 <MediaRow title="Trending This Week" items={trending} onSelect={handleSelectMedia} />
                                 {releasedTodayContent.length > 0 && <MediaRow title="Released Today" items={releasedTodayContent} onSelect={handleSelectMedia} animationDelay="100ms" />}
-                                {bornTodayContent.length > 0 && <PersonGrid people={bornTodayContent} onSelect={() => {}} />}
+                                {bornTodayContent.length > 0 && <PersonGrid people={bornTodayContent} onSelect={handleSelectActor} />}
                                 <MediaRow title="Now Playing in Theaters" items={nowPlaying} onSelect={handleSelectMedia} animationDelay="100ms" />
                                 <MediaRow title="Popular Movies" items={popularMovies} onSelect={handleSelectMedia} animationDelay="200ms" />
                                 <MediaRow title="Popular TV Shows" items={popularTv} onSelect={handleSelectMedia} animationDelay="300ms" />
