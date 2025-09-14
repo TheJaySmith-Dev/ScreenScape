@@ -9,7 +9,6 @@ import { LoadingSpinner } from './components/LoadingSpinner.tsx';
 import { StudioGrid } from './components/StudioGrid.tsx';
 import { BrandGrid } from './components/BrandGrid.tsx';
 import { NetworkGrid } from './components/NetworkGrid.tsx';
-import { PersonGrid } from './components/PersonGrid.tsx';
 import { StreamingGrid } from './components/StreamingGrid.tsx';
 import { BrandDetail } from './components/BrandDetail.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
@@ -29,9 +28,8 @@ import { popularStudios } from './services/studioService.ts';
 import { brands } from './services/brandService.ts';
 import { supportedProviders } from './services/streamingService.ts';
 import { popularNetworks } from './services/networkService.ts';
-import { people } from './services/peopleService.ts';
 
-import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Person, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy } from './types.ts';
+import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy } from './types.ts';
 import { getViewingGuidesForBrand, getAiDescriptionForBrand } from './services/aiService.ts';
 import { useSettings } from './hooks/useSettings.ts';
 
@@ -53,13 +51,11 @@ const App: React.FC = () => {
     const [studioContent, setStudioContent] = useState<MediaDetails[]>([]);
     const [brandContent, setBrandContent] = useState<MediaDetails[]>([]);
     const [networkContent, setNetworkContent] = useState<MediaDetails[]>([]);
-    const [personContent, setPersonContent] = useState<MediaDetails[]>([]);
     const [streamingContent, setStreamingContent] = useState<MediaDetails[]>([]);
     const [moviesContent, setMoviesContent] = useState<MediaDetails[]>([]);
     const [tvContent, setTvContent] = useState<MediaDetails[]>([]);
     const [comingSoonContent, setComingSoonContent] = useState<MediaDetails[]>([]);
     const [releasedTodayContent, setReleasedTodayContent] = useState<MediaDetails[]>([]);
-    const [bornTodayContent, setBornTodayContent] = useState<Person[]>([]);
 
     // Modal/Detail states
     const [selectedItem, setSelectedItem] = useState<MediaDetails | CollectionDetails | null>(null);
@@ -167,7 +163,7 @@ const App: React.FC = () => {
             const month = today.getMonth() + 1;
             const day = today.getDate();
 
-            const [trending, popularMovies, popularTv, nowPlaying, comingSoon, topMovies, topTv, releasedToday, bornToday] = await Promise.all([
+            const [trending, popularMovies, popularTv, nowPlaying, comingSoon, topMovies, topTv, releasedToday] = await Promise.all([
                 mediaService.getTrending(),
                 mediaService.getPopularMovies(),
                 mediaService.getPopularTv(),
@@ -176,7 +172,6 @@ const App: React.FC = () => {
                 mediaService.getTopRatedMovies(),
                 mediaService.getTopRatedTv(),
                 mediaService.getMoviesReleasedOn(month, day),
-                mediaService.getTrendingActors(),
             ]);
             setTrending(trending);
             setPopularMovies(popularMovies);
@@ -186,13 +181,6 @@ const App: React.FC = () => {
             setMoviesContent(topMovies);
             setTvContent(topTv);
             setReleasedTodayContent(releasedToday);
-
-            const bornTodayActors = bornToday.filter(actor => {
-                if (!actor.birthday) return false;
-                const actorBirthday = new Date(actor.birthday);
-                return actorBirthday.getMonth() + 1 === month && actorBirthday.getDate() === day;
-            });
-            setBornTodayContent(bornTodayActors);
         } catch (error) {
             console.error("Failed to fetch initial data:", error);
         } finally {
@@ -445,19 +433,6 @@ const App: React.FC = () => {
         }
     };
 
-     const handleSelectPerson = async (person: Person) => {
-        setIsLoading(true);
-        try {
-            const results = await mediaService.getMediaByPerson(person.tmdbId, person.role);
-            setPersonContent(results);
-            window.location.hash = `/person/${person.id}`;
-        } catch(e) {
-            console.error(`Failed to get content for person ${person.name}`, e);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     const handleOpenChatModal = (media: MediaDetails) => {
         setChatMediaItem(media);
         setIsChatModalOpen(true);
@@ -491,7 +466,6 @@ const App: React.FC = () => {
                             <div className="space-y-12 md:space-y-16 mt-8">
                                 <MediaRow title="Trending This Week" items={trending} onSelect={handleSelectMedia} />
                                 {releasedTodayContent.length > 0 && <MediaRow title="Released Today" items={releasedTodayContent} onSelect={handleSelectMedia} animationDelay="100ms" />}
-                                {bornTodayContent.length > 0 && <PersonGrid people={bornTodayContent} onSelect={handleSelectActor} />}
                                 <MediaRow title="Now Playing in Theaters" items={nowPlaying} onSelect={handleSelectMedia} animationDelay="100ms" />
                                 <MediaRow title="Popular Movies" items={popularMovies} onSelect={handleSelectMedia} animationDelay="200ms" />
                                 <MediaRow title="Popular TV Shows" items={popularTv} onSelect={handleSelectMedia} animationDelay="300ms" />
@@ -514,8 +488,6 @@ const App: React.FC = () => {
                     }
                 case 'networks':
                     return <NetworkGrid networks={popularNetworks} onSelect={handleSelectNetwork} />;
-                case 'people':
-                    return <PersonGrid people={people} onSelect={handleSelectPerson} />;
                 case 'search':
                     return <RecommendationGrid recommendations={searchResults} onSelect={handleSelectMedia} />;
                 case 'brand':
@@ -527,8 +499,6 @@ const App: React.FC = () => {
                     return <RecommendationGrid recommendations={studioContent} onSelect={handleSelectMedia} />;
                 case 'network':
                     return <RecommendationGrid recommendations={networkContent} onSelect={handleSelectMedia} />;
-                case 'person':
-                    return <RecommendationGrid recommendations={personContent} onSelect={handleSelectMedia} />;
                 default:
                      window.location.hash = '/home';
                      return null;

@@ -136,21 +136,11 @@ export interface Brand {
   borderColor?: string;
 }
 
-export interface Person {
-  id: string;
-  name: string;
-  posterUrl: string;
-  tmdbId: number;
-  role: 'actor' | 'director';
-}
-
 export interface Actor {
   id: number;
   name: string;
   biography: string;
   profilePath: string;
-  birthday: string | null;
-  placeOfBirth: string | null;
 }
 
 export interface ActorDetails extends Actor {
