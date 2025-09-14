@@ -28,7 +28,7 @@
             background-position: center;
             background-attachment: fixed;
             min-height: 100vh;
-            --liquid-blur: 16px;
+            --liquid-blur: 12px;
             --liquid-saturate: 1.8;
             --liquid-bg-start: rgba(255, 255, 255, 0.05);
             --liquid-bg-end: rgba(255, 255, 255, 0);
@@ -38,7 +38,7 @@
             --liquid-glow: rgba(100, 120, 255, 0.1);
             --liquid-light-x: 50%;
             --liquid-light-y: 50%;
-            --liquid-light-color: rgba(100, 120, 255, 0.25);
+            --liquid-light-color: rgba(100, 120, 255, 0.35);
             --liquid-transform: scale(1);
             --liquid-border-color: transparent;
         }
@@ -54,7 +54,7 @@
                 radial-gradient(
                     circle at var(--liquid-light-x) var(--liquid-light-y),
                     var(--liquid-light-color) 0%,
-                    transparent 40%
+                    transparent 50%
                 ),
                 /* Base glass texture */
                 linear-gradient(135deg, var(--liquid-bg-start), var(--liquid-bg-end));
@@ -87,7 +87,7 @@
                     0 20px 50px var(--liquid-shadow-outer),
                     inset 1px 1px 1px var(--liquid-shadow-inner-light),
                     inset -3px -3px 2px var(--liquid-shadow-inner-dark),
-                    inset 0 0 30px var(--liquid-glow);
+                    inset 0 0 40px var(--liquid-glow);
                 --liquid-border-color: rgba(255, 255, 255, 0.05);
             }
         }
