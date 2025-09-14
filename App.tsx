@@ -58,6 +58,8 @@ const App: React.FC = () => {
     const [moviesContent, setMoviesContent] = useState<MediaDetails[]>([]);
     const [tvContent, setTvContent] = useState<MediaDetails[]>([]);
     const [comingSoonContent, setComingSoonContent] = useState<MediaDetails[]>([]);
+    const [releasedTodayContent, setReleasedTodayContent] = useState<MediaDetails[]>([]);
+    const [bornTodayContent, setBornTodayContent] = useState<Person[]>([]);
 
     // Modal/Detail states
     const [selectedItem, setSelectedItem] = useState<MediaDetails | CollectionDetails | null>(null);
@@ -161,7 +163,11 @@ const App: React.FC = () => {
     const fetchInitialData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const [trending, popularMovies, popularTv, nowPlaying, comingSoon, topMovies, topTv] = await Promise.all([
+            const today = new Date();
+            const month = today.getMonth() + 1;
+            const day = today.getDate();
+
+            const [trending, popularMovies, popularTv, nowPlaying, comingSoon, topMovies, topTv, releasedToday, bornToday] = await Promise.all([
                 mediaService.getTrending(),
                 mediaService.getPopularMovies(),
                 mediaService.getPopularTv(),
@@ -169,6 +175,8 @@ const App: React.FC = () => {
                 mediaService.getComingSoonMedia(),
                 mediaService.getTopRatedMovies(),
                 mediaService.getTopRatedTv(),
+                mediaService.getMoviesReleasedOn(month, day),
+                mediaService.getTrendingActors(),
             ]);
             setTrending(trending);
             setPopularMovies(popularMovies);
@@ -177,6 +185,14 @@ const App: React.FC = () => {
             setComingSoonContent(comingSoon);
             setMoviesContent(topMovies);
             setTvContent(topTv);
+            setReleasedTodayContent(releasedToday);
+
+            const bornTodayActors = bornToday.filter(actor => {
+                if (!actor.birthday) return false;
+                const actorBirthday = new Date(actor.birthday);
+                return actorBirthday.getMonth() + 1 === month && actorBirthday.getDate() === day;
+            });
+            setBornTodayContent(bornTodayActors);
         } catch (error) {
             console.error("Failed to fetch initial data:", error);
         } finally {
@@ -474,6 +490,8 @@ const App: React.FC = () => {
                             {trending[0] && <HeroSection item={trending[0]} onPlay={() => {}} onMoreInfo={handleSelectMedia} />}
                             <div className="space-y-12 md:space-y-16 mt-8">
                                 <MediaRow title="Trending This Week" items={trending} onSelect={handleSelectMedia} />
+                                {releasedTodayContent.length > 0 && <MediaRow title="Released Today" items={releasedTodayContent} onSelect={handleSelectMedia} animationDelay="100ms" />}
+                                {bornTodayContent.length > 0 && <PersonGrid people={bornTodayContent} onSelect={() => {}} />}
                                 <MediaRow title="Now Playing in Theaters" items={nowPlaying} onSelect={handleSelectMedia} animationDelay="100ms" />
                                 <MediaRow title="Popular Movies" items={popularMovies} onSelect={handleSelectMedia} animationDelay="200ms" />
                                 <MediaRow title="Popular TV Shows" items={popularTv} onSelect={handleSelectMedia} animationDelay="300ms" />
