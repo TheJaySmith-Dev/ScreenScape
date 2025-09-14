@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import type { ActorDetails, MediaDetails } from '../types.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
-import { CakeIcon, LocationMarkerIcon, CloseIcon } from './icons.tsx';
+import { CloseIcon } from './icons.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 
 interface ActorPageProps {
@@ -12,35 +12,12 @@ interface ActorPageProps {
   isLoading: boolean;
 }
 
-const ActorInfo: React.FC<{ icon: React.ReactNode; label: string; value: string | null }> = ({ icon, label, value }) => {
-  if (!value) return null;
-  return (
-    <div className="flex items-start gap-3">
-      <div className="text-gray-400 mt-1">{icon}</div>
-      <div>
-        <p className="font-semibold text-gray-200">{value}</p>
-        <p className="text-xs text-gray-400">{label}</p>
-      </div>
-    </div>
-  );
-};
-
 export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMedia, isLoading }) => {
   const [showFullBio, setShowFullBio] = useState(false);
   
   const bioWords = actor.biography ? actor.biography.split(' ') : [];
   const canTruncate = bioWords.length > 80;
   const truncatedBio = canTruncate ? bioWords.slice(0, 80).join(' ') + '...' : actor.biography;
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return null;
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      timeZone: 'UTC'
-    });
-  };
   
   const handleSelectFilm = (media: MediaDetails) => {
     onSelectMedia(media);
@@ -68,10 +45,6 @@ export const ActorPage: React.FC<ActorPageProps> = ({ actor, onBack, onSelectMed
             </div>
             <div className="w-full">
               <h1 className="text-4xl sm:text-5xl font-bold mb-6 text-white text-center md:text-left">{actor.name}</h1>
-              <div className="flex flex-wrap justify-center md:justify-start gap-x-8 gap-y-4 mb-6">
-                <ActorInfo icon={<CakeIcon className="w-5 h-5" />} label="Birthday" value={formatDate(actor.birthday)} />
-                <ActorInfo icon={<LocationMarkerIcon className="w-5 h-5" />} label="Place of Birth" value={actor.placeOfBirth} />
-              </div>
               
               <h2 className="text-xl font-semibold mb-2 text-white">Biography</h2>
               <p className="text-gray-300 leading-relaxed text-sm">
