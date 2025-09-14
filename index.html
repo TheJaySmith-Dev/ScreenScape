@@ -308,15 +308,15 @@
 
         .player-controls {
             position: absolute;
-            bottom: 16px;
+            bottom: 12px;
             left: 50%;
             transform: translateX(-50%);
             width: 95%;
             max-width: 800px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 8px;
+            gap: 8px;
+            padding: 6px;
             /* Inherit from glass-panel */
             backdrop-filter: blur(var(--liquid-blur)) saturate(var(--liquid-saturate));
             -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(var(--liquid-saturate));
@@ -340,8 +340,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             flex-shrink: 0;
             background-image: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -361,8 +361,8 @@
 
         .player-progress-container {
             flex: 1;
-            height: 4px;
-            border-radius: 2px;
+            height: 3px;
+            border-radius: 1.5px;
             background: rgba(255, 255, 255, 0.2);
             cursor: pointer;
             position: relative;
@@ -374,6 +374,18 @@
             width: 0%;
             background: linear-gradient(90deg, #00c6ff, #0072ff);
             border-radius: 3px;
+        }
+
+        @media (max-width: 640px) {
+            .player-controls {
+                padding: 4px;
+                gap: 6px;
+                bottom: 10px;
+            }
+            .player-progress-container {
+                height: 2px;
+                border-radius: 1px;
+            }
         }
 
         /* AI Search Modal */
