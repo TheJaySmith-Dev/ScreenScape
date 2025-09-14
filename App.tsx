@@ -163,7 +163,7 @@ const App: React.FC = () => {
             const month = today.getMonth() + 1;
             const day = today.getDate();
 
-            const [trending, popularMovies, popularTv, nowPlaying, comingSoon, topMovies, topTv, releasedToday] = await Promise.all([
+            const results = await Promise.allSettled([
                 mediaService.getTrending(),
                 mediaService.getPopularMovies(),
                 mediaService.getPopularTv(),
@@ -173,14 +173,26 @@ const App: React.FC = () => {
                 mediaService.getTopRatedTv(),
                 mediaService.getMoviesReleasedOn(month, day),
             ]);
-            setTrending(trending);
-            setPopularMovies(popularMovies);
-            setPopularTv(popularTv);
-            setNowPlaying(nowPlaying);
-            setComingSoonContent(comingSoon);
-            setMoviesContent(topMovies);
-            setTvContent(topTv);
-            setReleasedTodayContent(releasedToday);
+
+            const [
+                trending,
+                popularMovies,
+                popularTv,
+                nowPlaying,
+                comingSoon,
+                topMovies,
+                topTv,
+                releasedToday
+            ] = results.map(result => (result.status === 'fulfilled' ? result.value : []));
+
+            setTrending(trending as MediaDetails[]);
+            setPopularMovies(popularMovies as MediaDetails[]);
+            setPopularTv(popularTv as MediaDetails[]);
+            setNowPlaying(nowPlaying as MediaDetails[]);
+            setComingSoonContent(comingSoon as MediaDetails[]);
+            setMoviesContent(topMovies as MediaDetails[]);
+            setTvContent(topTv as MediaDetails[]);
+            setReleasedTodayContent(releasedToday as MediaDetails[]);
         } catch (error) {
             console.error("Failed to fetch initial data:", error);
         } finally {
