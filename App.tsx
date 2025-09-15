@@ -98,55 +98,55 @@ const App: React.FC = () => {
         };
     }, []);
 
-    // LIQUID GLASS - Interactive light effect
+    // PERF_FIX: Optimize "Liquid Glass" effect to reduce jank on hover/scroll.
+    // The previous implementation used a global 'mousemove' listener, causing
+    // style updates on all '.glass-panel' elements simultaneously, which is
+    // highly inefficient.
+    //
+    // This revised effect uses event delegation on the body for 'mouseover' and
+    // 'mouseout'. It attaches a 'mousemove' listener *only* to the currently
+    // hovered panel and removes it on 'mouseout'. This dramatically reduces
+    // the number of event listeners and style recalculations, fixing the lag.
     useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            const panels = document.querySelectorAll<HTMLElement>('.glass-panel');
-            for (const panel of panels) {
-                const rect = panel.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                panel.style.setProperty('--liquid-light-x', `${x}px`);
-                panel.style.setProperty('--liquid-light-y', `${y}px`);
-            }
+        const handlePanelMouseMove = (e: MouseEvent) => {
+            const panel = e.currentTarget as HTMLElement;
+            const rect = panel.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            panel.style.setProperty('--liquid-light-x', `${x}px`);
+            panel.style.setProperty('--liquid-light-y', `${y}px`);
         };
 
-        window.addEventListener('mousemove', handleMouseMove);
-
-        return () => {
-            window.removeEventListener('mousemove', handleMouseMove);
-        };
-    }, []);
-
-    // LIQUID GLASS - Hover effect for panels
-    useEffect(() => {
-        const handleMouseOver = (e: MouseEvent) => {
+        const handlePanelMouseOver = (e: MouseEvent) => {
             const target = e.target as HTMLElement;
-            const panel = target.closest('.glass-panel') as HTMLElement;
+            const panel = target.closest<HTMLElement>('.glass-panel');
             if (panel) {
+                panel.addEventListener('mousemove', handlePanelMouseMove);
                 panel.style.setProperty('--liquid-light-color', 'rgba(120, 140, 255, 0.4)');
                 panel.style.setProperty('--liquid-saturate', '2.0');
                 panel.style.setProperty('--liquid-transform', 'scale(1.03) translateY(-5px)');
             }
         };
 
-        const handleMouseOut = (e: MouseEvent) => {
+        const handlePanelMouseOut = (e: MouseEvent) => {
             const target = e.target as HTMLElement;
-            const panel = target.closest('.glass-panel') as HTMLElement;
+            const panel = target.closest<HTMLElement>('.glass-panel');
             if (panel) {
-                // Revert to the default values from the stylesheet
+                panel.removeEventListener('mousemove', handlePanelMouseMove);
                 panel.style.removeProperty('--liquid-light-color');
                 panel.style.removeProperty('--liquid-saturate');
                 panel.style.removeProperty('--liquid-transform');
+                panel.style.removeProperty('--liquid-light-x');
+                panel.style.removeProperty('--liquid-light-y');
             }
         };
 
-        document.body.addEventListener('mouseover', handleMouseOver);
-        document.body.addEventListener('mouseout', handleMouseOut);
+        document.body.addEventListener('mouseover', handlePanelMouseOver);
+        document.body.addEventListener('mouseout', handlePanelMouseOut);
 
         return () => {
-            document.body.removeEventListener('mouseover', handleMouseOver);
-            document.body.removeEventListener('mouseout', handleMouseOut);
+            document.body.removeEventListener('mouseover', handlePanelMouseOver);
+            document.body.removeEventListener('mouseout', handlePanelMouseOut);
         };
     }, []);
 
