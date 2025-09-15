@@ -248,6 +248,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                 const videoId = trailerUrl.split('embed/')[1];
                 setTrailerVideoId(videoId);
             } else {
+                alert("KinoCheck trailer not found. Falling back to TMDb.");
                 // Fallback to TMDB trailer if KinoCheck fails
                 if (item.trailerUrl) {
                     const videoId = item.trailerUrl.split('embed/')[1];
@@ -256,10 +257,13 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                     alert("No trailer found for this title.");
                 }
             }
-        } else if (isMediaDetails(item) && item.trailerUrl) {
+        } else if (isMediaDetails(item)) {
+            alert("KinoCheck API key not found. Using TMDb trailer.");
             // Fallback for when kinocheckApiKey is not available
-            const videoId = item.trailerUrl.split('embed/')[1];
-            setTrailerVideoId(videoId);
+            if (item.trailerUrl) {
+                const videoId = item.trailerUrl.split('embed/')[1];
+                setTrailerVideoId(videoId);
+            }
         }
     };
 

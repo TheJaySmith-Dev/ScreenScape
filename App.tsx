@@ -87,6 +87,8 @@ const App: React.FC = () => {
         const handleHashChange = () => setRoute(getHashRoute());
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20);
+            const scrollY = window.scrollY;
+            document.body.style.backgroundPositionY = `${scrollY * 0.5}px`;
         };
         window.addEventListener('hashchange', handleHashChange);
         window.addEventListener('scroll', handleScroll, { passive: true });
@@ -122,9 +124,9 @@ const App: React.FC = () => {
             const target = e.target as HTMLElement;
             const panel = target.closest('.glass-panel') as HTMLElement;
             if (panel) {
-                panel.style.setProperty('--liquid-light-color', 'rgba(120, 140, 255, 0.25)');
-                panel.style.setProperty('--liquid-saturate', '1.8');
-                panel.style.setProperty('--liquid-transform', 'scale(1.02)');
+                panel.style.setProperty('--liquid-light-color', 'rgba(120, 140, 255, 0.4)');
+                panel.style.setProperty('--liquid-saturate', '2.0');
+                panel.style.setProperty('--liquid-transform', 'scale(1.03) translateY(-5px)');
             }
         };
 
