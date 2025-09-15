@@ -14,6 +14,7 @@ import { BrandDetail } from './components/BrandDetail.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
 import { ActorPage } from './components/ActorPage.tsx';
 import { ComingSoonPage } from './components/ComingSoonPage.tsx';
+import { DiscoverPage } from './components/DiscoverPage.tsx';
 import { ApiKeyModal } from './components/ApiKeyModal.tsx';
 import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { SearchModal } from './components/SearchModal.tsx';
@@ -490,6 +491,7 @@ const App: React.FC = () => {
                 case 'myscape': return <MyScapePage onSelectMedia={handleSelectMedia} />;
                 case 'movies': return <RecommendationGrid recommendations={moviesContent} onSelect={handleSelectMedia} />;
                 case 'tv': return <RecommendationGrid recommendations={tvContent} onSelect={handleSelectMedia} />;
+                case 'discover': return <DiscoverPage />;
                 case 'collections': return <ComingSoonPage media={comingSoonContent} onSelectMedia={handleSelectMedia} />;
                 case 'studios': return <StudioGrid studios={popularStudios} onSelect={handleSelectStudio} />;
                 case 'brands':
