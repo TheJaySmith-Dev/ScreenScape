@@ -42,27 +42,6 @@ export const fetchApi = async <T,>(endpoint: string): Promise<T> => {
     return response.json();
 };
 
-export const getGenres = async (type: 'movie' | 'tv'): Promise<{ id: number, name: string }[]> => {
-    try {
-        const data = await fetchApi<{ genres: { id: number, name: string }[] }>(`/genre/${type}/list`);
-        return data.genres;
-    } catch (error) {
-        console.error(`Failed to fetch ${type} genres:`, error);
-        throw error;
-    }
-};
-
-export const discoverMedia = (
-    type: 'movie' | 'tv',
-    genreIds: number[],
-    year: string
-): Promise<MediaDetails[]> => {
-    const genreQuery = genreIds.length > 0 ? `&with_genres=${genreIds.join(',')}` : '';
-    const yearQuery = year ? `&primary_release_year=${year}` : '';
-    const endpoint = `/discover/${type}?sort_by=popularity.desc${genreQuery}${yearQuery}`;
-    return fetchList(endpoint, type);
-};
-
 export const findBestTrailer = (videos: any[]): any | null => {
     if (!videos || videos.length === 0) return null;
 
