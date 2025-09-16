@@ -9,7 +9,7 @@ interface Genre {
   name: string;
 }
 
-export const DiscoverPage: React.FC = () => {
+export const DiscoverPage: React.FC<{ onSelectMedia: (media: MediaDetails) => void; }> = ({ onSelectMedia }) => {
   const [mediaType, setMediaType] = useState<'movie' | 'tv'>('movie');
   const [genres, setGenres] = useState<Genre[]>([]);
   const [selectedGenres, setSelectedGenres] = useState<number[]>([]);
@@ -133,7 +133,7 @@ export const DiscoverPage: React.FC = () => {
           ) : error ? (
             <div className="text-center text-red-400">{error}</div>
           ) : results.length > 0 ? (
-            <RecommendationGrid recommendations={results} onSelect={() => {}} />
+            <RecommendationGrid recommendations={results} onSelect={onSelectMedia} />
           ) : (
             <div className="text-center text-gray-400 glass-panel p-12 rounded-2xl">
               <p>Use the filters to discover new titles.</p>

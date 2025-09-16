@@ -3,7 +3,7 @@ import { useSettings } from '../hooks/useSettings.ts';
 import { usePreferences } from '../hooks/usePreferences.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { ApiKeyModal } from './ApiKeyModal.tsx';
-import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon, DiscordIcon, GitHubIcon } from './icons.tsx';
+import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon, DiscordIcon } from './icons.tsx';
 import type { MediaDetails } from '../types.ts';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 
@@ -52,10 +52,6 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                         <a href="#/foryou" className="flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-semibold transition-all duration-300">
                             <ThumbsUpIcon className="w-6 h-6 text-green-400" />
                             <span>For You Recommendations</span>
-                        </a>
-                        <a href="https://github.com/TheJaySmith-Dev/ScreenScape" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-500/10 hover:bg-gray-500/20 border border-gray-500/20 rounded-xl text-white font-semibold transition-all duration-300">
-                            <GitHubIcon className="w-6 h-6 text-white" />
-                            <span>View on GitHub</span>
                         </a>
                         <a href="https://discord.gg/VqfzVh5kzT" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 rounded-xl text-white font-semibold transition-all duration-300">
                             <DiscordIcon className="w-6 h-6 text-indigo-400" />
