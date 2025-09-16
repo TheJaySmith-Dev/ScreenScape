@@ -14,6 +14,7 @@ import { BrandDetail } from './components/BrandDetail.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
 import { ActorPage } from './components/ActorPage.tsx';
 import { ComingSoonPage } from './components/ComingSoonPage.tsx';
+import { DiscoverPage } from './components/DiscoverPage.tsx';
 import { ApiKeyModal } from './components/ApiKeyModal.tsx';
 import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { SearchModal } from './components/SearchModal.tsx';
@@ -83,70 +84,79 @@ const App: React.FC = () => {
     const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaTypeFilter>('all');
     const [sortBy, setSortBy] = useState<SortBy>('trending');
 
+    const [heroTransform, setHeroTransform] = useState('');
+
     useEffect(() => {
         const handleHashChange = () => setRoute(getHashRoute());
         const handleScroll = () => {
-            setIsScrolled(window.scrollY > 20);
             const scrollY = window.scrollY;
-            document.body.style.backgroundPositionY = `${scrollY * 0.5}px`;
+            setIsScrolled(scrollY > 20);
+            document.body.style.backgroundPositionY = `${scrollY * 0.7}px`;
+
+            // Apply parallax to hero only on the home page for performance
+            if (route[0] === 'home' || route.length === 0) {
+                setHeroTransform(`translateY(${scrollY * 0.3}px)`);
+            }
         };
+
         window.addEventListener('hashchange', handleHashChange);
         window.addEventListener('scroll', handleScroll, { passive: true });
+
         return () => {
             window.removeEventListener('hashchange', handleHashChange);
             window.removeEventListener('scroll', handleScroll);
         };
-    }, []);
+    }, [route]);
 
-    // LIQUID GLASS - Interactive light effect
+    // PERF_FIX: Optimize "Liquid Glass" effect to reduce jank on hover/scroll.
+    // The previous implementation used a global 'mousemove' listener, causing
+    // style updates on all '.glass-panel' elements simultaneously, which is
+    // highly inefficient.
+    //
+    // This revised effect uses event delegation on the body for 'mouseover' and
+    // 'mouseout'. It attaches a 'mousemove' listener *only* to the currently
+    // hovered panel and removes it on 'mouseout'. This dramatically reduces
+    // the number of event listeners and style recalculations, fixing the lag.
     useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            const panels = document.querySelectorAll<HTMLElement>('.glass-panel');
-            for (const panel of panels) {
-                const rect = panel.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                panel.style.setProperty('--liquid-light-x', `${x}px`);
-                panel.style.setProperty('--liquid-light-y', `${y}px`);
-            }
+        const handlePanelMouseMove = (e: MouseEvent) => {
+            const panel = e.currentTarget as HTMLElement;
+            const rect = panel.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            panel.style.setProperty('--liquid-light-x', `${x}px`);
+            panel.style.setProperty('--liquid-light-y', `${y}px`);
         };
 
-        window.addEventListener('mousemove', handleMouseMove);
-
-        return () => {
-            window.removeEventListener('mousemove', handleMouseMove);
-        };
-    }, []);
-
-    // LIQUID GLASS - Hover effect for panels
-    useEffect(() => {
-        const handleMouseOver = (e: MouseEvent) => {
+        const handlePanelMouseOver = (e: MouseEvent) => {
             const target = e.target as HTMLElement;
-            const panel = target.closest('.glass-panel') as HTMLElement;
+            const panel = target.closest<HTMLElement>('.glass-panel');
             if (panel) {
+                panel.addEventListener('mousemove', handlePanelMouseMove);
                 panel.style.setProperty('--liquid-light-color', 'rgba(120, 140, 255, 0.4)');
                 panel.style.setProperty('--liquid-saturate', '2.0');
                 panel.style.setProperty('--liquid-transform', 'scale(1.03) translateY(-5px)');
             }
         };
 
-        const handleMouseOut = (e: MouseEvent) => {
+        const handlePanelMouseOut = (e: MouseEvent) => {
             const target = e.target as HTMLElement;
-            const panel = target.closest('.glass-panel') as HTMLElement;
+            const panel = target.closest<HTMLElement>('.glass-panel');
             if (panel) {
-                // Revert to the default values from the stylesheet
+                panel.removeEventListener('mousemove', handlePanelMouseMove);
                 panel.style.removeProperty('--liquid-light-color');
                 panel.style.removeProperty('--liquid-saturate');
                 panel.style.removeProperty('--liquid-transform');
+                panel.style.removeProperty('--liquid-light-x');
+                panel.style.removeProperty('--liquid-light-y');
             }
         };
 
-        document.body.addEventListener('mouseover', handleMouseOver);
-        document.body.addEventListener('mouseout', handleMouseOut);
+        document.body.addEventListener('mouseover', handlePanelMouseOver);
+        document.body.addEventListener('mouseout', handlePanelMouseOut);
 
         return () => {
-            document.body.removeEventListener('mouseover', handleMouseOver);
-            document.body.removeEventListener('mouseout', handleMouseOut);
+            document.body.removeEventListener('mouseover', handlePanelMouseOver);
+            document.body.removeEventListener('mouseout', handlePanelMouseOut);
         };
     }, []);
 
@@ -476,7 +486,7 @@ const App: React.FC = () => {
                 case 'home':
                     return (
                         <>
-                            {trending[0] && <HeroSection item={trending[0]} onPlay={() => {}} onMoreInfo={handleSelectMedia} />}
+                            {trending[0] && <HeroSection item={trending[0]} onPlay={() => {}} onMoreInfo={handleSelectMedia} style={{ transform: heroTransform }} />}
                             <div className="space-y-12 md:space-y-16 mt-8">
                                 <MediaRow title="Trending This Week" items={trending} onSelect={handleSelectMedia} />
                                 {releasedTodayContent.length > 0 && <MediaRow title="Released Today" items={releasedTodayContent} onSelect={handleSelectMedia} animationDelay="100ms" />}
@@ -490,6 +500,7 @@ const App: React.FC = () => {
                 case 'myscape': return <MyScapePage onSelectMedia={handleSelectMedia} />;
                 case 'movies': return <RecommendationGrid recommendations={moviesContent} onSelect={handleSelectMedia} />;
                 case 'tv': return <RecommendationGrid recommendations={tvContent} onSelect={handleSelectMedia} />;
+                case 'discover': return <DiscoverPage />;
                 case 'collections': return <ComingSoonPage media={comingSoonContent} onSelectMedia={handleSelectMedia} />;
                 case 'studios': return <StudioGrid studios={popularStudios} onSelect={handleSelectStudio} />;
                 case 'brands':
