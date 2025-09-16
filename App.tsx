@@ -84,20 +84,29 @@ const App: React.FC = () => {
     const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaTypeFilter>('all');
     const [sortBy, setSortBy] = useState<SortBy>('trending');
 
+    const [heroTransform, setHeroTransform] = useState('');
+
     useEffect(() => {
         const handleHashChange = () => setRoute(getHashRoute());
         const handleScroll = () => {
-            setIsScrolled(window.scrollY > 20);
             const scrollY = window.scrollY;
-            document.body.style.backgroundPositionY = `${scrollY * 0.5}px`;
+            setIsScrolled(scrollY > 20);
+            document.body.style.backgroundPositionY = `${scrollY * 0.7}px`;
+
+            // Apply parallax to hero only on the home page for performance
+            if (route[0] === 'home' || route.length === 0) {
+                setHeroTransform(`translateY(${scrollY * 0.3}px)`);
+            }
         };
+
         window.addEventListener('hashchange', handleHashChange);
         window.addEventListener('scroll', handleScroll, { passive: true });
+
         return () => {
             window.removeEventListener('hashchange', handleHashChange);
             window.removeEventListener('scroll', handleScroll);
         };
-    }, []);
+    }, [route]);
 
     // PERF_FIX: Optimize "Liquid Glass" effect to reduce jank on hover/scroll.
     // The previous implementation used a global 'mousemove' listener, causing
@@ -477,7 +486,7 @@ const App: React.FC = () => {
                 case 'home':
                     return (
                         <>
-                            {trending[0] && <HeroSection item={trending[0]} onPlay={() => {}} onMoreInfo={handleSelectMedia} />}
+                            {trending[0] && <HeroSection item={trending[0]} onPlay={() => {}} onMoreInfo={handleSelectMedia} style={{ transform: heroTransform }} />}
                             <div className="space-y-12 md:space-y-16 mt-8">
                                 <MediaRow title="Trending This Week" items={trending} onSelect={handleSelectMedia} />
                                 {releasedTodayContent.length > 0 && <MediaRow title="Released Today" items={releasedTodayContent} onSelect={handleSelectMedia} animationDelay="100ms" />}

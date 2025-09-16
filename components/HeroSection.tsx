@@ -7,15 +7,16 @@ interface HeroSectionProps {
   item: MediaDetails;
   onPlay: (item: MediaDetails) => void;
   onMoreInfo: (item: MediaDetails) => void;
+  style?: React.CSSProperties;
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ item, onPlay, onMoreInfo }) => {
+export const HeroSection: React.FC<HeroSectionProps> = ({ item, onPlay, onMoreInfo, style }) => {
   const truncatedOverview = item.overview.length > 200 
     ? item.overview.substring(0, 200).split(' ').slice(0, -1).join(' ') + '...' 
     : item.overview;
 
   return (
-    <section className="hero-section sm:-mb-20 md:-mb-28">
+    <section className="hero-section sm:-mb-20 md:-mb-28" style={style}>
       <img src={item.backdropUrl} alt="" className="hero-backdrop hero-backdrop-animated" />
       <div className="hero-gradient" />
       <div className="hero-content container mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28">
