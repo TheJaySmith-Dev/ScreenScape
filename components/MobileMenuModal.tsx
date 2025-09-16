@@ -41,7 +41,7 @@ export const BrowseMenuModal: React.FC<BrowseMenuModalProps> = ({ isOpen, onClos
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between px-4 pb-4">
-                    <h2 className="text-2xl font-bold text-white">Browse</h2>
+                    <h2 className="text-2xl font-bold text-white">More</h2>
                     <button onClick={onClose} className="p-2 glass-panel rounded-full" aria-label="Close menu">
                         <CloseIcon className="w-6 h-6" />
                     </button>
