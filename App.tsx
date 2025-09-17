@@ -21,6 +21,7 @@ import { SearchModal } from './components/SearchModal.tsx';
 import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
 import { BrowseMenuModal } from './components/MobileMenuModal.tsx';
 import { ChatModal } from './components/ChatModal.tsx';
+import { MDBListCarousel } from './components/MDBListCarousel.tsx';
 import { AiDescriptionModal } from './components/AiDescriptionModal.tsx';
 import { UserIcon, SearchIcon, GridIcon } from './components/icons.tsx';
 
@@ -498,7 +499,18 @@ const App: React.FC = () => {
                     return <BrandGrid brands={brands} onSelect={openBrandDetail} onAiInfoClick={handleOpenAiDescription} />;
                 case 'streaming':
                     if (id) {
-                        return <RecommendationGrid recommendations={streamingContent} onSelect={handleSelectMedia} />;
+                        const isDisneyPlus = id === 'disney';
+                        return (
+                            <>
+                                {isDisneyPlus && (
+                                    <div className="space-y-12 md:space-y-16">
+                                        <MDBListCarousel listId="sig1878/disney-movies" title="Disney+ Movies on MDBList" onSelectMedia={handleSelectMedia} />
+                                        <MDBListCarousel listId="sig1878/disney-tv" title="Disney+ TV on MDBList" onSelectMedia={handleSelectMedia} />
+                                    </div>
+                                )}
+                                <RecommendationGrid recommendations={streamingContent} onSelect={handleSelectMedia} />
+                            </>
+                        );
                     } else {
                         return <StreamingGrid providers={supportedProviders} onSelect={handleSelectStreamingProvider} />;
                     }
