@@ -406,46 +406,49 @@ const App: React.FC = () => {
         }, 300);
     }, []);
 
-    const handleSelectStudio = async (studio: Studio) => {
-        setIsLoading(true);
-        try {
-            const idsToFetch = (studio.companyIds && studio.companyIds.length > 0)
-                ? studio.companyIds
-                : [studio.id];
-            const results = await mediaService.getMediaByStudio(idsToFetch);
-            setStudioContent(results);
-            window.location.hash = `/studio/${studio.id}`;
-        } catch(e) {
-            console.error(`Failed to get content for studio ${studio.name}`, e);
-        } finally {
-            setIsLoading(false);
+    useEffect(() => {
+        const [page, id] = route;
+        if (page === 'studio' && id) {
+            const studio = popularStudios.find(s => s.id.toString() === id);
+            if (studio) {
+                const idsToFetch = (studio.companyIds && studio.companyIds.length > 0)
+                    ? studio.companyIds
+                    : [studio.id];
+                mediaService.getMediaByStudio(idsToFetch).then(setStudioContent);
+            }
         }
+    }, [route]);
+
+    const handleSelectStudio = (studio: Studio) => {
+        window.location.hash = `/studio/${studio.id}`;
     };
 
-     const handleSelectNetwork = async (network: Network) => {
-        setIsLoading(true);
-        try {
-            const results = await mediaService.getMediaByNetwork(network.id);
-            setNetworkContent(results);
-            window.location.hash = `/network/${network.id}`;
-        } catch(e) {
-            console.error(`Failed to get content for network ${network.name}`, e);
-        } finally {
-            setIsLoading(false);
+    useEffect(() => {
+        const [page, id] = route;
+        if (page === 'network' && id) {
+            const network = popularNetworks.find(n => n.id.toString() === id);
+            if (network) {
+                mediaService.getMediaByNetwork(network.id).then(setNetworkContent);
+            }
         }
+    }, [route]);
+
+     const handleSelectNetwork = (network: Network) => {
+        window.location.hash = `/network/${network.id}`;
     };
 
-    const handleSelectStreamingProvider = async (provider: StreamingProviderInfo) => {
-        setIsLoading(true);
-        try {
-            const results = await mediaService.getMediaByStreamingProvider(provider.key, userLocation?.code || 'US');
-            setStreamingContent(results);
-            window.location.hash = `/streaming/${provider.key}`;
-        } catch(e) {
-            console.error(`Failed to get content for provider ${provider.name}`, e);
-        } finally {
-            setIsLoading(false);
+    useEffect(() => {
+        const [page, id] = route;
+        if (page === 'streaming' && id) {
+            const provider = supportedProviders.find(p => p.key === id);
+            if (provider) {
+                mediaService.getMediaByStreamingProvider(provider.key, userLocation?.code || 'US').then(setStreamingContent);
+            }
         }
+    }, [route, userLocation]);
+
+    const handleSelectStreamingProvider = (provider: StreamingProviderInfo) => {
+        window.location.hash = `/streaming/${provider.key}`;
     };
 
     const handleOpenChatModal = (media: MediaDetails) => {
