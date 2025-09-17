@@ -336,3 +336,15 @@ export interface AiCuratedCarousel {
   title: string;
   items: MediaDetails[];
 }
+
+export interface MDBListItem {
+  tmdb_id: number;
+  media_type: 'movie' | 'tv';
+  title: string;
+}
+
+export interface MDBList {
+  name: string;
+  description: string;
+  items: MDBListItem[];
+}
