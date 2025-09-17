@@ -320,6 +320,7 @@ export interface SettingsContextType {
   tmdbApiKey: string | null;
   geminiApiKey: string | null;
   kinocheckApiKey: string | null;
+  mdbListKey: string | null;
   aiClient: GoogleGenAI | null;
   rateLimit: RateLimitState;
   isInitialized: boolean;
@@ -327,7 +328,7 @@ export interface SettingsContextType {
   toggleAllClearMode: () => void;
   canMakeRequest: () => { canRequest: boolean; resetTime: number | null };
   incrementRequestCount: () => void;
-  saveApiKeys: (keys: { tmdbKey: string; geminiKey: string; kinocheckKey: string }) => void;
+  saveApiKeys: (keys: { tmdbKey: string; geminiKey: string; kinocheckKey: string; mdbListKey: string; }) => void;
   clearAllSettings: () => void;
 }
 
