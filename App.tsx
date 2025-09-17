@@ -439,8 +439,12 @@ const App: React.FC = () => {
     const handleSelectStreamingProvider = async (provider: StreamingProviderInfo) => {
         setIsLoading(true);
         try {
-            const results = await mediaService.getMediaByStreamingProvider(provider.key, userLocation?.code || 'US');
-            setStreamingContent(results);
+            if (provider.key === 'disney') {
+                setStreamingContent([]);
+            } else {
+                const results = await mediaService.getMediaByStreamingProvider(provider.key, userLocation?.code || 'US');
+                setStreamingContent(results);
+            }
             window.location.hash = `/streaming/${provider.key}`;
         } catch(e) {
             console.error(`Failed to get content for provider ${provider.name}`, e);
@@ -499,18 +503,16 @@ const App: React.FC = () => {
                     return <BrandGrid brands={brands} onSelect={openBrandDetail} onAiInfoClick={handleOpenAiDescription} />;
                 case 'streaming':
                     if (id) {
-                        const isDisneyPlus = id === 'disney';
-                        return (
-                            <>
-                                {isDisneyPlus && (
-                                    <div className="space-y-12 md:space-y-16">
-                                        <MDBListCarousel listId="sig1878/disney-movies" title="Disney+ Movies on MDBList" onSelectMedia={handleSelectMedia} />
-                                        <MDBListCarousel listId="sig1878/disney-tv" title="Disney+ TV on MDBList" onSelectMedia={handleSelectMedia} />
-                                    </div>
-                                )}
-                                <RecommendationGrid recommendations={streamingContent} onSelect={handleSelectMedia} />
-                            </>
-                        );
+                        if (id === 'disney') {
+                            return (
+                                <div className="space-y-12 md:space-y-16">
+                                    <MDBListCarousel listId="sig1878/disney-movies" title="Disney+ Movies on MDBList" onSelectMedia={handleSelectMedia} />
+                                    <MDBListCarousel listId="sig1878/disney-tv" title="Disney+ TV on MDBList" onSelectMedia={handleSelectMedia} />
+                                </div>
+                            );
+                        } else {
+                            return <RecommendationGrid recommendations={streamingContent} onSelect={handleSelectMedia} />;
+                        }
                     } else {
                         return <StreamingGrid providers={supportedProviders} onSelect={handleSelectStreamingProvider} />;
                     }
