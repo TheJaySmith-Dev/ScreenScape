@@ -21,7 +21,6 @@ import { SearchModal } from './components/SearchModal.tsx';
 import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
 import { BrowseMenuModal } from './components/MobileMenuModal.tsx';
 import { ChatModal } from './components/ChatModal.tsx';
-import { MDBListCarousel } from './components/MDBListCarousel.tsx';
 import { AiDescriptionModal } from './components/AiDescriptionModal.tsx';
 import { UserIcon, SearchIcon, GridIcon } from './components/icons.tsx';
 
@@ -439,12 +438,8 @@ const App: React.FC = () => {
     const handleSelectStreamingProvider = async (provider: StreamingProviderInfo) => {
         setIsLoading(true);
         try {
-            if (provider.key === 'disney') {
-                setStreamingContent([]);
-            } else {
-                const results = await mediaService.getMediaByStreamingProvider(provider.key, userLocation?.code || 'US');
-                setStreamingContent(results);
-            }
+            const results = await mediaService.getMediaByStreamingProvider(provider.key, userLocation?.code || 'US');
+            setStreamingContent(results);
             window.location.hash = `/streaming/${provider.key}`;
         } catch(e) {
             console.error(`Failed to get content for provider ${provider.name}`, e);
@@ -503,16 +498,7 @@ const App: React.FC = () => {
                     return <BrandGrid brands={brands} onSelect={openBrandDetail} onAiInfoClick={handleOpenAiDescription} />;
                 case 'streaming':
                     if (id) {
-                        if (id === 'disney') {
-                            return (
-                                <div className="space-y-12 md:space-y-16">
-                                    <MDBListCarousel listId="sig1878/disney-movies" title="Disney+ Movies on MDBList" onSelectMedia={handleSelectMedia} />
-                                    <MDBListCarousel listId="sig1878/disney-tv" title="Disney+ TV on MDBList" onSelectMedia={handleSelectMedia} />
-                                </div>
-                            );
-                        } else {
-                            return <RecommendationGrid recommendations={streamingContent} onSelect={handleSelectMedia} />;
-                        }
+                        return <RecommendationGrid recommendations={streamingContent} onSelect={handleSelectMedia} />;
                     } else {
                         return <StreamingGrid providers={supportedProviders} onSelect={handleSelectStreamingProvider} />;
                     }

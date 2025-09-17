@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import * as mediaService from '../services/mediaService.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
-import { MDBListCarousel } from './MDBListCarousel.tsx';
 import type { MediaDetails } from '../types.ts';
 
 interface Genre {
@@ -61,8 +60,6 @@ export const DiscoverPage: React.FC<{ onSelectMedia: (media: MediaDetails) => vo
   return (
     <div className="space-y-8">
       <h1 className="text-4xl font-bold text-white">Discover</h1>
-
-      <MDBListCarousel listId="rizreflects/top-10" title="Top 10 on MDBList" onSelectMedia={onSelectMedia} />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         <aside className="md:col-span-1 space-y-6 glass-panel p-6 rounded-2xl self-start">

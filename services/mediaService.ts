@@ -1,9 +1,7 @@
 import type { MediaDetails, CastMember, CrewMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor, AiSearchParams, SeasonDetails, Episode } from '../types.ts';
 import { supportedProviders } from './streamingService.ts';
 import { getTmdbApiKey } from './apiService.ts';
-import { getMDBList } from './mdblistService.ts';
 import { fetchBoxOffice } from './omdbService.ts';
-import { MDBListItem } from '../types.ts';
 
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 const entityCache = new Map<string, number>();
@@ -555,18 +553,6 @@ export const fetchActorDetails = async (actorId: number): Promise<ActorDetails> 
         placeOfBirth: details.place_of_birth,
         filmography
     };
-};
-
-export const fetchMediaFromMDBList = async (listId: string, mdbListKey: string): Promise<MediaDetails[]> => {
-    if (!mdbListKey) {
-        throw new Error("MDBList API key is not set. Please add it via the UI.");
-    }
-    const mdbList = await getMDBList(listId, mdbListKey);
-    const mediaIds = mdbList.items.map((item: MDBListItem) => ({
-        id: item.tmdb_id,
-        type: item.media_type,
-    }));
-    return fetchMediaByIds(mediaIds);
 };
 
 // --- Game Data Fetchers ---
