@@ -15,6 +15,8 @@ import { RecommendationGrid } from './components/RecommendationGrid.tsx';
 import { ActorPage } from './components/ActorPage.tsx';
 import { ComingSoonPage } from './components/ComingSoonPage.tsx';
 import { DiscoverPage } from './components/DiscoverPage.tsx';
+import { AwardsGrid } from './components/AwardsGrid.tsx';
+import { AwardPage } from './components/AwardPage.tsx';
 import { ApiKeyModal } from './components/ApiKeyModal.tsx';
 import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { SearchModal } from './components/SearchModal.tsx';
@@ -29,8 +31,10 @@ import { popularStudios } from './services/studioService.ts';
 import { brands } from './services/brandService.ts';
 import { supportedProviders } from './services/streamingService.ts';
 import { popularNetworks } from './services/networkService.ts';
+import * as awardService from './services/awardService.ts';
+import { supportedAwards } from './services/awardService.ts';
 
-import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy } from './types.ts';
+import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy, Award } from './types.ts';
 import { getViewingGuidesForBrand, getAiDescriptionForBrand } from './services/aiService.ts';
 import { useSettings } from './hooks/useSettings.ts';
 
@@ -53,6 +57,7 @@ const App: React.FC = () => {
     const [brandContent, setBrandContent] = useState<MediaDetails[]>([]);
     const [networkContent, setNetworkContent] = useState<MediaDetails[]>([]);
     const [streamingContent, setStreamingContent] = useState<MediaDetails[]>([]);
+    const [awardContent, setAwardContent] = useState<MediaDetails[]>([]);
     const [moviesContent, setMoviesContent] = useState<MediaDetails[]>([]);
     const [tvContent, setTvContent] = useState<MediaDetails[]>([]);
     const [comingSoonContent, setComingSoonContent] = useState<MediaDetails[]>([]);
@@ -451,6 +456,20 @@ const App: React.FC = () => {
         window.location.hash = `/streaming/${provider.key}`;
     };
 
+    useEffect(() => {
+        const [page, id] = route;
+        if (page === 'award' && id) {
+            const award = supportedAwards.find(a => a.id.toString() === id);
+            if (award) {
+                awardService.getMoviesByKeyword(award.id).then(setAwardContent);
+            }
+        }
+    }, [route]);
+
+    const handleSelectAward = (award: Award) => {
+        window.location.hash = `/award/${award.id}`;
+    };
+
     const handleOpenChatModal = (media: MediaDetails) => {
         setChatMediaItem(media);
         setIsChatModalOpen(true);
@@ -497,6 +516,12 @@ const App: React.FC = () => {
                 case 'discover': return <DiscoverPage onSelectMedia={handleSelectMedia} />;
                 case 'collections': return <ComingSoonPage media={comingSoonContent} onSelectMedia={handleSelectMedia} />;
                 case 'studios': return <StudioGrid studios={popularStudios} onSelect={handleSelectStudio} />;
+                case 'awards':
+                    if (id) {
+                        return <AwardPage awardId={parseInt(id, 10)} onSelectMedia={handleSelectMedia} />;
+                    } else {
+                        return <AwardsGrid awards={supportedAwards} onSelect={handleSelectAward} />;
+                    }
                 case 'brands':
                     return <BrandGrid brands={brands} onSelect={openBrandDetail} onAiInfoClick={handleOpenAiDescription} />;
                 case 'streaming':

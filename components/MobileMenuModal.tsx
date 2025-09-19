@@ -50,6 +50,7 @@ export const BrowseMenuModal: React.FC<BrowseMenuModalProps> = ({ isOpen, onClos
                     <MenuLink href="#/movies" label="Movies" onClick={onClose} />
                     <MenuLink href="#/tv" label="TV Shows" onClick={onClose} />
                     <MenuLink href="#/collections" label="Coming Soon" onClick={onClose} />
+                    <MenuLink href="#/awards" label="Awards" onClick={onClose} />
                     <MenuLink href="#/people" label="Talent" onClick={onClose} />
                     <MenuLink href="#/studios" label="Studios" onClick={onClose} />
                     <MenuLink href="#/brands" label="Brands" onClick={onClose} />
