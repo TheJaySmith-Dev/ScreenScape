@@ -53,7 +53,7 @@ export const ForYouPage: React.FC<ForYouPageProps> = ({ onSelectMedia }) => {
     );
   }
 
-  if (likes.length < MIN_LIKES_FOR_RECOMMENDations) {
+  if (likes.length < MIN_LIKES_FOR_RECOMMENDATIONS) {
     return (
       <div className="text-center text-gray-300 fade-in glass-panel p-8">
         <ThumbsUpIcon className="w-12 h-12 text-green-400 mx-auto mb-4" />

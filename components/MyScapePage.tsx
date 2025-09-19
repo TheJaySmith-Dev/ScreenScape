@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSettings } from '../hooks/useSettings.ts';
 import { usePreferences } from '../hooks/usePreferences.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
-import { OnboardingModal } from './OnboardingModal.tsx';
+import { ManageKeysModal } from './ManageKeysModal.tsx';
 import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon, DiscordIcon } from './icons.tsx';
 import type { MediaDetails } from '../types.ts';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
@@ -158,7 +158,7 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
             </div>
 
             {isApiKeyModalOpen && (
-                <OnboardingModal />
+                <ManageKeysModal onClose={() => setIsApiKeyModalOpen(false)} />
             )}
         </>
     );
