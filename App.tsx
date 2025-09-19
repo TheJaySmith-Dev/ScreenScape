@@ -516,12 +516,13 @@ const App: React.FC = () => {
                 case 'discover': return <DiscoverPage onSelectMedia={handleSelectMedia} />;
                 case 'collections': return <ComingSoonPage media={comingSoonContent} onSelectMedia={handleSelectMedia} />;
                 case 'studios': return <StudioGrid studios={popularStudios} onSelect={handleSelectStudio} />;
-                case 'awards':
+                case 'awards': return <AwardsGrid awards={supportedAwards} onSelect={handleSelectAward} />;
+                case 'award':
                     if (id) {
                         return <AwardPage awardId={parseInt(id, 10)} onSelectMedia={handleSelectMedia} />;
-                    } else {
-                        return <AwardsGrid awards={supportedAwards} onSelect={handleSelectAward} />;
                     }
+                    window.location.hash = '/awards';
+                    return null;
                 case 'brands':
                     return <BrandGrid brands={brands} onSelect={openBrandDetail} onAiInfoClick={handleOpenAiDescription} />;
                 case 'streaming':
