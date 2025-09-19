@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, FormEvent, useRef } from 'react';
 import type { MediaDetails } from '../types.ts';
-import { getAiRecommendations } from '../services/aiService.ts';
+import { getAiRecommendations } from '../services/recommendationService.ts';
 import { CloseIcon, SearchIcon, HistoryIcon } from './icons.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { RecommendationGrid } from './RecommendationGrid.tsx';

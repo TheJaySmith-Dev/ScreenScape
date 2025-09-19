@@ -402,6 +402,14 @@ export const getComingSoonMedia = async (): Promise<MediaDetails[]> => {
     return combined.slice(0, 20);
 };
 
+export const getNewReleases = async (): Promise<MediaDetails[]> => {
+    const upcomingMovies = await fetchList('/movie/upcoming', 'movie');
+    const onTheAirTv = await fetchList('/tv/on_the_air', 'tv');
+
+    // Just combine them, no need to sort
+    return [...upcomingMovies, ...onTheAirTv].slice(0, 20);
+}
+
 export const searchMedia = (query: string, year?: string): Promise<MediaDetails[]> => {
     const yearQuery = year ? `&year=${year}` : '';
     return fetchList(`/search/multi?query=${encodeURIComponent(query)}${yearQuery}`);

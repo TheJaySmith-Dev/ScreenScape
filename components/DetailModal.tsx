@@ -9,7 +9,7 @@ import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
 import { usePreferences } from '../hooks/usePreferences.ts';
 import { CinemaAvailability } from './CinemaAvailability.tsx';
 import { fetchOmdbDetails } from '../services/omdbService.ts';
-import { getFunFactsForMedia } from '../services/aiService.ts';
+import { getFunFactsForMedia } from '../services/recommendationService.ts';
 import { RateLimitMessage } from './RateLimitMessage.tsx';
 import { useSettings } from '../hooks/useSettings.ts';
 import { fetchSeasonDetails } from '../services/mediaService.ts';

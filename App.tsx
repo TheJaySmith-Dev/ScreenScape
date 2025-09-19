@@ -32,13 +32,15 @@ import { supportedProviders } from './services/streamingService.ts';
 import { popularNetworks } from './services/networkService.ts';
 
 import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy } from './types.ts';
-import { getViewingGuidesForBrand, getAiDescriptionForBrand } from './services/aiService.ts';
+import { getViewingGuidesForBrand, getAiDescriptionForBrand, getRecommendationsForSingleItem } from './services/recommendationService.ts';
 import { useSettings } from './hooks/useSettings.ts';
+import { usePreferences } from './hooks/usePreferences.ts';
 
 const getHashRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
 
 const App: React.FC = () => {
     const { tmdbApiKey, geminiApiKey, kinocheckApiKey, isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount } = useSettings();
+    const { likes } = usePreferences();
     const [route, setRoute] = useState<string[]>(getHashRoute());
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -57,7 +59,10 @@ const App: React.FC = () => {
     const [moviesContent, setMoviesContent] = useState<MediaDetails[]>([]);
     const [tvContent, setTvContent] = useState<MediaDetails[]>([]);
     const [comingSoonContent, setComingSoonContent] = useState<MediaDetails[]>([]);
+    const [newReleases, setNewReleases] = useState<MediaDetails[]>([]);
     const [releasedTodayContent, setReleasedTodayContent] = useState<MediaDetails[]>([]);
+    const [sinceYouLikedRecs, setSinceYouLikedRecs] = useState<MediaDetails[]>([]);
+    const [featuredLikedItem, setFeaturedLikedItem] = useState<any | null>(null);
 
     // Modal/Detail states
     const [selectedItem, setSelectedItem] = useState<MediaDetails | CollectionDetails | null>(null);
@@ -176,6 +181,7 @@ const App: React.FC = () => {
                 mediaService.getTopRatedMovies(),
                 mediaService.getTopRatedTv(),
                 mediaService.getMoviesReleasedOn(month, day),
+                mediaService.getNewReleases(),
             ]);
 
             const [
@@ -186,7 +192,8 @@ const App: React.FC = () => {
                 comingSoon,
                 topMovies,
                 topTv,
-                releasedToday
+                releasedToday,
+                newReleases
             ] = results.map(result => (result.status === 'fulfilled' ? result.value : []));
 
             setTrending(trending as MediaDetails[]);
@@ -197,6 +204,7 @@ const App: React.FC = () => {
             setMoviesContent(topMovies as MediaDetails[]);
             setTvContent(topTv as MediaDetails[]);
             setReleasedTodayContent(releasedToday as MediaDetails[]);
+            setNewReleases(newReleases as MediaDetails[]);
         } catch (error) {
             console.error("Failed to fetch initial data:", error);
         } finally {
@@ -226,6 +234,14 @@ const App: React.FC = () => {
                 });
         }
     }, [isInitialized, tmdbApiKey, fetchInitialData]);
+
+    useEffect(() => {
+        if (likes.length > 0) {
+            const randomLikedItem = likes[Math.floor(Math.random() * likes.length)];
+            setFeaturedLikedItem(randomLikedItem);
+            getRecommendationsForSingleItem(randomLikedItem).then(setSinceYouLikedRecs);
+        }
+    }, [likes]);
 
     // FIX: Add a useEffect hook to handle fetching data for brand pages based on the current route.
     // This ensures content loads correctly on both direct navigation and clicks.
@@ -480,6 +496,14 @@ const App: React.FC = () => {
                         <>
                             {trending[0] && <HeroSection item={trending[0]} onPlay={() => {}} onMoreInfo={handleSelectMedia} />}
                             <div className="space-y-12 md:space-y-16 mt-8">
+                                {featuredLikedItem && sinceYouLikedRecs.length > 0 && (
+                                    <MediaRow
+                                        title={`Since you liked ${featuredLikedItem.title}`}
+                                        items={sinceYouLikedRecs}
+                                        onSelect={handleSelectMedia}
+                                    />
+                                )}
+                                <MediaRow title="New" items={newReleases} onSelect={handleSelectMedia} />
                                 <MediaRow title="Trending This Week" items={trending} onSelect={handleSelectMedia} />
                                 {releasedTodayContent.length > 0 && <MediaRow title="Released Today" items={releasedTodayContent} onSelect={handleSelectMedia} animationDelay="100ms" />}
                                 <MediaRow title="Now Playing in Theaters" items={nowPlaying} onSelect={handleSelectMedia} animationDelay="100ms" />

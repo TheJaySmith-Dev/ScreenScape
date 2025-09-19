@@ -416,6 +416,77 @@ For each carousel, provide a creative title and a list of 5-7 recommendations. E
     }
 };
 
+let genreMap: Map<number, string> | null = null;
+
+const getGenreMap = async (): Promise<Map<number, string>> => {
+    if (genreMap) {
+        return genreMap;
+    }
+
+    try {
+        const movieGenres = await getGenres('movie');
+        const tvGenres = await getGenres('tv');
+        const allGenres = [...movieGenres, ...tvGenres];
+        genreMap = new Map(allGenres.map(g => [g.id, g.name]));
+        return genreMap;
+    } catch (error) {
+        console.error("Failed to build genre map:", error);
+        return new Map();
+    }
+};
+
+export const getSimilarContentRecommendations = async (
+    likedItems: LikedItem[]
+): Promise<AiCuratedCarousel[]> => {
+    if (likedItems.length === 0) return [];
+
+    try {
+        const genreMap = await getGenreMap();
+        const recommendations = await Promise.all(
+            likedItems.map(item => getSimilarMedia(item.id, item.type))
+        );
+
+        const allRecommendations = recommendations.flat();
+        const uniqueRecommendations = Array.from(new Map(allRecommendations.map(item => [item.id, item])).values());
+
+        const likedIds = new Set(likedItems.map(item => item.id));
+        const finalRecommendations = uniqueRecommendations.filter(item => !likedIds.has(item.id));
+
+        if (finalRecommendations.length === 0) {
+            return [];
+        }
+
+        const genres = [...new Set(finalRecommendations.map(item => item.genre_ids).flat())];
+
+        const carousels = genres.map(genreId => {
+            const items = finalRecommendations.filter(item => item.genre_ids.includes(genreId));
+            const genreName = genreMap.get(genreId) || `Genre ${genreId}`;
+            return {
+                title: `Because you like ${genreName}`,
+                items: items,
+            };
+        });
+
+        return carousels;
+
+    } catch (error) {
+        console.error("Error getting similar content recommendations:", error);
+        throw new Error("Couldn't get similar content recommendations. Please try again later.");
+    }
+};
+
+export const getRecommendationsForSingleItem = async (
+    item: LikedItem
+): Promise<MediaDetails[]> => {
+    try {
+        const recommendations = await getSimilarMedia(item.id, item.type);
+        return recommendations;
+    } catch (error) {
+        console.error(`Error getting recommendations for ${item.title}:`, error);
+        throw new Error(`Couldn't get recommendations for ${item.title}. Please try again later.`);
+    }
+};
+
 const awardMoviesSchema = {
     type: Type.OBJECT,
     properties: {
