@@ -415,3 +415,47 @@ For each carousel, provide a creative title and a list of 5-7 recommendations. E
         throw new Error("ScapeAI couldn't curate recommendations. Please try again later.");
     }
 };
+
+const awardMoviesSchema = {
+    type: Type.OBJECT,
+    properties: {
+        movies: {
+            type: Type.ARRAY,
+            description: "A list of movie titles that have won the specified award.",
+            items: {
+                type: Type.STRING,
+                description: "The movie title, followed by its release year in parentheses. E.g., 'The Godfather (1972)'."
+            }
+        }
+    },
+    required: ['movies']
+};
+
+export const getAwardMovies = async (query: string, aiClient: GoogleGenAI): Promise<string[]> => {
+    try {
+        const response: GenerateContentResponse = await aiClient.models.generateContent({
+            model,
+            contents: `The user wants a list of movies that have won a specific award. Analyze the user's query: "${query}". Provide a list of movies that fit the request.`,
+            config: {
+                systemInstruction: `You are a film awards expert. Your task is to return a list of movies based on the user's query about a specific award.
+                - You MUST return the data as a JSON object.
+                - The JSON object must have a single key called "movies".
+                - The value of "movies" must be an array of strings.
+                - Each string in the array must be the movie title followed by its release year in parentheses. Example: "The Godfather (1972)".
+                - Do not include anything else in your response other than the raw JSON object.`,
+                responseMimeType: "application/json",
+                responseSchema: awardMoviesSchema,
+            }
+        });
+
+        const result = JSON.parse(response.text);
+        if (result && result.movies) {
+            return result.movies;
+        } else {
+            throw new Error("AI response did not contain a 'movies' array.");
+        }
+    } catch (error) {
+        console.error(`Error getting award movies for query "${query}":`, error);
+        throw new Error("Sorry, I couldn't find any movies for that award. Please try being more specific.");
+    }
+};

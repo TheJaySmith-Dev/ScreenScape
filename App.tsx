@@ -15,8 +15,7 @@ import { RecommendationGrid } from './components/RecommendationGrid.tsx';
 import { ActorPage } from './components/ActorPage.tsx';
 import { ComingSoonPage } from './components/ComingSoonPage.tsx';
 import { DiscoverPage } from './components/DiscoverPage.tsx';
-import { AwardsGrid } from './components/AwardsGrid.tsx';
-import { AwardPage } from './components/AwardPage.tsx';
+import { AwardSearchPage } from './components/AwardSearchPage.tsx';
 import { ApiKeyModal } from './components/ApiKeyModal.tsx';
 import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { SearchModal } from './components/SearchModal.tsx';
@@ -31,10 +30,8 @@ import { popularStudios } from './services/studioService.ts';
 import { brands } from './services/brandService.ts';
 import { supportedProviders } from './services/streamingService.ts';
 import { popularNetworks } from './services/networkService.ts';
-import * as awardService from './services/awardService.ts';
-import { supportedAwards } from './services/awardService.ts';
 
-import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy, Award } from './types.ts';
+import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy } from './types.ts';
 import { getViewingGuidesForBrand, getAiDescriptionForBrand } from './services/aiService.ts';
 import { useSettings } from './hooks/useSettings.ts';
 
@@ -57,7 +54,6 @@ const App: React.FC = () => {
     const [brandContent, setBrandContent] = useState<MediaDetails[]>([]);
     const [networkContent, setNetworkContent] = useState<MediaDetails[]>([]);
     const [streamingContent, setStreamingContent] = useState<MediaDetails[]>([]);
-    const [awardContent, setAwardContent] = useState<MediaDetails[]>([]);
     const [moviesContent, setMoviesContent] = useState<MediaDetails[]>([]);
     const [tvContent, setTvContent] = useState<MediaDetails[]>([]);
     const [comingSoonContent, setComingSoonContent] = useState<MediaDetails[]>([]);
@@ -411,63 +407,46 @@ const App: React.FC = () => {
         }, 300);
     }, []);
 
-    useEffect(() => {
-        const [page, id] = route;
-        if (page === 'studio' && id) {
-            const studio = popularStudios.find(s => s.id.toString() === id);
-            if (studio) {
-                const idsToFetch = (studio.companyIds && studio.companyIds.length > 0)
-                    ? studio.companyIds
-                    : [studio.id];
-                mediaService.getMediaByStudio(idsToFetch).then(setStudioContent);
-            }
+    const handleSelectStudio = async (studio: Studio) => {
+        setIsLoading(true);
+        try {
+            const idsToFetch = (studio.companyIds && studio.companyIds.length > 0)
+                ? studio.companyIds
+                : [studio.id];
+            const results = await mediaService.getMediaByStudio(idsToFetch);
+            setStudioContent(results);
+            window.location.hash = `/studio/${studio.id}`;
+        } catch(e) {
+            console.error(`Failed to get content for studio ${studio.name}`, e);
+        } finally {
+            setIsLoading(false);
         }
-    }, [route]);
-
-    const handleSelectStudio = (studio: Studio) => {
-        window.location.hash = `/studio/${studio.id}`;
     };
 
-    useEffect(() => {
-        const [page, id] = route;
-        if (page === 'network' && id) {
-            const network = popularNetworks.find(n => n.id.toString() === id);
-            if (network) {
-                mediaService.getMediaByNetwork(network.id).then(setNetworkContent);
-            }
+     const handleSelectNetwork = async (network: Network) => {
+        setIsLoading(true);
+        try {
+            const results = await mediaService.getMediaByNetwork(network.id);
+            setNetworkContent(results);
+            window.location.hash = `/network/${network.id}`;
+        } catch(e) {
+            console.error(`Failed to get content for network ${network.name}`, e);
+        } finally {
+            setIsLoading(false);
         }
-    }, [route]);
-
-     const handleSelectNetwork = (network: Network) => {
-        window.location.hash = `/network/${network.id}`;
     };
 
-    useEffect(() => {
-        const [page, id] = route;
-        if (page === 'streaming' && id) {
-            const provider = supportedProviders.find(p => p.key === id);
-            if (provider) {
-                mediaService.getMediaByStreamingProvider(provider.key, userLocation?.code || 'US').then(setStreamingContent);
-            }
+    const handleSelectStreamingProvider = async (provider: StreamingProviderInfo) => {
+        setIsLoading(true);
+        try {
+            const results = await mediaService.getMediaByStreamingProvider(provider.key, userLocation?.code || 'US');
+            setStreamingContent(results);
+            window.location.hash = `/streaming/${provider.key}`;
+        } catch(e) {
+            console.error(`Failed to get content for provider ${provider.name}`, e);
+        } finally {
+            setIsLoading(false);
         }
-    }, [route, userLocation]);
-
-    const handleSelectStreamingProvider = (provider: StreamingProviderInfo) => {
-        window.location.hash = `/streaming/${provider.key}`;
-    };
-
-    useEffect(() => {
-        const [page, id] = route;
-        if (page === 'award' && id) {
-            const award = supportedAwards.find(a => a.id.toString() === id);
-            if (award) {
-                awardService.getMoviesByKeyword(award.id).then(setAwardContent);
-            }
-        }
-    }, [route]);
-
-    const handleSelectAward = (award: Award) => {
-        window.location.hash = `/award/${award.id}`;
     };
 
     const handleOpenChatModal = (media: MediaDetails) => {
@@ -516,13 +495,7 @@ const App: React.FC = () => {
                 case 'discover': return <DiscoverPage onSelectMedia={handleSelectMedia} />;
                 case 'collections': return <ComingSoonPage media={comingSoonContent} onSelectMedia={handleSelectMedia} />;
                 case 'studios': return <StudioGrid studios={popularStudios} onSelect={handleSelectStudio} />;
-                case 'awards': return <AwardsGrid awards={supportedAwards} onSelect={handleSelectAward} />;
-                case 'award':
-                    if (id) {
-                        return <AwardPage awardId={parseInt(id, 10)} onSelectMedia={handleSelectMedia} />;
-                    }
-                    window.location.hash = '/awards';
-                    return null;
+                case 'awards': return <AwardSearchPage onSelectMedia={handleSelectMedia} />;
                 case 'brands':
                     return <BrandGrid brands={brands} onSelect={openBrandDetail} onAiInfoClick={handleOpenAiDescription} />;
                 case 'streaming':
