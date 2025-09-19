@@ -6,6 +6,7 @@ import { ApiKeyModal } from './ApiKeyModal.tsx';
 import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon, DiscordIcon } from './icons.tsx';
 import type { MediaDetails } from '../types.ts';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
+import { VersionHistoryTab } from './VersionHistoryTab.tsx';
 
 interface MyScapePageProps {
   onSelectMedia: (media: MediaDetails) => void;
@@ -127,6 +128,12 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Version History Section */}
+                <div>
+                    <h2 className="text-3xl font-bold mb-6 text-white">Version History</h2>
+                    <VersionHistoryTab />
                 </div>
 
                 {/* Watchlist Section */}
