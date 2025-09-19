@@ -6,7 +6,6 @@ import type { SettingsContextType, RateLimitState } from '../types.ts';
 const LOCAL_STORAGE_KEY_TMDB = 'screenscape_tmdb_api_key';
 const LOCAL_STORAGE_KEY_GEMINI = 'screenscape_gemini_api_key';
 const LOCAL_STORAGE_KEY_KINOCHECK = 'screenscape_kinocheck_api_key';
-const LOCAL_STORAGE_KEY_MDBLIST = 'screenscape_mdblist_api_key';
 const LOCAL_STORAGE_KEY_RATE_LIMIT = 'screenscape_rate_limit';
 const LOCAL_STORAGE_KEY_ALL_CLEAR = 'screenscape_all_clear_mode';
 
@@ -37,7 +36,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     const [tmdbApiKey, setTmdbApiKey] = useState<string | null>(null);
     const [geminiApiKey, setGeminiApiKey] = useState<string | null>(null);
     const [kinocheckApiKey, setKinocheckApiKey] = useState<string | null>(null);
-    const [mdbListKey, setMdbListKey] = useState<string | null>(null);
     const [aiClient, setAiClient] = useState<GoogleGenAI | null>(null);
     const [rateLimit, setRateLimit] = useState<RateLimitState>(getInitialRateLimit());
     const [isInitialized, setIsInitialized] = useState(false);
@@ -48,7 +46,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
         const localGeminiKey = localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI);
         const localKinocheckKey = localStorage.getItem(LOCAL_STORAGE_KEY_KINOCHECK);
-        const localMdbListKey = localStorage.getItem(LOCAL_STORAGE_KEY_MDBLIST);
         const localAllClear = localStorage.getItem(LOCAL_STORAGE_KEY_ALL_CLEAR);
         
         if (localTmdbKey) {
@@ -62,7 +59,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         
         setGeminiApiKey(localGeminiKey);
         setKinocheckApiKey(localKinocheckKey);
-        setMdbListKey(localMdbListKey);
         setRateLimit(getInitialRateLimit());
         
         setIsInitialized(true);
@@ -83,16 +79,14 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
     }, [geminiApiKey]);
 
-    const saveApiKeys = useCallback((keys: { tmdbKey: string; geminiKey: string; kinocheckKey: string; mdbListKey: string; }) => {
+    const saveApiKeys = useCallback((keys: { tmdbKey: string; geminiKey: string; kinocheckKey: string; }) => {
         setTmdbApiKey(keys.tmdbKey);
         setLocalTmdbApiKey(keys.tmdbKey); // Sync immediately
         setGeminiApiKey(keys.geminiKey);
         setKinocheckApiKey(keys.kinocheckKey);
-        setMdbListKey(keys.mdbListKey);
         localStorage.setItem(LOCAL_STORAGE_KEY_TMDB, keys.tmdbKey);
         localStorage.setItem(LOCAL_STORAGE_KEY_GEMINI, keys.geminiKey);
         localStorage.setItem(LOCAL_STORAGE_KEY_KINOCHECK, keys.kinocheckKey);
-        localStorage.setItem(LOCAL_STORAGE_KEY_MDBLIST, keys.mdbListKey);
     }, []);
 
     const toggleAllClearMode = useCallback(() => {
@@ -138,7 +132,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         setLocalTmdbApiKey(null); // Sync immediately
         setGeminiApiKey(null);
         setKinocheckApiKey(null);
-        setMdbListKey(null);
         setAiClient(null);
         setRateLimit(newRateLimit);
         setIsAllClearMode(false);
@@ -146,7 +139,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         localStorage.removeItem(LOCAL_STORAGE_KEY_TMDB);
         localStorage.removeItem(LOCAL_STORAGE_KEY_GEMINI);
         localStorage.removeItem(LOCAL_STORAGE_KEY_KINOCHECK);
-        localStorage.removeItem(LOCAL_STORAGE_KEY_MDBLIST);
         localStorage.removeItem(LOCAL_STORAGE_KEY_RATE_LIMIT);
         localStorage.removeItem(LOCAL_STORAGE_KEY_ALL_CLEAR);
     }, []);
@@ -155,7 +147,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         tmdbApiKey,
         geminiApiKey,
         kinocheckApiKey,
-        mdbListKey,
         aiClient,
         rateLimit,
         isInitialized,

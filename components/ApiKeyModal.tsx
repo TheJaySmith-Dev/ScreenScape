@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ApiKeyInfoModal } from './ApiKeyInfoModal.tsx';
 
 interface ApiKeyModalProps {
-    onSave: (keys: { tmdbKey: string; geminiKey: string; kinocheckKey: string; mdbListKey: string; }) => void;
+    onSave: (keys: { tmdbKey: string; geminiKey: string; kinocheckKey: string; }) => void;
     onClose: () => void;
 }
 
@@ -10,7 +10,6 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onSave, onClose }) => 
     const [tmdbKey, setTmdbKey] = useState('');
     const [geminiKey, setGeminiKey] = useState('');
     const [kinocheckKey, setKinocheckKey] = useState('');
-    const [mdbListKey, setMdbListKey] = useState('');
     const [error, setError] = useState('');
     const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
 
@@ -25,7 +24,6 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onSave, onClose }) => 
             tmdbKey: tmdbKey.trim(),
             geminiKey: geminiKey.trim(),
             kinocheckKey: kinocheckKey.trim(),
-            mdbListKey: mdbListKey.trim(),
         });
     };
 
@@ -79,18 +77,6 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onSave, onClose }) => 
                         />
                         <a href="https://api.kinocheck.com/register" target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-400 hover:underline -mt-2 text-left">
                             Get a KinoCheck API key.
-                        </a>
-
-                        <input
-                            type="password"
-                            value={mdbListKey}
-                            onChange={(e) => setMdbListKey(e.target.value)}
-                            placeholder="Enter your MDBList API Key"
-                            className="w-full px-4 py-3 text-white bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/80 focus:outline-none transition-colors placeholder-gray-400"
-                            aria-label="MDBList API Key"
-                        />
-                        <a href="https://mdblist.com/preferences/" target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-400 hover:underline -mt-2 text-left">
-                            Get an MDBList API key.
                         </a>
 
                         {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
