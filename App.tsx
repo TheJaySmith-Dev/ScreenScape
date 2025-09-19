@@ -16,7 +16,7 @@ import { ActorPage } from './components/ActorPage.tsx';
 import { ComingSoonPage } from './components/ComingSoonPage.tsx';
 import { DiscoverPage } from './components/DiscoverPage.tsx';
 import { AwardSearchPage } from './components/AwardSearchPage.tsx';
-import { ApiKeyModal } from './components/ApiKeyModal.tsx';
+import { OnboardingModal } from './components/OnboardingModal.tsx';
 import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { SearchModal } from './components/SearchModal.tsx';
 import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
@@ -467,8 +467,8 @@ const App: React.FC = () => {
             return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
         }
         
-        if (!tmdbApiKey || !geminiApiKey) {
-            return <ApiKeyModal onSave={saveApiKeys} onClose={() => {}} />;
+        if (!tmdbApiKey || !geminiApiKey || !kinocheckApiKey) {
+            return <OnboardingModal />;
         }
         
         if (isLoading) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;

@@ -89,6 +89,22 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         localStorage.setItem(LOCAL_STORAGE_KEY_KINOCHECK, keys.kinocheckKey);
     }, []);
 
+    const saveTmdbApiKey = useCallback((key: string) => {
+        setTmdbApiKey(key);
+        setLocalTmdbApiKey(key);
+        localStorage.setItem(LOCAL_STORAGE_KEY_TMDB, key);
+    }, []);
+
+    const saveGeminiApiKey = useCallback((key: string) => {
+        setGeminiApiKey(key);
+        localStorage.setItem(LOCAL_STORAGE_KEY_GEMINI, key);
+    }, []);
+
+    const saveKinocheckApiKey = useCallback((key: string) => {
+        setKinocheckApiKey(key);
+        localStorage.setItem(LOCAL_STORAGE_KEY_KINOCHECK, key);
+    }, []);
+
     const toggleAllClearMode = useCallback(() => {
         setIsAllClearMode(prev => {
             const newState = !prev;
@@ -155,6 +171,9 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         canMakeRequest,
         incrementRequestCount,
         saveApiKeys,
+        saveTmdbApiKey,
+        saveGeminiApiKey,
+        saveKinocheckApiKey,
         clearAllSettings,
     };
 
