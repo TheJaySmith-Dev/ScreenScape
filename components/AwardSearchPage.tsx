@@ -37,7 +37,7 @@ export const AwardSearchPage: React.FC<{ onSelectMedia: (media: MediaDetails) =>
                 const match = title.match(/(.+) \((\d{4})\)/);
                 if (match) {
                     const [, movieTitle, year] = match;
-                    return mediaService.searchMedia(`${movieTitle} year:${year}`);
+                    return mediaService.searchMedia(movieTitle, year);
                 }
                 return mediaService.searchMedia(title);
             });
