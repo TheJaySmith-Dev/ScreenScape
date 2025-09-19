@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { RecommendationGrid } from './RecommendationGrid';
 import { LoadingSpinner } from './LoadingSpinner';
 import { SendIcon } from './icons';
-import * as aiService from '../services/aiService';
+import * as recommendationService from '../services/recommendationService.ts';
 import * as mediaService from '../services/mediaService';
 import type { MediaDetails, ChatMessage } from '../types';
 import { useSettings } from '../hooks/useSettings';
@@ -31,7 +31,7 @@ export const AwardSearchPage: React.FC<{ onSelectMedia: (media: MediaDetails) =>
         setSearchResults([]);
 
         try {
-            const movieTitles = await aiService.getAwardMovies(userInput, aiClient);
+            const movieTitles = await recommendationService.getAwardMovies(userInput, aiClient);
 
             const promises = movieTitles.map(title => {
                 const match = title.match(/(.+) \((\d{4})\)/);
