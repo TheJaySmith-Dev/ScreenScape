@@ -26,12 +26,14 @@ export const ForYouPage: React.FC<ForYouPageProps> = ({ onSelectMedia }) => {
   const fetchForYouRecommendations = useCallback(async () => {
     if (likes.length < MIN_LIKES_FOR_AI || !aiClient) {
       setCuratedRows([]);
+      setIsLoading(false);
       return;
     }
     
     const { canRequest } = canMakeRequest();
     if (!canRequest) {
       // The rate limit message will be shown in the render logic
+      setIsLoading(false);
       return;
     }
 
