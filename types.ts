@@ -328,6 +328,9 @@ export interface SettingsContextType {
   canMakeRequest: () => { canRequest: boolean; resetTime: number | null };
   incrementRequestCount: () => void;
   saveApiKeys: (keys: { tmdbKey: string; geminiKey: string; kinocheckKey: string; }) => void;
+    saveTmdbApiKey: (key: string) => void;
+    saveGeminiApiKey: (key: string) => void;
+    saveKinocheckApiKey: (key: string) => void;
   clearAllSettings: () => void;
 }
 

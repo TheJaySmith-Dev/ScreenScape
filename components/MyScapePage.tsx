@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSettings } from '../hooks/useSettings.ts';
 import { usePreferences } from '../hooks/usePreferences.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
-import { ApiKeyModal } from './ApiKeyModal.tsx';
+import { OnboardingModal } from './OnboardingModal.tsx';
 import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon, DiscordIcon } from './icons.tsx';
 import type { MediaDetails } from '../types.ts';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
@@ -13,7 +13,7 @@ interface MyScapePageProps {
 }
 
 export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
-    const { rateLimit, tmdbApiKey, geminiApiKey, saveApiKeys, clearAllSettings, isAllClearMode, toggleAllClearMode } = useSettings();
+    const { rateLimit, tmdbApiKey, geminiApiKey, kinocheckApiKey, clearAllSettings, isAllClearMode, toggleAllClearMode } = useSettings();
     const { likes, isLoading: preferencesLoading } = usePreferences();
     const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
 
@@ -73,6 +73,10 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-gray-300">Gemini API Key:</span>
                                 <span className="font-mono text-gray-400">{geminiApiKey ? `...${geminiApiKey.slice(-4)}` : 'Not Set'}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-gray-300">KinoCheck API Key:</span>
+                                <span className="font-mono text-gray-400">{kinocheckApiKey ? `...${kinocheckApiKey.slice(-4)}` : 'Not Set (Optional)'}</span>
                             </div>
                              <div className="flex justify-between items-center">
                                 <div>
@@ -154,13 +158,7 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
             </div>
 
             {isApiKeyModalOpen && (
-                <ApiKeyModal 
-                    onSave={(keys) => {
-                        saveApiKeys(keys);
-                        setIsApiKeyModalOpen(false);
-                    }}
-                    onClose={() => setIsApiKeyModalOpen(false)} 
-                />
+                <OnboardingModal />
             )}
         </>
     );

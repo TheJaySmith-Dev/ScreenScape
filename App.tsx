@@ -16,7 +16,7 @@ import { ActorPage } from './components/ActorPage.tsx';
 import { ComingSoonPage } from './components/ComingSoonPage.tsx';
 import { DiscoverPage } from './components/DiscoverPage.tsx';
 import { AwardSearchPage } from './components/AwardSearchPage.tsx';
-import { ApiKeyModal } from './components/ApiKeyModal.tsx';
+import { OnboardingModal } from './components/OnboardingModal.tsx';
 import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { SearchModal } from './components/SearchModal.tsx';
 import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
@@ -38,7 +38,7 @@ import { useSettings } from './hooks/useSettings.ts';
 const getHashRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
 
 const App: React.FC = () => {
-    const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount } = useSettings();
+    const { tmdbApiKey, geminiApiKey, kinocheckApiKey, isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount } = useSettings();
     const [route, setRoute] = useState<string[]>(getHashRoute());
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -468,7 +468,7 @@ const App: React.FC = () => {
         }
         
         if (!tmdbApiKey || !geminiApiKey) {
-            return <ApiKeyModal onSave={saveApiKeys} onClose={() => {}} />;
+            return <OnboardingModal />;
         }
         
         if (isLoading) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
