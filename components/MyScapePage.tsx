@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useSettings } from '../hooks/useSettings.ts';
 import { usePreferences } from '../hooks/usePreferences.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
-import { ApiKeyModal } from './ApiKeyModal.tsx';
 import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon, DiscordIcon } from './icons.tsx';
 import type { MediaDetails } from '../types.ts';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
@@ -13,9 +12,8 @@ interface MyScapePageProps {
 }
 
 export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
-    const { rateLimit, tmdbApiKey, geminiApiKey, saveApiKeys, clearAllSettings, isAllClearMode, toggleAllClearMode } = useSettings();
+    const { rateLimit, tmdbApiKey, geminiApiKey, kinocheckApiKey, clearAllSettings, isAllClearMode, toggleAllClearMode } = useSettings();
     const { likes, isLoading: preferencesLoading } = usePreferences();
-    const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
 
     if (preferencesLoading) {
         return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
@@ -74,6 +72,10 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                                 <span className="text-gray-300">Gemini API Key:</span>
                                 <span className="font-mono text-gray-400">{geminiApiKey ? `...${geminiApiKey.slice(-4)}` : 'Not Set'}</span>
                             </div>
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-gray-300">KinoCheck API Key:</span>
+                                <span className="font-mono text-gray-400">{kinocheckApiKey ? `...${kinocheckApiKey.slice(-4)}` : 'Not Set'}</span>
+                            </div>
                              <div className="flex justify-between items-center">
                                 <div>
                                     <label htmlFor="all-clear-toggle" className="text-gray-200 text-sm">"All Clear" Mode</label>
@@ -96,9 +98,6 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                                 </button>
                             </div>
                             <div className="pt-2 space-y-2">
-                                <button onClick={() => setIsApiKeyModalOpen(true)} className="w-full px-4 py-2 text-sm text-center bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                                    Manage API Keys
-                                </button>
                                  <button onClick={clearAllSettings} className="w-full px-4 py-2 text-sm text-center text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors">
                                     Clear All Local Data
                                 </button>
@@ -153,15 +152,6 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                 </div>
             </div>
 
-            {isApiKeyModalOpen && (
-                <ApiKeyModal 
-                    onSave={(keys) => {
-                        saveApiKeys(keys);
-                        setIsApiKeyModalOpen(false);
-                    }}
-                    onClose={() => setIsApiKeyModalOpen(false)} 
-                />
-            )}
         </>
     );
 };
