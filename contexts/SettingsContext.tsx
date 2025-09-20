@@ -5,7 +5,6 @@ import type { SettingsContextType, RateLimitState } from '../types.ts';
 
 const LOCAL_STORAGE_KEY_TMDB = 'screenscape_tmdb_api_key';
 const LOCAL_STORAGE_KEY_GEMINI = 'screenscape_gemini_api_key';
-const LOCAL_STORAGE_KEY_KINOCHECK = 'screenscape_kinocheck_api_key';
 const LOCAL_STORAGE_KEY_RATE_LIMIT = 'screenscape_rate_limit';
 const LOCAL_STORAGE_KEY_ALL_CLEAR = 'screenscape_all_clear_mode';
 
@@ -35,7 +34,6 @@ export const SettingsContext = createContext<SettingsContextType | undefined>(un
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [tmdbApiKey, setTmdbApiKey] = useState<string | null>(null);
     const [geminiApiKey, setGeminiApiKey] = useState<string | null>(null);
-    const [kinocheckApiKey, setKinocheckApiKey] = useState<string | null>(null);
     const [aiClient, setAiClient] = useState<GoogleGenAI | null>(null);
     const [rateLimit, setRateLimit] = useState<RateLimitState>(getInitialRateLimit());
     const [isInitialized, setIsInitialized] = useState(false);
@@ -45,7 +43,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     useEffect(() => {
         const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
         const localGeminiKey = localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI);
-        const localKinocheckKey = localStorage.getItem(LOCAL_STORAGE_KEY_KINOCHECK);
         const localAllClear = localStorage.getItem(LOCAL_STORAGE_KEY_ALL_CLEAR);
         
         if (localTmdbKey) {
@@ -58,7 +55,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
         
         setGeminiApiKey(localGeminiKey);
-        setKinocheckApiKey(localKinocheckKey);
         setRateLimit(getInitialRateLimit());
         
         setIsInitialized(true);
@@ -79,30 +75,12 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
     }, [geminiApiKey]);
 
-    const saveApiKeys = useCallback((keys: { tmdbKey: string; geminiKey: string; kinocheckKey: string; }) => {
+    const saveApiKeys = useCallback((keys: { tmdbKey: string; geminiKey: string }) => {
         setTmdbApiKey(keys.tmdbKey);
         setLocalTmdbApiKey(keys.tmdbKey); // Sync immediately
         setGeminiApiKey(keys.geminiKey);
-        setKinocheckApiKey(keys.kinocheckKey);
         localStorage.setItem(LOCAL_STORAGE_KEY_TMDB, keys.tmdbKey);
         localStorage.setItem(LOCAL_STORAGE_KEY_GEMINI, keys.geminiKey);
-        localStorage.setItem(LOCAL_STORAGE_KEY_KINOCHECK, keys.kinocheckKey);
-    }, []);
-
-    const saveTmdbApiKey = useCallback((key: string) => {
-        setTmdbApiKey(key);
-        setLocalTmdbApiKey(key);
-        localStorage.setItem(LOCAL_STORAGE_KEY_TMDB, key);
-    }, []);
-
-    const saveGeminiApiKey = useCallback((key: string) => {
-        setGeminiApiKey(key);
-        localStorage.setItem(LOCAL_STORAGE_KEY_GEMINI, key);
-    }, []);
-
-    const saveKinocheckApiKey = useCallback((key: string) => {
-        setKinocheckApiKey(key);
-        localStorage.setItem(LOCAL_STORAGE_KEY_KINOCHECK, key);
     }, []);
 
     const toggleAllClearMode = useCallback(() => {
@@ -147,14 +125,12 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         setTmdbApiKey(null);
         setLocalTmdbApiKey(null); // Sync immediately
         setGeminiApiKey(null);
-        setKinocheckApiKey(null);
         setAiClient(null);
         setRateLimit(newRateLimit);
         setIsAllClearMode(false);
         
         localStorage.removeItem(LOCAL_STORAGE_KEY_TMDB);
         localStorage.removeItem(LOCAL_STORAGE_KEY_GEMINI);
-        localStorage.removeItem(LOCAL_STORAGE_KEY_KINOCHECK);
         localStorage.removeItem(LOCAL_STORAGE_KEY_RATE_LIMIT);
         localStorage.removeItem(LOCAL_STORAGE_KEY_ALL_CLEAR);
     }, []);
@@ -162,7 +138,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     const value = {
         tmdbApiKey,
         geminiApiKey,
-        kinocheckApiKey,
         aiClient,
         rateLimit,
         isInitialized,
@@ -171,9 +146,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         canMakeRequest,
         incrementRequestCount,
         saveApiKeys,
-        saveTmdbApiKey,
-        saveGeminiApiKey,
-        saveKinocheckApiKey,
         clearAllSettings,
     };
 

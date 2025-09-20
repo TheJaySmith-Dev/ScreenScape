@@ -5,11 +5,10 @@ import { PlaySolidIcon, InfoIcon } from './icons.tsx';
 
 interface HeroSectionProps {
   item: MediaDetails;
-  onPlay: (item: MediaDetails) => void;
   onMoreInfo: (item: MediaDetails) => void;
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ item, onPlay, onMoreInfo }) => {
+export const HeroSection: React.FC<HeroSectionProps> = ({ item, onMoreInfo }) => {
   const truncatedOverview = item.overview.length > 200 
     ? item.overview.substring(0, 200).split(' ').slice(0, -1).join(' ') + '...' 
     : item.overview;
@@ -28,7 +27,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ item, onPlay, onMoreIn
             </p>
             <div className="flex items-center gap-3 sm:gap-4 fade-in" style={{ animationDelay: '600ms' }}>
                 <button
-                    onClick={() => onPlay(item)}
+                    onClick={() => onMoreInfo(item)}
                     className="glass-button primary text-sm sm:text-base"
                 >
                     <PlaySolidIcon className="w-5 h-5" />

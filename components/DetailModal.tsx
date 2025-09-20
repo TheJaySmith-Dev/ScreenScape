@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, CrewMember, UserLocation, WatchProviders, OmdbDetails, FunFact, SeasonDetails, Episode, SeasonSummary } from '../types.ts';
 import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, SparklesIcon, InfoIcon, ChatBubbleIcon, CloseIcon } from './icons.tsx';
 // FIX: Import `RecommendationGrid` which is used in this component, and remove the unused `RecommendationCard` import.
@@ -9,13 +10,14 @@ import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
 import { usePreferences } from '../hooks/usePreferences.ts';
 import { CinemaAvailability } from './CinemaAvailability.tsx';
 import { fetchOmdbDetails } from '../services/omdbService.ts';
-import { getFunFactsForMedia } from '../services/recommendationService.ts';
+import { getFunFactsForMedia } from '../services/aiService.ts';
 import { RateLimitMessage } from './RateLimitMessage.tsx';
 import { useSettings } from '../hooks/useSettings.ts';
 import { fetchSeasonDetails } from '../services/mediaService.ts';
-import { getKinoCheckTrailer } from '../services/kinocheckService.ts';
 import { useCountdown } from '../hooks/useCountdown.ts';
 import { StreamingAvailability } from './StreamingAvailability.tsx';
+import { CountrySelector } from './CountrySelector.tsx';
+import { supportedCountries } from '../services/countryService.ts';
 
 interface DetailModalProps {
   item: MediaDetails | CollectionDetails;
@@ -23,7 +25,8 @@ interface DetailModalProps {
   isLoading: boolean;
   onSelectMedia: (media: MediaDetails) => void;
   onSelectActor: (actorId: number) => void;
-  userLocation: UserLocation | null;
+  selectedLocation: UserLocation;
+  onLocationChange: (location: UserLocation) => void;
   onOpenChat: (media: MediaDetails) => void;
 }
 
@@ -191,13 +194,13 @@ const isMediaDetails = (item: MediaDetails | CollectionDetails): item is MediaDe
   return 'title' in item && 'type' in item;
 };
 
-export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, onSelectActor, userLocation, onOpenChat }) => {
+export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, onSelectActor, selectedLocation, onLocationChange, onOpenChat }) => {
     const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
     const { likeItem, dislikeItem, unlistItem, isLiked, isDisliked } = usePreferences();
     const [omdbDetails, setOmdbDetails] = useState<OmdbDetails | null>(null);
     const [isOmdbLoading, setIsOmdbLoading] = useState(false);
     const [isDetailsVisible, setIsDetailsVisible] = useState(false);
-    const { aiClient, canMakeRequest, incrementRequestCount, kinocheckApiKey } = useSettings();
+    const { aiClient, canMakeRequest, incrementRequestCount } = useSettings();
 
     // State for AI-generated Fun Facts
     const [funFacts, setFunFacts] = useState<FunFact[] | null>(null);
@@ -241,29 +244,10 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         }
     }, [item.id, item]);
 
-    const handleWatchTrailer = async () => {
-        if (isMediaDetails(item) && kinocheckApiKey) {
-            const trailerUrl = await getKinoCheckTrailer(item.id, kinocheckApiKey);
-            if (trailerUrl) {
-                const videoId = trailerUrl.split('embed/')[1];
-                setTrailerVideoId(videoId);
-            } else {
-                alert("KinoCheck trailer not found. Falling back to TMDb.");
-                // Fallback to TMDB trailer if KinoCheck fails
-                if (item.trailerUrl) {
-                    const videoId = item.trailerUrl.split('embed/')[1];
-                    setTrailerVideoId(videoId);
-                } else {
-                    alert("No trailer found for this title.");
-                }
-            }
-        } else if (isMediaDetails(item)) {
-            alert("KinoCheck API key not found. Using TMDb trailer.");
-            // Fallback for when kinocheckApiKey is not available
-            if (item.trailerUrl) {
-                const videoId = item.trailerUrl.split('embed/')[1];
-                setTrailerVideoId(videoId);
-            }
+    const handleWatchTrailer = () => {
+        if (isMediaDetails(item) && item.trailerUrl) {
+            const videoId = item.trailerUrl.split('embed/')[1];
+            setTrailerVideoId(videoId);
         }
     };
 
@@ -309,6 +293,20 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         }
     }
 
+    const handleCountryChange = (countryCode: string) => {
+        const country = supportedCountries.find(c => c.code === countryCode);
+        if (country) {
+            onLocationChange({ name: country.name, code: country.code });
+        }
+    };
+
+    const countryListForSelector = useMemo(() => {
+        const userCountry = supportedCountries.find(c => c.code === selectedLocation.code);
+        if (!userCountry) return supportedCountries;
+        const otherCountries = supportedCountries.filter(c => c.code !== userCountry.code);
+        return [userCountry, ...otherCountries];
+    }, [selectedLocation.code]);
+
     const itemIsLiked = isMediaDetails(item) && isLiked(item.id);
     const itemIsDisliked = isMediaDetails(item) && isDisliked(item.id);
 
@@ -331,7 +329,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
           <CloseIcon className="w-6 h-6" />
         </button>
 
-        {trailerVideoId && <CustomVideoPlayer videoId={trailerVideoId} onClose={() => setTrailerVideoId(null)} />}
+        {trailerVideoId && <CustomVideoPlayer videoId={trailerVideoId} onClose={() => setTrailerVideoId(null)} videoTitle={`${pageTitle} - Official Trailer`} />}
         
         <div className="overflow-y-auto media-row rounded-[24px]">
           <div className="relative min-h-[400px] md:min-h-[500px] flex flex-col justify-end text-white rounded-t-[24px] overflow-hidden p-6 md:p-8">
@@ -361,7 +359,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                   )}
 
                   <div className="flex flex-wrap items-center gap-3">
-                    {isMediaDetails(item) && (
+                    {isMediaDetails(item) && item.trailerUrl && (
                       <button onClick={handleWatchTrailer} className="glass-button primary text-sm">
                         <PlayIcon className="w-5 h-5" />
                         <span>Trailer</span>
@@ -417,11 +415,20 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                         )}
                      </div>
                      <div className="md:w-1/3 flex-shrink-0 space-y-6">
-                        {userLocation && item.isInTheaters && (
-                            <CinemaAvailability userLocation={userLocation} movieTitle={item.title} />
+                        <div>
+                            <h4 className="text-md font-semibold text-white mb-2">Region</h4>
+                            <CountrySelector
+                                countries={countryListForSelector}
+                                selectedCode={selectedLocation.code}
+                                onCountryChange={handleCountryChange}
+                            />
+                        </div>
+
+                        {selectedLocation && item.isInTheaters && (
+                            <CinemaAvailability userLocation={selectedLocation} movieTitle={item.title} />
                         )}
                         
-                        {isMediaDetails(item) && !item.isInTheaters && <StreamingAvailability item={item} userLocation={userLocation} />}
+                        {isMediaDetails(item) && !item.isInTheaters && <StreamingAvailability item={item} userLocation={selectedLocation} />}
 
                         {aiClient && (
                             <div>

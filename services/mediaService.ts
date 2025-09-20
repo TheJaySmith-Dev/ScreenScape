@@ -42,50 +42,35 @@ export const fetchApi = async <T,>(endpoint: string): Promise<T> => {
     return response.json();
 };
 
-export const getGenres = async (type: 'movie' | 'tv'): Promise<{ id: number, name: string }[]> => {
-    try {
-        const data = await fetchApi<{ genres: { id: number, name: string }[] }>(`/genre/${type}/list`);
-        return data.genres;
-    } catch (error) {
-        console.error(`Failed to fetch ${type} genres:`, error);
-        throw error;
-    }
-};
-
-export const discoverMedia = (
-    type: 'movie' | 'tv',
-    genreIds: number[],
-    year: string
-): Promise<MediaDetails[]> => {
-    const genreQuery = genreIds.length > 0 ? `&with_genres=${genreIds.join(',')}` : '';
-    const yearQuery = year ? `&primary_release_year=${year}` : '';
-    const endpoint = `/discover/${type}?sort_by=popularity.desc${genreQuery}${yearQuery}`;
-    return fetchList(endpoint, type);
-};
-
 export const findBestTrailer = (videos: any[]): any | null => {
     if (!videos || videos.length === 0) return null;
 
-    const candidates = videos.filter(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
+    const candidates = videos.filter(v => v.site === 'YouTube' && ['Trailer', 'Teaser'].includes(v.type));
+    
     if (candidates.length === 0) return null;
 
     candidates.sort((a, b) => {
         let scoreA = 0;
         let scoreB = 0;
-        if (a.official) scoreA += 8;
-        if (b.official) scoreB += 8;
-        if (a.name && a.name.toLowerCase().includes('original')) scoreA += 4;
-        if (b.name && b.name.toLowerCase().includes('original')) scoreB += 4;
-        if (a.type === 'Trailer') scoreA += 2;
-        if (b.type === 'Trailer') scoreB += 2;
+
+        // Type preference: 'Trailer' is better than 'Teaser'
+        if (a.type === 'Trailer') scoreA += 4;
+        if (b.type === 'Trailer') scoreB += 4;
+
+        // Official status preference
+        if (a.official) scoreA += 2;
+        if (b.official) scoreB += 2;
+
+        // Recency preference: newer is better
         const dateA = new Date(a.published_at).getTime();
         const dateB = new Date(b.published_at).getTime();
-        if (dateA < dateB) {
+        if (dateA > dateB) {
             scoreA += 1;
-        } else if (dateB < a) {
+        } else if (dateB > dateA) {
             scoreB += 1;
         }
-        return scoreB - scoreA;
+        
+        return scoreB - scoreA; // Sort descending by score
     });
 
     return candidates[0];
@@ -295,15 +280,6 @@ export const fetchDetailsForModal = async (id: number, type: 'movie' | 'tv', cou
               }
               additionalDetails.seasons = details.seasons;
           }
-
-      if (type === 'movie') {
-        if (details.budget > 0) {
-            additionalDetails.budget = details.budget;
-        }
-        if (details.revenue > 0) {
-            additionalDetails.revenue = details.revenue;
-        }
-      }
   
           const finalDetails = {
               ...baseDetails,
@@ -365,28 +341,6 @@ export const getNowPlayingMovies = (): Promise<MediaDetails[]> => fetchList('/mo
 export const getTopRatedMovies = (): Promise<MediaDetails[]> => fetchList('/movie/top_rated', 'movie');
 export const getTopRatedTv = (): Promise<MediaDetails[]> => fetchList('/tv/top_rated', 'tv');
 
-export const getMoviesReleasedOn = (month: number, day: number): Promise<MediaDetails[]> => {
-    // TMDb API's /discover endpoint doesn't directly support filtering by month/day across all years.
-    // As a workaround, we can fetch movies from the last few decades on this day.
-    // This is not exhaustive but provides a good sample.
-    const currentYear = new Date().getFullYear();
-    const years = [currentYear, currentYear - 10, currentYear - 20, currentYear - 30, currentYear - 40];
-
-    const promises = years.map(year => {
-        const date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        return fetchList(`/discover/movie?primary_release_date.gte=${date}&primary_release_date.lte=${date}`, 'movie');
-    });
-
-    return Promise.all(promises).then(results => results.flat());
-};
-
-export const getPeopleBornOn = (month: number, day: number): Promise<any[]> => {
-    // TMDb API doesn't support searching for people by birthday.
-    // This is a placeholder for a potential future implementation.
-    console.log(`Fetching people born on ${month}/${day} - not yet implemented.`);
-    return Promise.resolve([]);
-};
-
 export const getComingSoonMedia = async (): Promise<MediaDetails[]> => {
     const upcomingMovies = await fetchList('/movie/upcoming', 'movie');
     const onTheAirTv = await fetchList('/tv/on_the_air', 'tv');
@@ -402,22 +356,8 @@ export const getComingSoonMedia = async (): Promise<MediaDetails[]> => {
     return combined.slice(0, 20);
 };
 
-export const getNewReleases = async (): Promise<MediaDetails[]> => {
-    const upcomingMovies = await fetchList('/movie/upcoming', 'movie');
-    const onTheAirTv = await fetchList('/tv/on_the_air', 'tv');
-
-    // Just combine them, no need to sort
-    return [...upcomingMovies, ...onTheAirTv].slice(0, 20);
-}
-
-export const getSimilarMedia = async (id: number, type: 'movie' | 'tv'): Promise<MediaDetails[]> => {
-    const endpoint = `/${type}/${id}/similar`;
-    return fetchList(endpoint, type);
-};
-
-export const searchMedia = (query: string, year?: string): Promise<MediaDetails[]> => {
-    const yearQuery = year ? `&year=${year}` : '';
-    return fetchList(`/search/multi?query=${encodeURIComponent(query)}${yearQuery}`);
+export const searchMedia = (query: string): Promise<MediaDetails[]> => {
+    return fetchList(`/search/multi?query=${encodeURIComponent(query)}`);
 };
 
 export const fetchCollectionDetails = async (collectionId: number): Promise<CollectionDetails> => {

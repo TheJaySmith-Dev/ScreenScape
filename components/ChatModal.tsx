@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { MediaDetails, ChatMessage, Brand } from '../types.ts';
 import { CloseIcon, SendIcon } from './icons.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
-import { startChatForMedia, startChatForBrand } from '../services/recommendationService.ts';
+import { startChatForMedia, startChatForBrand } from '../services/aiService.ts';
 import { RateLimitMessage } from './RateLimitMessage.tsx';
 import type { Chat } from '@google/genai';
 import { useSettings } from '../hooks/useSettings.ts';

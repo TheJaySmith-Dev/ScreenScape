@@ -8,13 +8,13 @@ import { LoadingSpinner } from './components/LoadingSpinner.tsx';
 import { StudioGrid } from './components/StudioGrid.tsx';
 import { BrandGrid } from './components/BrandGrid.tsx';
 import { NetworkGrid } from './components/NetworkGrid.tsx';
+import { PersonGrid } from './components/PersonGrid.tsx';
+import { PersonPage } from './components/PersonPage.tsx';
 import { StreamingGrid } from './components/StreamingGrid.tsx';
 import { BrandDetail } from './components/BrandDetail.tsx';
 import { RecommendationGrid } from './components/RecommendationGrid.tsx';
 import { ActorPage } from './components/ActorPage.tsx';
 import { ComingSoonPage } from './components/ComingSoonPage.tsx';
-import { DiscoverPage } from './components/DiscoverPage.tsx';
-import { AwardSearchPage } from './components/AwardSearchPage.tsx';
 import { OnboardingModal } from './components/OnboardingModal.tsx';
 import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { SearchModal } from './components/SearchModal.tsx';
@@ -22,26 +22,26 @@ import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
 import { BrowseMenuModal } from './components/MobileMenuModal.tsx';
 import { ChatModal } from './components/ChatModal.tsx';
 import { AiDescriptionModal } from './components/AiDescriptionModal.tsx';
-import { UserIcon, SearchIcon, GridIcon } from './components/icons.tsx';
+import { SearchIcon, GridIcon, ThumbsUpIcon } from './components/icons.tsx';
+import { RateLimitMessage } from './components/RateLimitMessage.tsx';
 
 import * as mediaService from './services/mediaService.ts';
 import { popularStudios } from './services/studioService.ts';
 import { brands } from './services/brandService.ts';
 import { supportedProviders } from './services/streamingService.ts';
 import { popularNetworks } from './services/networkService.ts';
+import { people } from './services/peopleService.ts';
 
-import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy } from './types.ts';
-import { getViewingGuidesForBrand, getAiDescriptionForBrand } from './services/recommendationService.ts';
+import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Person, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy, AiCuratedCarousel } from './types.ts';
+import { getViewingGuidesForBrand, getAiDescriptionForBrand, getAiCuratedRecommendations } from './services/aiService.ts';
 import { useSettings } from './hooks/useSettings.ts';
 import { usePreferences } from './hooks/usePreferences.ts';
-import { useRecommendations } from './hooks/useRecommendations.ts';
 
 const getHashRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
 
 const App: React.FC = () => {
-    const { tmdbApiKey, geminiApiKey, kinocheckApiKey, isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount } = useSettings();
-    const { likes } = usePreferences();
-    const { forYouRecs, sinceYouLikedRecs, featuredLikedItem, isLoading: recsLoading } = useRecommendations();
+    const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount } = useSettings();
+    const { likes, isLoading: isPreferencesLoading } = usePreferences();
     const [route, setRoute] = useState<string[]>(getHashRoute());
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -56,17 +56,20 @@ const App: React.FC = () => {
     const [studioContent, setStudioContent] = useState<MediaDetails[]>([]);
     const [brandContent, setBrandContent] = useState<MediaDetails[]>([]);
     const [networkContent, setNetworkContent] = useState<MediaDetails[]>([]);
+    const [personContent, setPersonContent] = useState<MediaDetails[]>([]);
     const [streamingContent, setStreamingContent] = useState<MediaDetails[]>([]);
     const [moviesContent, setMoviesContent] = useState<MediaDetails[]>([]);
     const [tvContent, setTvContent] = useState<MediaDetails[]>([]);
     const [comingSoonContent, setComingSoonContent] = useState<MediaDetails[]>([]);
-    const [newReleases, setNewReleases] = useState<MediaDetails[]>([]);
-    const [releasedTodayContent, setReleasedTodayContent] = useState<MediaDetails[]>([]);
+    const [curatedRows, setCuratedRows] = useState<AiCuratedCarousel[]>([]);
+    const [isForYouLoading, setIsForYouLoading] = useState(false);
+    const [forYouError, setForYouError] = useState<string | null>(null);
 
     // Modal/Detail states
     const [selectedItem, setSelectedItem] = useState<MediaDetails | CollectionDetails | null>(null);
     const [selectedActor, setSelectedActor] = useState<ActorDetails | null>(null);
     const [selectedBrand, setSelectedBrand] = useState<Brand | null>(null);
+    const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isAiSearchOpen, setIsAiSearchOpen] = useState(false);
     const [isViewingGuideModalOpen, setIsViewingGuideModalOpen] = useState(false);
@@ -76,7 +79,7 @@ const App: React.FC = () => {
     const [chatBrandItem, setChatBrandItem] = useState<Brand | null>(null);
     const [brandGuides, setBrandGuides] = useState<ViewingGuide[]>([]);
     const [isGuideLoading, setIsGuideLoading] = useState(false);
-    const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+    const [selectedLocation, setSelectedLocation] = useState<UserLocation>({ name: 'United States', code: 'US' });
     
     // AI Description Modal state
     const [isAiDescriptionModalOpen, setIsAiDescriptionModalOpen] = useState(false);
@@ -93,66 +96,12 @@ const App: React.FC = () => {
         const handleHashChange = () => setRoute(getHashRoute());
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20);
-            const scrollY = window.scrollY;
-            document.body.style.backgroundPositionY = `${scrollY * 0.5}px`;
         };
         window.addEventListener('hashchange', handleHashChange);
         window.addEventListener('scroll', handleScroll, { passive: true });
         return () => {
             window.removeEventListener('hashchange', handleHashChange);
             window.removeEventListener('scroll', handleScroll);
-        };
-    }, []);
-
-    // LIQUID GLASS - Interactive light effect
-    useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            const panels = document.querySelectorAll<HTMLElement>('.glass-panel');
-            for (const panel of panels) {
-                const rect = panel.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                panel.style.setProperty('--liquid-light-x', `${x}px`);
-                panel.style.setProperty('--liquid-light-y', `${y}px`);
-            }
-        };
-
-        window.addEventListener('mousemove', handleMouseMove);
-
-        return () => {
-            window.removeEventListener('mousemove', handleMouseMove);
-        };
-    }, []);
-
-    // LIQUID GLASS - Hover effect for panels
-    useEffect(() => {
-        const handleMouseOver = (e: MouseEvent) => {
-            const target = e.target as HTMLElement;
-            const panel = target.closest('.glass-panel') as HTMLElement;
-            if (panel) {
-                panel.style.setProperty('--liquid-light-color', 'rgba(120, 140, 255, 0.4)');
-                panel.style.setProperty('--liquid-saturate', '2.0');
-                panel.style.setProperty('--liquid-transform', 'scale(1.03) translateY(-5px)');
-            }
-        };
-
-        const handleMouseOut = (e: MouseEvent) => {
-            const target = e.target as HTMLElement;
-            const panel = target.closest('.glass-panel') as HTMLElement;
-            if (panel) {
-                // Revert to the default values from the stylesheet
-                panel.style.removeProperty('--liquid-light-color');
-                panel.style.removeProperty('--liquid-saturate');
-                panel.style.removeProperty('--liquid-transform');
-            }
-        };
-
-        document.body.addEventListener('mouseover', handleMouseOver);
-        document.body.addEventListener('mouseout', handleMouseOut);
-
-        return () => {
-            document.body.removeEventListener('mouseover', handleMouseOver);
-            document.body.removeEventListener('mouseout', handleMouseOut);
         };
     }, []);
 
@@ -167,11 +116,7 @@ const App: React.FC = () => {
     const fetchInitialData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const today = new Date();
-            const month = today.getMonth() + 1;
-            const day = today.getDate();
-
-            const results = await Promise.allSettled([
+            const [trending, popularMovies, popularTv, nowPlaying, comingSoon, topMovies, topTv] = await Promise.all([
                 mediaService.getTrending(),
                 mediaService.getPopularMovies(),
                 mediaService.getPopularTv(),
@@ -179,31 +124,14 @@ const App: React.FC = () => {
                 mediaService.getComingSoonMedia(),
                 mediaService.getTopRatedMovies(),
                 mediaService.getTopRatedTv(),
-                mediaService.getMoviesReleasedOn(month, day),
-                mediaService.getNewReleases(),
             ]);
-
-            const [
-                trending,
-                popularMovies,
-                popularTv,
-                nowPlaying,
-                comingSoon,
-                topMovies,
-                topTv,
-                releasedToday,
-                newReleases
-            ] = results.map(result => (result.status === 'fulfilled' ? result.value : []));
-
-            setTrending(trending as MediaDetails[]);
-            setPopularMovies(popularMovies as MediaDetails[]);
-            setPopularTv(popularTv as MediaDetails[]);
-            setNowPlaying(nowPlaying as MediaDetails[]);
-            setComingSoonContent(comingSoon as MediaDetails[]);
-            setMoviesContent(topMovies as MediaDetails[]);
-            setTvContent(topTv as MediaDetails[]);
-            setReleasedTodayContent(releasedToday as MediaDetails[]);
-            setNewReleases(newReleases as MediaDetails[]);
+            setTrending(trending);
+            setPopularMovies(popularMovies);
+            setPopularTv(popularTv);
+            setNowPlaying(nowPlaying);
+            setComingSoonContent(comingSoon);
+            setMoviesContent(topMovies);
+            setTvContent(topTv);
         } catch (error) {
             console.error("Failed to fetch initial data:", error);
         } finally {
@@ -214,25 +142,47 @@ const App: React.FC = () => {
     useEffect(() => {
         if (isInitialized && tmdbApiKey) {
             fetchInitialData();
-            // Fetch user location
-            fetch('https://ipinfo.io/json?token=a0c105b32a98f7')
-                .then(res => res.json())
-                .then(data => {
-                    // Defensive check to ensure data.country exists and is a non-empty string
-                    if (data && typeof data.country === 'string' && data.country.trim() !== '') {
-                        setUserLocation({ name: data.country, code: data.country });
-                    } else {
-                        // Fallback if the API response is malformed or missing the country
-                        console.warn("ipinfo.io did not return a valid country. Falling back to US.");
-                        setUserLocation({ name: 'United States', code: 'US' });
-                    }
-                })
-                .catch(error => {
-                    console.error("Failed to fetch user location:", error);
-                    setUserLocation({ name: 'United States', code: 'US' }); // Fallback for network errors
-                });
         }
     }, [isInitialized, tmdbApiKey, fetchInitialData]);
+
+    const MIN_LIKES_FOR_AI = 3;
+    const fetchForYouRecommendations = useCallback(async () => {
+        if (likes.length < MIN_LIKES_FOR_AI || !aiClient || isForYouLoading) {
+            return;
+        }
+
+        const { canRequest } = canMakeRequest();
+        if (!canRequest) {
+            return;
+        }
+
+        setIsForYouLoading(true);
+        setForYouError(null);
+        
+        try {
+            const results = await getAiCuratedRecommendations(likes, aiClient);
+            incrementRequestCount();
+            
+            if (results.length === 0) {
+                setForYouError("ScapeAI couldn't generate recommendations. Try liking more diverse titles!");
+            } else {
+                setCuratedRows(results);
+            }
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
+            console.error(errorMessage);
+            setForYouError("An error occurred while curating your recommendations.");
+        } finally {
+            setIsForYouLoading(false);
+        }
+    }, [likes, aiClient, isForYouLoading, canMakeRequest, incrementRequestCount]);
+
+    useEffect(() => {
+        const page = route[0] || 'home';
+        if (page === 'home' && isInitialized && tmdbApiKey && geminiApiKey && !isPreferencesLoading) {
+            fetchForYouRecommendations();
+        }
+    }, [route, isInitialized, tmdbApiKey, geminiApiKey, isPreferencesLoading, fetchForYouRecommendations]);
 
     // FIX: Add a useEffect hook to handle fetching data for brand pages based on the current route.
     // This ensures content loads correctly on both direct navigation and clicks.
@@ -279,13 +229,49 @@ const App: React.FC = () => {
         }
     }, [route, isInitialized, tmdbApiKey, selectedBrand]);
 
+    useEffect(() => {
+        const [page, id] = route;
+        if (!isInitialized || !tmdbApiKey) return;
+    
+        const fetchPersonData = async (personId: string) => {
+            if (selectedPerson && selectedPerson.id === personId) {
+                return; // Avoid re-fetching
+            }
+    
+            const person = people.find(p => p.id === personId);
+            if (person) {
+                setIsLoading(true);
+                setSelectedPerson(person);
+                try {
+                    const media = await mediaService.getMediaByPerson(person.tmdbId, person.role);
+                    setPersonContent(media);
+                } catch (error) {
+                    console.error(`Failed to fetch content for person ${person.name}`, error);
+                    setPersonContent([]);
+                } finally {
+                    setIsLoading(false);
+                }
+            } else if (page === 'person') {
+                window.location.hash = '/people'; // Redirect if person not found
+            }
+        };
+    
+        if (page === 'person' && id) {
+            fetchPersonData(id);
+        } else if (selectedPerson) {
+            // Clean up person data when navigating away
+            setSelectedPerson(null);
+            setPersonContent([]);
+        }
+    }, [route, isInitialized, tmdbApiKey, selectedPerson]);
+
     const handleSelectMedia = useCallback(async (media: MediaDetails) => {
         setSelectedActor(null); // Clear actor modal when opening media modal
         setIsDetailLoading(true);
         setSelectedItem(media);
         document.body.classList.add('modal-open');
         try {
-            const details = await mediaService.fetchDetailsForModal(media.id, media.type, userLocation?.code || 'US');
+            const details = await mediaService.fetchDetailsForModal(media.id, media.type, selectedLocation.code);
             setSelectedItem(prev => prev ? { ...prev, ...details } : null);
         } catch (error) {
             console.error("Failed to fetch full details:", error);
@@ -294,7 +280,7 @@ const App: React.FC = () => {
         } finally {
             setIsDetailLoading(false);
         }
-    }, [userLocation]);
+    }, [selectedLocation]);
 
     const handleSelectCollection = useCallback(async (collection: Collection) => {
         setIsDetailLoading(true);
@@ -446,7 +432,7 @@ const App: React.FC = () => {
     const handleSelectStreamingProvider = async (provider: StreamingProviderInfo) => {
         setIsLoading(true);
         try {
-            const results = await mediaService.getMediaByStreamingProvider(provider.key, userLocation?.code || 'US');
+            const results = await mediaService.getMediaByStreamingProvider(provider.key, selectedLocation.code);
             setStreamingContent(results);
             window.location.hash = `/streaming/${provider.key}`;
         } catch(e) {
@@ -454,6 +440,10 @@ const App: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleSelectPerson = (person: Person) => {
+        window.location.hash = `/person/${person.id}`;
     };
 
     const handleOpenChatModal = (media: MediaDetails) => {
@@ -475,7 +465,7 @@ const App: React.FC = () => {
         }
         
         if (!tmdbApiKey || !geminiApiKey) {
-            return <OnboardingModal />;
+            return <OnboardingModal onSave={saveApiKeys} />;
         }
         
         if (isLoading) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
@@ -483,41 +473,84 @@ const App: React.FC = () => {
         const pageContent = (() => {
             switch(page) {
                 case 'home':
+                    const { canRequest: canRequestForYou, resetTime } = canMakeRequest();
+                    const forYouContent = () => {
+                        if (!geminiApiKey || isPreferencesLoading) return null;
+
+                        if (!canRequestForYou && resetTime) {
+                            return (
+                                <div className="mt-12 md:mt-16 px-4 sm:px-6 lg:px-8">
+                                    <RateLimitMessage resetTime={resetTime} featureName="For You curations" />
+                                </div>
+                            );
+                        }
+                        
+                        if (likes.length < MIN_LIKES_FOR_AI) {
+                            return (
+                                <div className="mt-12 md:mt-16 px-4 sm:px-6 lg:px-8">
+                                    <div className="text-center text-gray-300 fade-in glass-panel p-8">
+                                        <ThumbsUpIcon className="w-12 h-12 text-green-400 mx-auto mb-4" />
+                                        <h2 className="text-2xl font-bold mb-4 text-white">For You Recommendations</h2>
+                                        <p>Like at least <span className="font-bold text-white">{MIN_LIKES_FOR_AI}</span> movies or shows to unlock your personal AI-curated feed right here.</p>
+                                        <p className="text-sm mt-2">You've liked <span className="font-bold text-white">{likes.length}</span> so far.</p>
+                                    </div>
+                                </div>
+                            );
+                        }
+
+                        if (isForYouLoading) {
+                            return (
+                                <div className="mt-12 md:mt-16 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+                                    <h2 className="font-bold text-white mb-4 text-2xl">Curating Your Scape...</h2>
+                                    <LoadingSpinner />
+                                </div>
+                            );
+                        }
+
+                        if (forYouError) {
+                            return (
+                                <div className="mt-12 md:mt-16 px-4 sm:px-6 lg:px-8">
+                                    <p className="text-red-400 text-center bg-red-500/10 p-4 rounded-lg">{forYouError}</p>
+                                </div>
+                            );
+                        }
+                        
+                        if (curatedRows.length > 0) {
+                             return (
+                                <div className="space-y-12 md:space-y-16 mt-12 md:mt-16">
+                                    {curatedRows.map((row, index) => (
+                                        <MediaRow 
+                                            key={row.title}
+                                            title={row.title}
+                                            items={row.items}
+                                            onSelect={handleSelectMedia}
+                                            animationDelay={`${index * 150}ms`}
+                                        />
+                                    ))}
+                                </div>
+                            );
+                        }
+
+                        return null;
+                    };
+
                     return (
                         <>
-                            {trending[0] && <HeroSection item={trending[0]} onPlay={() => {}} onMoreInfo={handleSelectMedia} />}
+                            {trending[0] && <HeroSection item={trending[0]} onMoreInfo={handleSelectMedia} />}
                             <div className="space-y-12 md:space-y-16 mt-8">
-                                {featuredLikedItem && sinceYouLikedRecs.length > 0 && (
-                                    <MediaRow
-                                        title={`Since you liked ${featuredLikedItem.title}`}
-                                        items={sinceYouLikedRecs}
-                                        onSelect={handleSelectMedia}
-                                    />
-                                )}
-                                <MediaRow title="New" items={newReleases} onSelect={handleSelectMedia} />
-                                {forYouRecs && forYouRecs.length > 0 && forYouRecs.map((row, index) => (
-                                    <MediaRow
-                                        key={index}
-                                        title={row.title}
-                                        items={row.items}
-                                        onSelect={handleSelectMedia}
-                                    />
-                                ))}
                                 <MediaRow title="Trending This Week" items={trending} onSelect={handleSelectMedia} />
-                                {releasedTodayContent.length > 0 && <MediaRow title="Released Today" items={releasedTodayContent} onSelect={handleSelectMedia} animationDelay="100ms" />}
                                 <MediaRow title="Now Playing in Theaters" items={nowPlaying} onSelect={handleSelectMedia} animationDelay="100ms" />
                                 <MediaRow title="Popular Movies" items={popularMovies} onSelect={handleSelectMedia} animationDelay="200ms" />
                                 <MediaRow title="Popular TV Shows" items={popularTv} onSelect={handleSelectMedia} animationDelay="300ms" />
                             </div>
+                            {forYouContent()}
                         </>
                     );
                 case 'myscape': return <MyScapePage onSelectMedia={handleSelectMedia} />;
                 case 'movies': return <RecommendationGrid recommendations={moviesContent} onSelect={handleSelectMedia} />;
                 case 'tv': return <RecommendationGrid recommendations={tvContent} onSelect={handleSelectMedia} />;
-                case 'discover': return <DiscoverPage onSelectMedia={handleSelectMedia} />;
                 case 'collections': return <ComingSoonPage media={comingSoonContent} onSelectMedia={handleSelectMedia} />;
                 case 'studios': return <StudioGrid studios={popularStudios} onSelect={handleSelectStudio} />;
-                case 'awards': return <AwardSearchPage onSelectMedia={handleSelectMedia} />;
                 case 'brands':
                     return <BrandGrid brands={brands} onSelect={openBrandDetail} onAiInfoClick={handleOpenAiDescription} />;
                 case 'streaming':
@@ -528,6 +561,8 @@ const App: React.FC = () => {
                     }
                 case 'networks':
                     return <NetworkGrid networks={popularNetworks} onSelect={handleSelectNetwork} />;
+                case 'people':
+                    return <PersonGrid people={people} onSelect={handleSelectPerson} />;
                 case 'search':
                     return <RecommendationGrid recommendations={searchResults} onSelect={handleSelectMedia} />;
                 case 'brand':
@@ -539,6 +574,16 @@ const App: React.FC = () => {
                     return <RecommendationGrid recommendations={studioContent} onSelect={handleSelectMedia} />;
                 case 'network':
                     return <RecommendationGrid recommendations={networkContent} onSelect={handleSelectMedia} />;
+                case 'person':
+                    if (selectedPerson) {
+                        return <PersonPage 
+                                    person={selectedPerson} 
+                                    media={personContent} 
+                                    onBack={() => window.location.hash = '/people'} 
+                                    onSelectMedia={handleSelectMedia}
+                                    onSelectActor={handleSelectActor} />;
+                    }
+                    return <div className="text-center">Loading talent...</div>;
                 default:
                      window.location.hash = '/home';
                      return null;
@@ -566,18 +611,12 @@ const App: React.FC = () => {
         return null;
     };
     
-    // PHASE 1: Navigation Simplification
-    // The following navigation changes are the first phase of a larger UI enhancement.
-    // The "Discover" link is promoted to the main navigation for desktop/tablet,
-    // while the "Browse" button is hidden on those views to simplify the main navigation paths.
-    // The "Dynamic Title Tiles" feature will be implemented in the next phase.
     const PillNavigation: React.FC = () => {
        const activeRoute = route[0] || 'home';
        return (
             <div className={`transition-transform duration-500 ease-in-out ${isScrolled ? 'scale-90' : 'scale-100'}`}>
                 <div className="flex items-center gap-1 p-1.5 glass-panel rounded-full">
                     <a href="#/home" className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${activeRoute === 'home' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}>Home</a>
-                    <a href="#/discover" className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${activeRoute === 'discover' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}>Discover</a>
                     <button onClick={() => setIsSearchOpen(true)} className="p-2.5 rounded-full hover:bg-white/5 transition-colors" aria-label="Open Search">
                         <SearchIcon className="w-5 h-5" />
                     </button>
@@ -585,110 +624,65 @@ const App: React.FC = () => {
                         <img src="https://img.icons8.com/?size=100&id=eoxMN35Z6JKg&format=png&color=FFFFFF" alt="ScapeAI logo" className="w-5 h-5" />
                         <span>ScapeAI</span>
                     </button>
-                     <button onClick={() => setIsBrowseMenuOpen(true)} className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-semibold text-gray-300 hover:bg-white/5 rounded-full transition-colors" aria-label="Open More Menu">
+                     <button onClick={() => setIsBrowseMenuOpen(true)} className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-semibold text-gray-300 bg-white/5 hover:bg-white/10 rounded-full transition-colors" aria-label="Open browse menu">
                         <GridIcon className="w-5 h-5" />
-                        <span>More</span>
+                        <span>Browse</span>
                     </button>
-                    {/* Visual separator */}
-                    <div className="w-px h-6 bg-white/10 mx-1"></div>
-                    <a href="#/myscape" className={`p-2.5 rounded-full transition-colors ${activeRoute === 'myscape' ? 'bg-white/10' : 'hover:bg-white/5'}`} aria-label="MyScape">
-                        <UserIcon className="w-6 h-6" />
-                    </a>
+                    <a href="#/myscape" className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${activeRoute === 'myscape' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}>MyScape</a>
                 </div>
             </div>
        );
     };
 
-    const isMedia = selectedItem && 'type' in selectedItem;
-    // FIX: Correctly determine the modal's backdrop URL. This logic handles media items (with/without textless backdrops) and collections, ensuring the background always displays.
-    const backdropUrl = selectedItem 
-        ? (isMedia 
-            ? ((selectedItem as MediaDetails).textlessBackdropUrl || (selectedItem as MediaDetails).backdropUrl) 
-            : (selectedItem as CollectionDetails).backdropUrl) 
-        : null;
-
     return (
-      <div className="min-h-screen">
-          <header className="fixed top-0 left-0 right-0 z-40 p-4 hidden md:flex items-center justify-center">
-              <PillNavigation />
-          </header>
-          
-          <main className="pb-24 md:pb-0">
-              {renderPage()}
-          </main>
-          
-          {(selectedItem || selectedActor) && (
-              <div
-                className="fixed inset-0 z-50 overflow-y-auto"
+        <div id="app-container" className="min-h-screen">
+            <header className={`fixed top-4 left-0 right-0 z-50 flex justify-center items-center transition-all duration-300 ease-in-out`}>
+                <PillNavigation />
+            </header>
+
+            <main className="transition-opacity duration-500">
+                {renderPage()}
+            </main>
+
+            {selectedItem && (
+              <div 
+                className="fixed inset-0 z-[60] flex items-center justify-center p-4 modal-backdrop-overlay"
                 onClick={handleCloseModal}
               >
-                  <div className="fixed inset-0 -z-10">
-                      {backdropUrl && (
-                          <img src={backdropUrl} alt="" className="w-full h-full object-cover" />
-                      )}
-                      <div className="absolute inset-0 modal-backdrop-overlay" />
-                  </div>
-
-                  <div className="flex items-center justify-center min-h-full p-4">
-                       {selectedItem && (
-                            <DetailModal item={selectedItem} onClose={handleCloseModal} isLoading={isDetailLoading} onSelectMedia={handleSelectMedia} onSelectActor={handleSelectActor} userLocation={userLocation} onOpenChat={handleOpenChatModal} />
-                       )}
-                       {selectedActor && (
-                            <div onClick={(e) => e.stopPropagation()}>
-                                <ActorPage actor={selectedActor} onBack={handleCloseModal} onSelectMedia={handleSelectMedia} isLoading={isDetailLoading} />
-                            </div>
-                       )}
-                  </div>
+                <DetailModal 
+                    item={selectedItem}
+                    onClose={handleCloseModal}
+                    isLoading={isDetailLoading}
+                    onSelectMedia={handleSelectMedia}
+                    onSelectActor={handleSelectActor}
+                    selectedLocation={selectedLocation}
+                    onLocationChange={setSelectedLocation}
+                    onOpenChat={handleOpenChatModal}
+                />
               </div>
-          )}
+            )}
+            
+            {selectedActor && (
+                <div 
+                    className="fixed inset-0 z-[60] flex items-center justify-center p-4 modal-backdrop-overlay"
+                    onClick={handleCloseModal}
+                >
+                    <ActorPage 
+                        actor={selectedActor}
+                        onBack={handleCloseModal}
+                        onSelectMedia={handleSelectMedia}
+                        isLoading={isDetailLoading}
+                    />
+                </div>
+            )}
 
-          <SearchModal 
-            isOpen={isSearchOpen}
-            onClose={() => setIsSearchOpen(false)}
-            onSearch={handleSearch}
-            isLoading={isLoading}
-          />
-          <AiSearchModal 
-            isOpen={isAiSearchOpen}
-            onClose={() => setIsAiSearchOpen(false)}
-            onSelectMedia={handleSelectMedia}
-          />
-          <ViewingGuideModal 
-            isOpen={isViewingGuideModalOpen}
-            onClose={() => setIsViewingGuideModalOpen(false)}
-            isLoading={isGuideLoading}
-            brandName={selectedBrand?.name || ''}
-            guides={brandGuides}
-            onSelectMedia={handleSelectMedia}
-          />
-
-          {(chatMediaItem || chatBrandItem) && (
-              <ChatModal 
-                isOpen={isChatModalOpen}
-                onClose={handleCloseChatModal}
-                media={chatMediaItem ?? undefined}
-                brand={chatBrandItem ?? undefined}
-              />
-          )}
-
-          <AiDescriptionModal
-            isOpen={isAiDescriptionModalOpen}
-            onClose={handleCloseAiDescriptionModal}
-            isLoading={isAiDescriptionLoading}
-            title={selectedBrandForDescription?.name || ''}
-            description={aiDescription}
-            error={aiDescriptionError}
-          />
-
-          <nav className="mobile-dock md:hidden">
-              <PillNavigation />
-          </nav>
-
-          <BrowseMenuModal
-            isOpen={isBrowseMenuOpen}
-            onClose={() => setIsBrowseMenuOpen(false)}
-          />
-      </div>
+            {isSearchOpen && <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} onSearch={handleSearch} isLoading={isLoading} />}
+            {isAiSearchOpen && <AiSearchModal isOpen={isAiSearchOpen} onClose={() => setIsAiSearchOpen(false)} onSelectMedia={handleSelectMedia} />}
+            {isViewingGuideModalOpen && selectedBrand && <ViewingGuideModal isOpen={isViewingGuideModalOpen} onClose={handleCloseModal} isLoading={isGuideLoading} brandName={selectedBrand.name} guides={brandGuides} onSelectMedia={handleSelectMedia} />}
+            {isBrowseMenuOpen && <BrowseMenuModal isOpen={isBrowseMenuOpen} onClose={() => setIsBrowseMenuOpen(false)} />}
+            {isChatModalOpen && <ChatModal isOpen={isChatModalOpen} onClose={handleCloseChatModal} media={chatMediaItem || undefined} brand={chatBrandItem || undefined} />}
+            {isAiDescriptionModalOpen && selectedBrandForDescription && <AiDescriptionModal isOpen={isAiDescriptionModalOpen} onClose={handleCloseAiDescriptionModal} isLoading={isAiDescriptionLoading} title={selectedBrandForDescription.name} description={aiDescription} error={aiDescriptionError} />}
+        </div>
     );
 };
 

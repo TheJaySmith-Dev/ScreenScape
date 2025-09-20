@@ -67,8 +67,6 @@ export interface MediaDetails {
   status?: string; // For TV shows, e.g. "Ended", "Returning Series"
   rated?: string; // MPAA rating from TMDb
   seasons?: SeasonSummary[];
-  budget?: number;
-  revenue?: number;
 }
 
 export interface Collection {
@@ -136,11 +134,21 @@ export interface Brand {
   borderColor?: string;
 }
 
+export interface Person {
+  id: string;
+  name: string;
+  posterUrl: string;
+  tmdbId: number;
+  role: 'actor' | 'director';
+}
+
 export interface Actor {
   id: number;
   name: string;
   biography: string;
   profilePath: string;
+  birthday: string | null;
+  placeOfBirth: string | null;
 }
 
 export interface ActorDetails extends Actor {
@@ -319,7 +327,6 @@ export interface RateLimitState {
 export interface SettingsContextType {
   tmdbApiKey: string | null;
   geminiApiKey: string | null;
-  kinocheckApiKey: string | null;
   aiClient: GoogleGenAI | null;
   rateLimit: RateLimitState;
   isInitialized: boolean;
@@ -327,10 +334,7 @@ export interface SettingsContextType {
   toggleAllClearMode: () => void;
   canMakeRequest: () => { canRequest: boolean; resetTime: number | null };
   incrementRequestCount: () => void;
-  saveApiKeys: (keys: { tmdbKey: string; geminiKey: string; kinocheckKey: string; }) => void;
-    saveTmdbApiKey: (key: string) => void;
-    saveGeminiApiKey: (key: string) => void;
-    saveKinocheckApiKey: (key: string) => void;
+  saveApiKeys: (keys: { tmdbKey: string; geminiKey: string }) => void;
   clearAllSettings: () => void;
 }
 

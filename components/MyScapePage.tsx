@@ -2,20 +2,19 @@ import React, { useState } from 'react';
 import { useSettings } from '../hooks/useSettings.ts';
 import { usePreferences } from '../hooks/usePreferences.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
-import { ManageKeysModal } from './ManageKeysModal.tsx';
-import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon, DiscordIcon } from './icons.tsx';
+import { OnboardingModal } from './OnboardingModal.tsx';
+import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon } from './icons.tsx';
 import type { MediaDetails } from '../types.ts';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
-import { VersionHistoryTab } from './VersionHistoryTab.tsx';
 
 interface MyScapePageProps {
   onSelectMedia: (media: MediaDetails) => void;
 }
 
 export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
-    const { rateLimit, tmdbApiKey, geminiApiKey, kinocheckApiKey, clearAllSettings, isAllClearMode, toggleAllClearMode } = useSettings();
+    const { rateLimit, tmdbApiKey, geminiApiKey, saveApiKeys, clearAllSettings, isAllClearMode, toggleAllClearMode } = useSettings();
     const { likes, isLoading: preferencesLoading } = usePreferences();
-    const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
+    const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
 
     if (preferencesLoading) {
         return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
@@ -49,12 +48,10 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                         <h1 className="text-4xl font-bold text-white">MyScape</h1>
                         <p className="text-lg text-gray-400">Your local hub for settings and liked items.</p>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <a href="https://discord.gg/VqfzVh5kzT" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 rounded-xl text-white font-semibold transition-all duration-300">
-                            <DiscordIcon className="w-6 h-6 text-indigo-400" />
-                            <span>Join our Discord</span>
-                        </a>
-                    </div>
+                    <a href="#/foryou" className="flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-semibold transition-all duration-300">
+                        <ThumbsUpIcon className="w-6 h-6 text-green-400" />
+                        <span>For You Recommendations</span>
+                    </a>
                 </header>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
@@ -69,10 +66,6 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-gray-300">Gemini API Key:</span>
                                 <span className="font-mono text-gray-400">{geminiApiKey ? `...${geminiApiKey.slice(-4)}` : 'Not Set'}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-gray-300">KinoCheck API Key:</span>
-                                <span className="font-mono text-gray-400">{kinocheckApiKey ? `...${kinocheckApiKey.slice(-4)}` : 'Not Set (Optional)'}</span>
                             </div>
                              <div className="flex justify-between items-center">
                                 <div>
@@ -96,7 +89,7 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                                 </button>
                             </div>
                             <div className="pt-2 space-y-2">
-                                <button onClick={() => setIsApiKeyModalOpen(true)} className="w-full px-4 py-2 text-sm text-center bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
+                                <button onClick={() => setIsOnboardingModalOpen(true)} className="w-full px-4 py-2 text-sm text-center bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
                                     Manage API Keys
                                 </button>
                                  <button onClick={clearAllSettings} className="w-full px-4 py-2 text-sm text-center text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors">
@@ -130,12 +123,6 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                     </div>
                 </div>
 
-                {/* Version History Section */}
-                <div>
-                    <h2 className="text-3xl font-bold mb-6 text-white">Version History</h2>
-                    <VersionHistoryTab />
-                </div>
-
                 {/* Watchlist Section */}
                 <div>
                     <h2 className="text-3xl font-bold mb-6 text-white flex items-center gap-3">
@@ -153,8 +140,17 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                 </div>
             </div>
 
-            {isApiKeyModalOpen && (
-                <ManageKeysModal onClose={() => setIsApiKeyModalOpen(false)} />
+            {isOnboardingModalOpen && (
+                <OnboardingModal
+                    onSave={(keys) => {
+                        saveApiKeys(keys);
+                        setIsOnboardingModalOpen(false);
+                    }}
+                    onClose={() => setIsOnboardingModalOpen(false)}
+                    initialTmdbKey={tmdbApiKey || ''}
+                    initialGeminiKey={geminiApiKey || ''}
+                    startOnStep={5}
+                />
             )}
         </>
     );
