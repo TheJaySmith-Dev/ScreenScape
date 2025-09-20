@@ -7,7 +7,7 @@ interface ManageKeysModalProps {
 }
 
 export const ManageKeysModal: React.FC<ManageKeysModalProps> = ({ onClose }) => {
-    const { tmdbApiKey, geminiApiKey, kinocheckApiKey, saveApiKeys } = useSettings();
+    const { tmdbApiKey, geminiApiKey, kinocheckApiKey, saveTmdbApiKey, saveGeminiApiKey, saveKinocheckApiKey } = useSettings();
     const [tmdbKey, setTmdbKey] = useState(tmdbApiKey || '');
     const [geminiKey, setGeminiKey] = useState(geminiApiKey || '');
     const [kinocheckKey, setKinocheckKey] = useState(kinocheckApiKey || '');
@@ -24,11 +24,9 @@ export const ManageKeysModal: React.FC<ManageKeysModalProps> = ({ onClose }) => 
             return;
         }
         setError('');
-        saveApiKeys({
-            tmdbKey: tmdbKey.trim(),
-            geminiKey: geminiKey.trim(),
-            kinocheckKey: kinocheckKey.trim(),
-        });
+        saveTmdbApiKey(tmdbKey.trim());
+        saveGeminiApiKey(geminiKey.trim());
+        saveKinocheckApiKey(kinocheckKey.trim());
         onClose();
     };
 

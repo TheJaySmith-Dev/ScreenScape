@@ -3,7 +3,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { HeroSection } from './components/HeroSection.tsx';
 import { MediaRow } from './components/MediaRow.tsx';
 import { DetailModal } from './components/DetailModal.tsx';
-import { ForYouPage } from './components/ForYouPage.tsx';
 import { MyScapePage } from './components/MyScapePage.tsx';
 import { LoadingSpinner } from './components/LoadingSpinner.tsx';
 import { StudioGrid } from './components/StudioGrid.tsx';
@@ -32,15 +31,17 @@ import { supportedProviders } from './services/streamingService.ts';
 import { popularNetworks } from './services/networkService.ts';
 
 import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy } from './types.ts';
-import { getViewingGuidesForBrand, getAiDescriptionForBrand, getRecommendationsForSingleItem } from './services/recommendationService.ts';
+import { getViewingGuidesForBrand, getAiDescriptionForBrand } from './services/recommendationService.ts';
 import { useSettings } from './hooks/useSettings.ts';
 import { usePreferences } from './hooks/usePreferences.ts';
+import { useRecommendations } from './hooks/useRecommendations.ts';
 
 const getHashRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
 
 const App: React.FC = () => {
     const { tmdbApiKey, geminiApiKey, kinocheckApiKey, isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount } = useSettings();
     const { likes } = usePreferences();
+    const { forYouRecs, sinceYouLikedRecs, featuredLikedItem, isLoading: recsLoading } = useRecommendations();
     const [route, setRoute] = useState<string[]>(getHashRoute());
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -61,8 +62,6 @@ const App: React.FC = () => {
     const [comingSoonContent, setComingSoonContent] = useState<MediaDetails[]>([]);
     const [newReleases, setNewReleases] = useState<MediaDetails[]>([]);
     const [releasedTodayContent, setReleasedTodayContent] = useState<MediaDetails[]>([]);
-    const [sinceYouLikedRecs, setSinceYouLikedRecs] = useState<MediaDetails[]>([]);
-    const [featuredLikedItem, setFeaturedLikedItem] = useState<any | null>(null);
 
     // Modal/Detail states
     const [selectedItem, setSelectedItem] = useState<MediaDetails | CollectionDetails | null>(null);
@@ -213,7 +212,7 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (isInitialized && tmdbApiKey) {
+        if (isInitialized && tmdbApiKey && geminiApiKey) {
             fetchInitialData();
             // Fetch user location
             fetch('https://ipinfo.io/json?token=a0c105b32a98f7')
@@ -233,15 +232,7 @@ const App: React.FC = () => {
                     setUserLocation({ name: 'United States', code: 'US' }); // Fallback for network errors
                 });
         }
-    }, [isInitialized, tmdbApiKey, fetchInitialData]);
-
-    useEffect(() => {
-        if (likes.length > 0) {
-            const randomLikedItem = likes[Math.floor(Math.random() * likes.length)];
-            setFeaturedLikedItem(randomLikedItem);
-            getRecommendationsForSingleItem(randomLikedItem).then(setSinceYouLikedRecs);
-        }
-    }, [likes]);
+    }, [isInitialized, tmdbApiKey, geminiApiKey, fetchInitialData]);
 
     // FIX: Add a useEffect hook to handle fetching data for brand pages based on the current route.
     // This ensures content loads correctly on both direct navigation and clicks.
@@ -504,6 +495,14 @@ const App: React.FC = () => {
                                     />
                                 )}
                                 <MediaRow title="New" items={newReleases} onSelect={handleSelectMedia} />
+                                {forYouRecs.map((row, index) => (
+                                    <MediaRow
+                                        key={index}
+                                        title={row.title}
+                                        items={row.items}
+                                        onSelect={handleSelectMedia}
+                                    />
+                                ))}
                                 <MediaRow title="Trending This Week" items={trending} onSelect={handleSelectMedia} />
                                 {releasedTodayContent.length > 0 && <MediaRow title="Released Today" items={releasedTodayContent} onSelect={handleSelectMedia} animationDelay="100ms" />}
                                 <MediaRow title="Now Playing in Theaters" items={nowPlaying} onSelect={handleSelectMedia} animationDelay="100ms" />
@@ -512,7 +511,6 @@ const App: React.FC = () => {
                             </div>
                         </>
                     );
-                case 'foryou': return <ForYouPage onSelectMedia={handleSelectMedia} />;
                 case 'myscape': return <MyScapePage onSelectMedia={handleSelectMedia} />;
                 case 'movies': return <RecommendationGrid recommendations={moviesContent} onSelect={handleSelectMedia} />;
                 case 'tv': return <RecommendationGrid recommendations={tvContent} onSelect={handleSelectMedia} />;
