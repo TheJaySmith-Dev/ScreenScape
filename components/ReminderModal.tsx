@@ -103,7 +103,7 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({ isOpen, onClose, m
                     <div className="flex flex-col items-center justify-center text-center h-48 fade-in">
                         <CheckCircleIcon className="w-16 h-16 text-green-400 mb-4" />
                         <h3 className="text-2xl font-bold text-white">Confirmation Sent!</h3>
-                        <p className="text-gray-300 mt-2">A confirmation email has been sent to {email}.</p>
+                        <p className="text-gray-300 mt-2">A confirmation email has been sent to ${email}.</p>
                     </div>
                 );
             case 'error':
@@ -115,7 +115,7 @@ export const ReminderModal: React.FC<ReminderModalProps> = ({ isOpen, onClose, m
                             <h2 className="text-2xl font-bold text-white">Get New Episode Reminders</h2>
                         </div>
                         <p className="text-gray-300 mb-6">
-                            Enter your email to get a notification whenever a new episode of <strong>{media.title}</strong> is released.
+                            Enter your email to get a notification whenever a new episode of <strong>${media.title}</strong> is released.
                         </p>
                         <form onSubmit={handleSubscribe} className="flex flex-col gap-4">
                             <input
