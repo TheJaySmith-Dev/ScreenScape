@@ -22,7 +22,8 @@ import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
 import { BrowseMenuModal } from './components/MobileMenuModal.tsx';
 import { ChatModal } from './components/ChatModal.tsx';
 import { AiDescriptionModal } from './components/AiDescriptionModal.tsx';
-import { SearchIcon, GridIcon, ThumbsUpIcon } from './components/icons.tsx';
+import { ReminderModal } from './components/ReminderModal.tsx';
+import { SearchIcon, GridIcon, ThumbsUpIcon, HomeIcon, UserIcon } from './components/icons.tsx';
 import { RateLimitMessage } from './components/RateLimitMessage.tsx';
 
 import * as mediaService from './services/mediaService.ts';
@@ -80,6 +81,8 @@ const App: React.FC = () => {
     const [brandGuides, setBrandGuides] = useState<ViewingGuide[]>([]);
     const [isGuideLoading, setIsGuideLoading] = useState(false);
     const [selectedLocation, setSelectedLocation] = useState<UserLocation>({ name: 'United States', code: 'US' });
+    const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
+    const [mediaForReminder, setMediaForReminder] = useState<MediaDetails | null>(null);
     
     // AI Description Modal state
     const [isAiDescriptionModalOpen, setIsAiDescriptionModalOpen] = useState(false);
@@ -449,6 +452,18 @@ const App: React.FC = () => {
         setChatBrandItem(brand);
         setIsChatModalOpen(true);
     };
+    
+    const handleOpenReminderModal = (media: MediaDetails) => {
+        setMediaForReminder(media);
+        setIsReminderModalOpen(true);
+    };
+
+    const handleCloseReminderModal = useCallback(() => {
+        setIsReminderModalOpen(false);
+        setTimeout(() => {
+            setMediaForReminder(null);
+        }, 300);
+    }, []);
 
     const renderPage = () => {
         const page = route[0] || 'home';
@@ -600,20 +615,26 @@ const App: React.FC = () => {
        const activeRoute = route[0] || 'home';
        return (
             <div className={`transition-transform duration-500 ease-in-out ${isScrolled ? 'scale-90' : 'scale-100'}`}>
-                <div className="flex items-center gap-1 p-1.5 glass-panel rounded-full">
-                    <a href="#/home" className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${activeRoute === 'home' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}>Home</a>
+                <div className="flex items-center gap-1 p-1 sm:p-1.5 glass-panel rounded-full">
+                    <a href="#/home" className={`flex items-center justify-center p-2.5 sm:px-4 sm:py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${activeRoute === 'home' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}>
+                        <HomeIcon className="w-5 h-5 sm:hidden" />
+                        <span className="hidden sm:inline">Home</span>
+                    </a>
                     <button onClick={() => setIsSearchOpen(true)} className="p-2.5 rounded-full hover:bg-white/5 transition-colors" aria-label="Open Search">
                         <SearchIcon className="w-5 h-5" />
                     </button>
                     <button onClick={() => setIsAiSearchOpen(true)} className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-semibold text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-full transition-colors" aria-label="Open ScapeAI Search">
                         <img src="https://img.icons8.com/?size=100&id=eoxMN35Z6JKg&format=png&color=FFFFFF" alt="ScapeAI logo" className="w-5 h-5" />
-                        <span>ScapeAI</span>
+                        <span className="hidden sm:inline">ScapeAI</span>
                     </button>
                      <button onClick={() => setIsBrowseMenuOpen(true)} className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-semibold text-gray-300 bg-white/5 hover:bg-white/10 rounded-full transition-colors" aria-label="Open browse menu">
                         <GridIcon className="w-5 h-5" />
-                        <span>Browse</span>
+                        <span className="hidden sm:inline">Browse</span>
                     </button>
-                    <a href="#/myscape" className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${activeRoute === 'myscape' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}>MyScape</a>
+                    <a href="#/myscape" className={`flex items-center justify-center p-2.5 sm:px-4 sm:py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${activeRoute === 'myscape' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}>
+                        <UserIcon className="w-5 h-5 sm:hidden" />
+                        <span className="hidden sm:inline">MyScape</span>
+                    </a>
                 </div>
             </div>
        );
@@ -643,6 +664,7 @@ const App: React.FC = () => {
                     selectedLocation={selectedLocation}
                     onLocationChange={setSelectedLocation}
                     onOpenChat={handleOpenChatModal}
+                    onOpenReminderModal={handleOpenReminderModal}
                 />
               </div>
             )}
@@ -667,6 +689,7 @@ const App: React.FC = () => {
             {isBrowseMenuOpen && <BrowseMenuModal isOpen={isBrowseMenuOpen} onClose={() => setIsBrowseMenuOpen(false)} />}
             {isChatModalOpen && <ChatModal isOpen={isChatModalOpen} onClose={handleCloseChatModal} media={chatMediaItem || undefined} brand={chatBrandItem || undefined} />}
             {isAiDescriptionModalOpen && selectedBrandForDescription && <AiDescriptionModal isOpen={isAiDescriptionModalOpen} onClose={handleCloseAiDescriptionModal} isLoading={isAiDescriptionLoading} title={selectedBrandForDescription.name} description={aiDescription} error={aiDescriptionError} />}
+            {isReminderModalOpen && mediaForReminder && <ReminderModal isOpen={isReminderModalOpen} onClose={handleCloseReminderModal} media={mediaForReminder} />}
         </div>
     );
 };

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, CrewMember, UserLocation, WatchProviders, OmdbDetails, FunFact, SeasonDetails, Episode, SeasonSummary } from '../types.ts';
-import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, SparklesIcon, InfoIcon, ChatBubbleIcon, CloseIcon } from './icons.tsx';
+import { StarIcon, PlayIcon, ThumbsUpIcon, ThumbsDownIcon, TvIcon, SparklesIcon, InfoIcon, ChatBubbleIcon, CloseIcon, BellIcon } from './icons.tsx';
 // FIX: Import `RecommendationGrid` which is used in this component, and remove the unused `RecommendationCard` import.
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
@@ -28,6 +28,7 @@ interface DetailModalProps {
   selectedLocation: UserLocation;
   onLocationChange: (location: UserLocation) => void;
   onOpenChat: (media: MediaDetails) => void;
+  onOpenReminderModal: (media: MediaDetails) => void;
 }
 
 const CountdownTimer: React.FC<{ airDate: string }> = ({ airDate }) => {
@@ -194,7 +195,7 @@ const isMediaDetails = (item: MediaDetails | CollectionDetails): item is MediaDe
   return 'title' in item && 'type' in item;
 };
 
-export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, onSelectActor, selectedLocation, onLocationChange, onOpenChat }) => {
+export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, onSelectActor, selectedLocation, onLocationChange, onOpenChat, onOpenReminderModal }) => {
     const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
     const { likeItem, dislikeItem, unlistItem, isLiked, isDisliked } = usePreferences();
     const [omdbDetails, setOmdbDetails] = useState<OmdbDetails | null>(null);
@@ -292,6 +293,12 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             onOpenChat(item);
         }
     }
+    
+    const handleReminderClick = () => {
+        if (isMediaDetails(item)) {
+            onOpenReminderModal(item);
+        }
+    }
 
     const handleCountryChange = (countryCode: string) => {
         const country = supportedCountries.find(c => c.code === countryCode);
@@ -377,6 +384,11 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                         <button onClick={handleDislike} className={`glass-button !p-3 transition-colors ${itemIsDisliked ? 'bg-red-500/30 border-red-500/50' : ''}`} aria-label={itemIsDisliked ? 'Undislike' : 'Dislike'}>
                             <ThumbsDownIcon className={`w-5 h-5 ${itemIsDisliked ? 'text-red-300' : ''}`} />
                         </button>
+                        {item.type === 'tv' && (
+                          <button onClick={handleReminderClick} className="glass-button !p-3" aria-label="Set Reminder">
+                            <BellIcon className="w-5 h-5" />
+                          </button>
+                        )}
                         <button onClick={handleChatClick} className="glass-button !p-3" aria-label="Chat with AI">
                             <ChatBubbleIcon className="w-5 h-5"/>
                         </button>

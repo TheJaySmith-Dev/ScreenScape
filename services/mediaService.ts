@@ -509,6 +509,23 @@ export const fetchActorDetails = async (actorId: number): Promise<ActorDetails> 
     };
 };
 
+// FIX: Add and export the missing `fetchTvShowDetails` function required by the API routes.
+/**
+ * Fetches the full details for a specific TV show from TMDb.
+ * This is used by the backend services for reminders.
+ * @param tvId The TMDb ID of the TV show.
+ * @returns A promise that resolves to the TV show details, or null if not found.
+ */
+export const fetchTvShowDetails = async (tvId: number): Promise<any | null> => {
+    try {
+        const details = await fetchApi<any>(`/tv/${tvId}`);
+        return details;
+    } catch (error) {
+        console.error(`Failed to fetch details for TV show ID ${tvId}:`, error);
+        return null;
+    }
+};
+
 // --- Game Data Fetchers ---
 
 const formatGameMovie = async (movie: any): Promise<GameMovie | null> => {
