@@ -410,6 +410,11 @@ export const getNewReleases = async (): Promise<MediaDetails[]> => {
     return [...upcomingMovies, ...onTheAirTv].slice(0, 20);
 }
 
+export const getSimilarMedia = async (id: number, type: 'movie' | 'tv'): Promise<MediaDetails[]> => {
+    const endpoint = `/${type}/${id}/similar`;
+    return fetchList(endpoint, type);
+};
+
 export const searchMedia = (query: string, year?: string): Promise<MediaDetails[]> => {
     const yearQuery = year ? `&year=${year}` : '';
     return fetchList(`/search/multi?query=${encodeURIComponent(query)}${yearQuery}`);
