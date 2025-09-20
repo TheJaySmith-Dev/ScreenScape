@@ -1,4 +1,4 @@
-import type { MediaDetails, CastMember, CrewMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor, AiSearchParams, SeasonDetails, Episode } from '../types.ts';
+import type { MediaDetails, CastMember, CrewMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor, AiSearchParams, SeasonDetails, Episode, AiCuratedCarousel } from '../types.ts';
 import { supportedProviders } from './streamingService.ts';
 import { getTmdbApiKey } from './apiService.ts';
 import { fetchBoxOffice } from './omdbService.ts';
@@ -662,4 +662,61 @@ export const discoverMediaFromAi = async (params: AiSearchParams): Promise<Media
     endpoint += queryParams.join('&');
     
     return fetchList(endpoint, params.media_type === 'tv' ? 'tv' : 'movie');
+};
+
+/**
+ * Generates personalized carousels of recommendations based on user's liked items using TMDb.
+ */
+export const getTmdbCuratedRecommendations = async (
+    likedItems: LikedItem[]
+): Promise<AiCuratedCarousel[]> => {
+    if (likedItems.length === 0) {
+        return [];
+    }
+
+    // Use the 3 most recently liked items as seeds for recommendations
+    const seedItems = likedItems.slice(-3).reverse();
+    const likedItemIds = new Set(likedItems.map(item => item.id));
+
+    const recommendationPromises = seedItems.map(async (seed) => {
+        try {
+            const endpoint = `/${seed.type}/${seed.id}/recommendations`;
+            const recommendedMedia = await fetchList(endpoint, seed.type);
+
+            // Filter out items the user has already liked
+            const filteredRecommendations = recommendedMedia.filter(
+                (rec) => !likedItemIds.has(rec.id)
+            );
+
+            if (filteredRecommendations.length > 0) {
+                return {
+                    title: `Because you liked ${seed.title}`,
+                    items: filteredRecommendations.slice(0, 10), // Limit to 10 per row
+                };
+            }
+            return null;
+        } catch (error) {
+            console.error(`Could not fetch recommendations for ${seed.title}:`, error);
+            return null;
+        }
+    });
+
+    const carousels = (await Promise.all(recommendationPromises)).filter(
+        (carousel): carousel is AiCuratedCarousel => carousel !== null
+    );
+
+    // De-dupe items across carousels to ensure variety
+    const seenIds = new Set<number>();
+    const uniqueCarousels = carousels.map(carousel => {
+        const uniqueItems = carousel.items.filter(item => {
+            if (seenIds.has(item.id)) {
+                return false;
+            }
+            seenIds.add(item.id);
+            return true;
+        });
+        return { ...carousel, items: uniqueItems };
+    }).filter(carousel => carousel.items.length > 0); // Remove carousels that are now empty
+
+    return uniqueCarousels;
 };

@@ -48,7 +48,7 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                         <h1 className="text-4xl font-bold text-white">MyScape</h1>
                         <p className="text-lg text-gray-400">Your local hub for settings and liked items.</p>
                     </div>
-                    <a href="#/foryou" className="flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-semibold transition-all duration-300">
+                    <a href="#/home" className="flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-semibold transition-all duration-300">
                         <ThumbsUpIcon className="w-6 h-6 text-green-400" />
                         <span>For You Recommendations</span>
                     </a>

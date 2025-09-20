@@ -33,7 +33,7 @@ import { popularNetworks } from './services/networkService.ts';
 import { people } from './services/peopleService.ts';
 
 import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Person, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy, AiCuratedCarousel } from './types.ts';
-import { getViewingGuidesForBrand, getAiDescriptionForBrand, getAiCuratedRecommendations } from './services/aiService.ts';
+import { getViewingGuidesForBrand, getAiDescriptionForBrand } from './services/aiService.ts';
 import { useSettings } from './hooks/useSettings.ts';
 import { usePreferences } from './hooks/usePreferences.ts';
 
@@ -145,14 +145,9 @@ const App: React.FC = () => {
         }
     }, [isInitialized, tmdbApiKey, fetchInitialData]);
 
-    const MIN_LIKES_FOR_AI = 3;
+    const MIN_LIKES_FOR_RECOMMENDATIONS = 3;
     const fetchForYouRecommendations = useCallback(async () => {
-        if (likes.length < MIN_LIKES_FOR_AI || !aiClient || isForYouLoading) {
-            return;
-        }
-
-        const { canRequest } = canMakeRequest();
-        if (!canRequest) {
+        if (likes.length < MIN_LIKES_FOR_RECOMMENDATIONS || isForYouLoading) {
             return;
         }
 
@@ -160,11 +155,10 @@ const App: React.FC = () => {
         setForYouError(null);
         
         try {
-            const results = await getAiCuratedRecommendations(likes, aiClient);
-            incrementRequestCount();
+            const results = await mediaService.getTmdbCuratedRecommendations(likes);
             
             if (results.length === 0) {
-                setForYouError("ScapeAI couldn't generate recommendations. Try liking more diverse titles!");
+                setForYouError("Couldn't generate recommendations. Try liking a few more titles!");
             } else {
                 setCuratedRows(results);
             }
@@ -175,14 +169,14 @@ const App: React.FC = () => {
         } finally {
             setIsForYouLoading(false);
         }
-    }, [likes, aiClient, isForYouLoading, canMakeRequest, incrementRequestCount]);
+    }, [likes, isForYouLoading]);
 
     useEffect(() => {
         const page = route[0] || 'home';
-        if (page === 'home' && isInitialized && tmdbApiKey && geminiApiKey && !isPreferencesLoading) {
+        if (page === 'home' && isInitialized && tmdbApiKey && !isPreferencesLoading) {
             fetchForYouRecommendations();
         }
-    }, [route, isInitialized, tmdbApiKey, geminiApiKey, isPreferencesLoading, fetchForYouRecommendations]);
+    }, [route, isInitialized, tmdbApiKey, isPreferencesLoading, fetchForYouRecommendations]);
 
     // FIX: Add a useEffect hook to handle fetching data for brand pages based on the current route.
     // This ensures content loads correctly on both direct navigation and clicks.
@@ -473,25 +467,16 @@ const App: React.FC = () => {
         const pageContent = (() => {
             switch(page) {
                 case 'home':
-                    const { canRequest: canRequestForYou, resetTime } = canMakeRequest();
                     const forYouContent = () => {
-                        if (!geminiApiKey || isPreferencesLoading) return null;
+                        if (isPreferencesLoading) return null;
 
-                        if (!canRequestForYou && resetTime) {
-                            return (
-                                <div className="mt-12 md:mt-16 px-4 sm:px-6 lg:px-8">
-                                    <RateLimitMessage resetTime={resetTime} featureName="For You curations" />
-                                </div>
-                            );
-                        }
-                        
-                        if (likes.length < MIN_LIKES_FOR_AI) {
+                        if (likes.length < MIN_LIKES_FOR_RECOMMENDATIONS) {
                             return (
                                 <div className="mt-12 md:mt-16 px-4 sm:px-6 lg:px-8">
                                     <div className="text-center text-gray-300 fade-in glass-panel p-8">
                                         <ThumbsUpIcon className="w-12 h-12 text-green-400 mx-auto mb-4" />
-                                        <h2 className="text-2xl font-bold mb-4 text-white">For You Recommendations</h2>
-                                        <p>Like at least <span className="font-bold text-white">{MIN_LIKES_FOR_AI}</span> movies or shows to unlock your personal AI-curated feed right here.</p>
+                                        <h2 className="text-2xl font-bold mb-4 text-white">Personalized Recommendations</h2>
+                                        <p>Like at least <span className="font-bold text-white">{MIN_LIKES_FOR_RECOMMENDATIONS}</span> movies or shows to unlock your personal feed right here.</p>
                                         <p className="text-sm mt-2">You've liked <span className="font-bold text-white">{likes.length}</span> so far.</p>
                                     </div>
                                 </div>
@@ -501,7 +486,7 @@ const App: React.FC = () => {
                         if (isForYouLoading) {
                             return (
                                 <div className="mt-12 md:mt-16 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
-                                    <h2 className="font-bold text-white mb-4 text-2xl">Curating Your Scape...</h2>
+                                    <h2 className="font-bold text-white mb-4 text-2xl">Finding Recommendations...</h2>
                                     <LoadingSpinner />
                                 </div>
                             );
