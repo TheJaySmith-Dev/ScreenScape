@@ -114,7 +114,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                         <CheckCircleIcon className="w-16 h-16 text-green-400 mx-auto mb-4" />
                         <h2 className="text-3xl font-bold mb-2">You're All Set!</h2>
                         <p className="text-gray-300 mb-6">Enter your keys below to unlock ScreenScape.</p>
-                        <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
+                        <form id="api-key-form" onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
                             <div className="relative">
                                 <input
                                     type={isTmdbVisible ? 'text' : 'password'}
@@ -166,16 +166,16 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                         <StepIndicator count={TOTAL_STEPS} current={step} />
                         <div className="flex items-center gap-3">
                             {step > 0 && startOnStep === 0 && (
-                                <button onClick={prevStep} className="px-6 py-2.5 text-sm font-semibold text-gray-300 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
+                                <button type="button" onClick={prevStep} className="px-6 py-2.5 text-sm font-semibold text-gray-300 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
                                     Back
                                 </button>
                             )}
                             {step < TOTAL_STEPS - 1 ? (
-                                <button onClick={nextStep} className="px-8 py-2.5 text-sm font-semibold text-black bg-white rounded-full hover:bg-gray-200 transition-colors">
+                                <button type="button" onClick={nextStep} className="px-8 py-2.5 text-sm font-semibold text-black bg-white rounded-full hover:bg-gray-200 transition-colors">
                                     Next
                                 </button>
                             ) : (
-                                <button onClick={handleSubmit} className="px-8 py-2.5 text-sm font-semibold text-black bg-white rounded-full hover:bg-gray-200 transition-colors">
+                                <button type="submit" form="api-key-form" className="px-8 py-2.5 text-sm font-semibold text-black bg-white rounded-full hover:bg-gray-200 transition-colors">
                                     Finish Setup
                                 </button>
                             )}
