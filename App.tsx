@@ -495,7 +495,7 @@ const App: React.FC = () => {
                                     />
                                 )}
                                 <MediaRow title="New" items={newReleases} onSelect={handleSelectMedia} />
-                                {forYouRecs.map((row, index) => (
+                                {forYouRecs && forYouRecs.length > 0 && forYouRecs.map((row, index) => (
                                     <MediaRow
                                         key={index}
                                         title={row.title}
