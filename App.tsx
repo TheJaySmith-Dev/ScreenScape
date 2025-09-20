@@ -212,7 +212,7 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (isInitialized && tmdbApiKey && geminiApiKey) {
+        if (isInitialized && tmdbApiKey) {
             fetchInitialData();
             // Fetch user location
             fetch('https://ipinfo.io/json?token=a0c105b32a98f7')
@@ -232,7 +232,7 @@ const App: React.FC = () => {
                     setUserLocation({ name: 'United States', code: 'US' }); // Fallback for network errors
                 });
         }
-    }, [isInitialized, tmdbApiKey, geminiApiKey, fetchInitialData]);
+    }, [isInitialized, tmdbApiKey, fetchInitialData]);
 
     // FIX: Add a useEffect hook to handle fetching data for brand pages based on the current route.
     // This ensures content loads correctly on both direct navigation and clicks.

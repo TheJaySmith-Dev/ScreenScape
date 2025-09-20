@@ -5,7 +5,7 @@ import { usePreferences } from './usePreferences.ts';
 import { useSettings } from './useSettings.ts';
 
 export const useRecommendations = () => {
-    const { likes } = usePreferences();
+    const { likes, isLoading: preferencesLoading } = usePreferences();
     const { tmdbApiKey, geminiApiKey } = useSettings();
     const [forYouRecs, setForYouRecs] = useState<AiCuratedCarousel[]>([]);
     const [sinceYouLikedRecs, setSinceYouLikedRecs] = useState<MediaDetails[]>([]);
@@ -33,8 +33,10 @@ export const useRecommendations = () => {
     }, [likes, tmdbApiKey, geminiApiKey]);
 
     useEffect(() => {
-        fetchRecommendations();
-    }, [fetchRecommendations]);
+        if (!preferencesLoading) {
+            fetchRecommendations();
+        }
+    }, [likes, preferencesLoading, fetchRecommendations]);
 
     return { forYouRecs, sinceYouLikedRecs, featuredLikedItem, isLoading };
 };
