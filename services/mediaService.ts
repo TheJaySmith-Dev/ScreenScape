@@ -509,17 +509,6 @@ export const fetchActorDetails = async (actorId: number): Promise<ActorDetails> 
     };
 };
 
-// FIX: Export a new `fetchTvShowDetails` function to be used by the reminder API endpoints.
-export const fetchTvShowDetails = async (tvId: number): Promise<any | null> => {
-    try {
-        const details = await fetchApi<any>(`/tv/${tvId}`);
-        return details;
-    } catch (error) {
-        console.error(`Failed to fetch details for TV ID ${tvId}:`, error);
-        return null;
-    }
-};
-
 // --- Game Data Fetchers ---
 
 const formatGameMovie = async (movie: any): Promise<GameMovie | null> => {
