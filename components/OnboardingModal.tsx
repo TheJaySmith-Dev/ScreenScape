@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CloseIcon, SparklesIcon, KeyIcon, CheckCircleIcon, EyeIcon, EyeSlashIcon } from './icons.tsx';
 
 interface OnboardingModalProps {
@@ -30,7 +30,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     const [isTmdbVisible, setIsTmdbVisible] = useState(false);
     const [isGeminiVisible, setIsGeminiVisible] = useState(false);
     const [error, setError] = useState('');
+    const [isTransitioning, setIsTransitioning] = useState(false);
+    const isTransitioningRef = useRef(false); // Use ref for an immediate, non-stateful lock
     const TOTAL_STEPS = 6;
+    const ANIMATION_DURATION = 500; // Must match CSS animation duration
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -55,8 +58,26 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         });
     };
 
-    const nextStep = () => setStep(s => Math.min(s + 1, TOTAL_STEPS - 1));
-    const prevStep = () => setStep(s => Math.max(s - 1, 0));
+    // Combined function to handle step changes to avoid race conditions
+    const changeStep = (direction: 'next' | 'prev') => {
+        if (isTransitioningRef.current) return; // Immediate lock check
+        isTransitioningRef.current = true;
+
+        setIsTransitioning(true); // Triggers visual disabled state
+        
+        setStep(s => {
+            if (direction === 'next') return Math.min(s + 1, TOTAL_STEPS - 1);
+            return Math.max(s - 1, 0);
+        });
+        
+        setTimeout(() => {
+            isTransitioningRef.current = false;
+            setIsTransitioning(false);
+        }, ANIMATION_DURATION);
+    };
+    
+    const nextStep = () => changeStep('next');
+    const prevStep = () => changeStep('prev');
 
     const renderStepContent = () => {
         switch (step) {
@@ -166,16 +187,30 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                         <StepIndicator count={TOTAL_STEPS} current={step} />
                         <div className="flex items-center gap-3">
                             {step > 0 && startOnStep === 0 && (
-                                <button type="button" onClick={prevStep} className="px-6 py-2.5 text-sm font-semibold text-gray-300 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
+                                <button 
+                                    type="button" 
+                                    onClick={prevStep} 
+                                    disabled={isTransitioning}
+                                    className="px-6 py-2.5 text-sm font-semibold text-gray-300 bg-white/5 rounded-full hover:bg-white/10 transition-colors disabled:opacity-50"
+                                >
                                     Back
                                 </button>
                             )}
                             {step < TOTAL_STEPS - 1 ? (
-                                <button type="button" onClick={nextStep} className="px-8 py-2.5 text-sm font-semibold text-black bg-white rounded-full hover:bg-gray-200 transition-colors">
+                                <button 
+                                    type="button" 
+                                    onClick={nextStep} 
+                                    disabled={isTransitioning}
+                                    className="px-8 py-2.5 text-sm font-semibold text-black bg-white rounded-full hover:bg-gray-200 transition-colors disabled:opacity-50"
+                                >
                                     Next
                                 </button>
                             ) : (
-                                <button type="submit" form="api-key-form" className="px-8 py-2.5 text-sm font-semibold text-black bg-white rounded-full hover:bg-gray-200 transition-colors">
+                                <button 
+                                    type="submit" 
+                                    form="api-key-form" 
+                                    className="px-8 py-2.5 text-sm font-semibold text-black bg-white rounded-full hover:bg-gray-200 transition-colors"
+                                >
                                     Finish Setup
                                 </button>
                             )}
