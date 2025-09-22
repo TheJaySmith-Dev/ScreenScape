@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useSettings } from '../hooks/useSettings.ts';
 import { useTmdbAccount } from '../hooks/useTmdbAccount.ts';
@@ -68,7 +67,7 @@ const GeminiKeyManager: React.FC = () => {
 };
 
 export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
-    const { rateLimit, clearAllSettings, isAllClearMode, toggleAllClearMode, tmdb, loginWithTmdb, logoutTmdb } = useSettings();
+    const { rateLimit, clearAllSettings, isAllClearMode, toggleAllClearMode, tmdb, logoutTmdb } = useSettings();
     const { likes, isLoading: preferencesLoading } = useTmdbAccount();
 
     if (preferencesLoading) {
@@ -100,25 +99,15 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                 <div className="glass-panel p-6 rounded-2xl flex flex-col justify-between">
                     <div>
                         <h2 className="text-xl font-semibold mb-2 flex items-center gap-2"><LoginIcon className="w-5 h-5"/> TMDb Account</h2>
-                        {tmdb.state === 'authenticated' ? (
-                            <div className="text-center">
-                                <p className="text-gray-300">Logged in as</p>
-                                <p className="font-bold text-white text-lg">{tmdb.accountDetails?.username}</p>
-                            </div>
-                        ) : (
-                            <p className="text-sm text-gray-300">Login to sync your likes and get personalized recommendations.</p>
-                        )}
+                         <div className="text-center">
+                            <p className="text-gray-300">Logged in as</p>
+                            <p className="font-bold text-white text-lg">{tmdb.accountDetails?.username}</p>
+                        </div>
                     </div>
                     <div className="mt-auto pt-4">
-                       {tmdb.state === 'authenticated' ? (
-                            <button onClick={logoutTmdb} className="w-full px-4 py-2 text-sm text-center text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors">
-                                Logout
-                            </button>
-                       ) : (
-                            <button onClick={loginWithTmdb} disabled={tmdb.state === 'loading'} className="w-full px-4 py-2 text-sm text-center bg-white/5 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50">
-                                {tmdb.state === 'loading' ? 'Redirecting...' : 'Login with TMDb'}
-                            </button>
-                       )}
+                        <button onClick={logoutTmdb} className="w-full px-4 py-2 text-sm text-center text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors">
+                            Logout
+                        </button>
                     </div>
                 </div>
 
@@ -177,11 +166,7 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                 <h2 className="text-3xl font-bold mb-6 text-white flex items-center gap-3">
                     My Likes
                 </h2>
-                {tmdb.state !== 'authenticated' ? (
-                     <div className="text-center py-12 glass-panel rounded-2xl">
-                        <p className="text-gray-300">Login with TMDb to see your liked titles.</p>
-                    </div>
-                ) : likes.length > 0 ? (
+                {likes.length > 0 ? (
                     <RecommendationGrid recommendations={likes} onSelect={onSelectMedia} />
                 ) : (
                     <div className="text-center py-12 glass-panel rounded-2xl">
