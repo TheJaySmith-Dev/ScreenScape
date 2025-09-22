@@ -53,6 +53,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     const [isAllClearMode, setIsAllClearMode] = useState<boolean>(false);
     const [trakt, setTrakt] = useState<TraktAuth>(getInitialTraktAuth());
     const isRefreshingToken = useRef(false);
+    const pollingTimeoutRef = useRef<number | null>(null);
 
     useEffect(() => {
         const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
@@ -70,6 +71,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         setTrakt(getInitialTraktAuth());
         
         setIsInitialized(true);
+
+        return () => {
+             if (pollingTimeoutRef.current) clearTimeout(pollingTimeoutRef.current);
+        }
     }, []);
 
     useEffect(() => {
@@ -94,35 +99,62 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         localStorage.setItem(LOCAL_STORAGE_KEY_GEMINI, keys.geminiKey);
     }, []);
     
-    const initiateTraktAuth = useCallback(() => {
-        setTrakt(prev => ({ ...prev, state: 'loading' }));
-        traktService.initiateAuth();
-    }, []);
-    
     const disconnectTrakt = useCallback(() => {
         const newAuthState: TraktAuth = { accessToken: null, refreshToken: null, expiresAt: null, state: 'idle' };
         setTrakt(newAuthState);
         localStorage.removeItem(LOCAL_STORAGE_KEY_TRAKT);
+        if (pollingTimeoutRef.current) clearTimeout(pollingTimeoutRef.current);
     }, []);
 
-    const handleTraktCallback = useCallback(async (code: string) => {
-        setTrakt(prev => ({...prev, state: 'loading' }));
-        try {
-            const tokenData = await traktService.exchangeCodeForToken(code);
-            const expiresAt = (tokenData.created_at + tokenData.expires_in) * 1000;
-            const newAuthState: TraktAuth = {
-                accessToken: tokenData.access_token,
-                refreshToken: tokenData.refresh_token,
-                expiresAt,
-                state: 'authenticated',
-            };
-            setTrakt(newAuthState);
-            localStorage.setItem(LOCAL_STORAGE_KEY_TRAKT, JSON.stringify(newAuthState));
-        } catch(e) {
-            console.error(e);
-            disconnectTrakt();
-            throw e;
-        }
+    const startTraktDeviceAuth = useCallback(async () => {
+        setTrakt(prev => ({ ...prev, state: 'loading' }));
+        if (pollingTimeoutRef.current) clearTimeout(pollingTimeoutRef.current);
+    
+        const authDetails = await traktService.getDeviceCode();
+        const pollUntilSuccess = async () => {
+            try {
+                const tokenData = await traktService.pollForToken(authDetails.device_code);
+                const expiresAt = (tokenData.created_at + tokenData.expires_in) * 1000;
+                const newAuthState: TraktAuth = {
+                    accessToken: tokenData.access_token,
+                    refreshToken: tokenData.refresh_token,
+                    expiresAt,
+                    state: 'authenticated',
+                };
+                setTrakt(newAuthState);
+                localStorage.setItem(LOCAL_STORAGE_KEY_TRAKT, JSON.stringify(newAuthState));
+                if (pollingTimeoutRef.current) clearTimeout(pollingTimeoutRef.current);
+            } catch (error: any) {
+                // If user hasn't authorized yet, just poll again.
+                if (error.message.includes('Pending')) {
+                    pollingTimeoutRef.current = window.setTimeout(pollUntilSuccess, authDetails.interval * 1000);
+                } else {
+                    // For terminal errors (Expired, Denied), stop polling and show error.
+                    console.error("Trakt auth failed:", error.message);
+                    disconnectTrakt(); 
+                }
+            }
+        };
+
+        // Start the first poll
+        pollingTimeoutRef.current = window.setTimeout(pollUntilSuccess, authDetails.interval * 1000);
+
+        // Set a master timeout for the whole process
+        setTimeout(() => {
+            if (pollingTimeoutRef.current) {
+                clearTimeout(pollingTimeoutRef.current);
+                // Check the state one last time before declaring timeout
+                setTrakt(currentTraktState => {
+                    if (currentTraktState.state !== 'authenticated') {
+                        console.error("Trakt auth timed out.");
+                        disconnectTrakt();
+                    }
+                    return currentTraktState;
+                });
+            }
+        }, authDetails.expires_in * 1000);
+        
+        return authDetails;
     }, [disconnectTrakt]);
 
     const getValidAccessToken = useCallback(async (): Promise<string | null> => {
@@ -142,18 +174,12 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
         
         if (isRefreshingToken.current) {
-            // Wait for the ongoing refresh to complete by checking state periodically
             return new Promise((resolve) => {
                 const interval = setInterval(() => {
                     if (!isRefreshingToken.current) {
                         clearInterval(interval);
-                        // After refresh, the global 'trakt' state is updated. We re-read it from a fresh closure.
                         setTrakt(currentTraktState => {
-                            if (currentTraktState.state === 'authenticated') {
-                                resolve(currentTraktState.accessToken);
-                            } else {
-                                resolve(null);
-                            }
+                            resolve(currentTraktState.state === 'authenticated' ? currentTraktState.accessToken : null);
                             return currentTraktState;
                         });
                     }
@@ -239,8 +265,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         isInitialized,
         isAllClearMode,
         trakt,
-        initiateTraktAuth,
-        handleTraktCallback,
+        startTraktDeviceAuth,
         disconnectTrakt,
         getValidAccessToken,
         toggleAllClearMode,

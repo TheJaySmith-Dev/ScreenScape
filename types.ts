@@ -337,8 +337,7 @@ export interface SettingsContextType {
   isInitialized: boolean;
   isAllClearMode: boolean;
   trakt: TraktAuth;
-  initiateTraktAuth: () => void;
-  handleTraktCallback: (code: string) => Promise<void>;
+  startTraktDeviceAuth: () => Promise<import('../services/traktService.ts').DeviceCodeResponse>;
   disconnectTrakt: () => void;
   getValidAccessToken: () => Promise<string | null>;
   toggleAllClearMode: () => void;

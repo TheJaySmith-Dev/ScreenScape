@@ -1,8 +1,12 @@
 import React from 'react';
 import { useSettings } from '../hooks/useSettings.ts';
 
-export const TraktAuthButton: React.FC = () => {
-    const { trakt, initiateTraktAuth, disconnectTrakt } = useSettings();
+interface TraktAuthButtonProps {
+    onClick: () => void;
+}
+
+export const TraktAuthButton: React.FC<TraktAuthButtonProps> = ({ onClick }) => {
+    const { trakt, disconnectTrakt } = useSettings();
 
     if (trakt.state === 'authenticated') {
         return (
@@ -17,7 +21,7 @@ export const TraktAuthButton: React.FC = () => {
 
     return (
          <button
-            onClick={initiateTraktAuth}
+            onClick={onClick}
             disabled={trakt.state === 'loading'}
             className="w-full px-4 py-2 text-sm text-center bg-white/5 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
         >

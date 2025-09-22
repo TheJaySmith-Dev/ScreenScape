@@ -38,7 +38,6 @@ const StreamingGrid = React.lazy(() => import('./components/StreamingGrid.tsx').
 const BrandDetail = React.lazy(() => import('./components/BrandDetail.tsx').then(module => ({ default: module.BrandDetail })));
 const RecommendationGrid = React.lazy(() => import('./components/RecommendationGrid.tsx').then(module => ({ default: module.RecommendationGrid })));
 const ComingSoonPage = React.lazy(() => import('./components/ComingSoonPage.tsx').then(module => ({ default: module.ComingSoonPage })));
-const TraktCallbackPage = React.lazy(() => import('./pages/Callback/index.tsx').then(module => ({ default: module.TraktCallbackPage })));
 
 const getPathRoute = () => window.location.pathname.replace(/^\/?|\/$/g, '').split('/');
 
@@ -623,11 +622,6 @@ const App: React.FC = () => {
                                     onSelectActor={handleSelectActor} />;
                     }
                     return <div className="text-center">Loading talent...</div>;
-                case 'callback':
-                    if (id === 'trakt') {
-                        return <TraktCallbackPage />;
-                    }
-                    // Fallthrough to default
                 default:
                      navigate('/', true);
                      return null;

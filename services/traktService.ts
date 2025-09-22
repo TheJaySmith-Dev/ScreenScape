@@ -2,9 +2,15 @@ import type { MediaDetails, TraktWatchlistItem, TraktStats } from '../types.ts';
 
 const CLIENT_ID = '73f5fc3ac40020a73a2d207f82c08ad274a1bd702513bc7d686f1facb8dea492';
 const CLIENT_SECRET = 'cd44e8061745f1113a53fbb769a9b59103283e36a8d75af3891f43fe8a46aab8';
-// Use a hardcoded, canonical Redirect URI to eliminate any ambiguity from www/non-www domains.
-export const REDIRECT_URI = 'https://screenscape.space/callback/trakt';
 const API_URL = 'https://api.trakt.tv';
+
+export interface DeviceCodeResponse {
+    device_code: string;
+    user_code: string;
+    verification_url: string;
+    expires_in: number;
+    interval: number;
+}
 
 interface TokenResponse {
     access_token: string;
@@ -38,31 +44,40 @@ const apiRequest = async <T>(endpoint: string, method: 'GET' | 'POST', accessTok
     return response.json();
 };
 
-export const initiateAuth = () => {
-    const authUrl = `https://trakt.tv/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
-    window.location.href = authUrl;
+export const getDeviceCode = async (): Promise<DeviceCodeResponse> => {
+    const response = await fetch(`${API_URL}/oauth/device/code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ client_id: CLIENT_ID }),
+    });
+    if (!response.ok) throw new Error('Failed to get device code from Trakt.');
+    return response.json();
 };
 
-export const exchangeCodeForToken = async (code: string): Promise<TokenResponse> => {
-    const response = await fetch(`${API_URL}/oauth/token`, {
+export const pollForToken = async (deviceCode: string): Promise<TokenResponse> => {
+    const response = await fetch(`${API_URL}/oauth/device/token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            code,
+            code: deviceCode,
             client_id: CLIENT_ID,
             client_secret: CLIENT_SECRET,
-            redirect_uri: REDIRECT_URI,
-            grant_type: 'authorization_code',
         }),
     });
-
-    if (!response.ok) {
-        const errorDetails = await response.text();
-        console.error("Token exchange failed:", errorDetails);
-        throw new Error('Failed to exchange auth code for token');
+    
+    // 200 means success, anything else means we keep polling or fail.
+    if (response.status === 200) {
+        return response.json();
     }
-    return response.json();
+    
+    if (response.status === 400) throw new Error('Pending: User has not authorized yet.');
+    if (response.status === 404) throw new Error('Expired: The code has expired.');
+    if (response.status === 409) throw new Error('Conflict: Code has already been used.');
+    if (response.status === 410) throw new Error('Denied: User explicitly denied the request.');
+    
+    throw new Error(`Polling failed with status: ${response.status}`);
 };
+
 
 export const refreshToken = async (refreshToken: string): Promise<TokenResponse> => {
     const response = await fetch(`${API_URL}/oauth/token`, {
@@ -72,7 +87,7 @@ export const refreshToken = async (refreshToken: string): Promise<TokenResponse>
             refresh_token: refreshToken,
             client_id: CLIENT_ID,
             client_secret: CLIENT_SECRET,
-            redirect_uri: REDIRECT_URI,
+            redirect_uri: 'urn:ietf:wg:oauth:2.0:oob', // Required for refresh, but value doesn't matter for device auth
             grant_type: 'refresh_token',
         }),
     });

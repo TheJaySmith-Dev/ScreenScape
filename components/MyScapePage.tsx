@@ -7,7 +7,7 @@ import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon, TraktIcon } from './icons.ts
 import type { MediaDetails } from '../types.ts';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { TraktAuthButton } from './TraktAuthButton.tsx';
-import { REDIRECT_URI } from '../services/traktService.ts';
+import { TraktAuthModal } from './TraktAuthModal.tsx';
 
 interface MyScapePageProps {
   onSelectMedia: (media: MediaDetails) => void;
@@ -17,7 +17,7 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
     const { rateLimit, tmdbApiKey, geminiApiKey, saveApiKeys, clearAllSettings, isAllClearMode, toggleAllClearMode, trakt } = useSettings();
     const { watchlist, isLoading: preferencesLoading } = useTrakt();
     const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
-    const [copyText, setCopyText] = useState('Copy');
+    const [isTraktAuthModalOpen, setIsTraktAuthModalOpen] = useState(false);
 
     if (preferencesLoading) {
         return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
@@ -41,13 +41,6 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
     } else if (usagePercentage >= 75) {
         progressBarColor = 'bg-yellow-500';
     }
-
-    const handleCopyUri = () => {
-        navigator.clipboard.writeText(REDIRECT_URI);
-        setCopyText('Copied!');
-        setTimeout(() => setCopyText('Copy'), 2000);
-    };
-
 
     return (
         <>
@@ -114,24 +107,7 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                             <p className="text-sm text-gray-300 mb-4">Connect your Trakt account to sync your watchlist across all your devices.</p>
                         </div>
                         <div className="mt-auto">
-                           <TraktAuthButton />
-                           {trakt.state !== 'authenticated' && (
-                               <div className="mt-4 text-xs text-gray-400">
-                                   <p className="font-semibold mb-2 text-sm text-gray-200">Connection Help</p>
-                                   <p className="mb-2">To fix authentication errors, ensure the URI below is the <strong>only one</strong> in your <a href="https://trakt.tv/oauth/applications" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">Trakt Application settings</a>. We automatically handle `www` redirects.</p>
-                                   
-                                   <label className="font-semibold text-gray-300">Canonical Redirect URI:</label>
-                                   <div className="flex items-center justify-between gap-2 mt-1 p-2 bg-black/20 rounded-md">
-                                       <code className="truncate text-gray-300">{REDIRECT_URI}</code>
-                                       <button 
-                                           onClick={handleCopyUri} 
-                                           className="text-indigo-400 hover:text-indigo-300 font-bold flex-shrink-0 w-12 text-center"
-                                       >
-                                           {copyText}
-                                       </button>
-                                   </div>
-                               </div>
-                           )}
+                           <TraktAuthButton onClick={() => setIsTraktAuthModalOpen(true)} />
                         </div>
                     </div>
                     {/* Usage */}
@@ -192,6 +168,11 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                     startOnStep={5}
                 />
             )}
+            
+            <TraktAuthModal 
+                isOpen={isTraktAuthModalOpen} 
+                onClose={() => setIsTraktAuthModalOpen(false)} 
+            />
         </>
     );
 };
