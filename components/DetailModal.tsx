@@ -193,6 +193,9 @@ const isMediaDetails = (item: MediaDetails | CollectionDetails): item is MediaDe
 
 export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, onSelectActor, selectedLocation, onLocationChange, onOpenChat, onOpenReminderModal }) => {
     const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
+    const handleClosePlayer = useCallback(() => {
+        setTrailerVideoId(null);
+    }, []);
     const { addToLikes, removeFromLikes, isOnLikes } = useTmdbAccount();
     const [omdbDetails, setOmdbDetails] = useState<OmdbDetails | null>(null);
     const [isOmdbLoading, setIsOmdbLoading] = useState(false);
@@ -313,7 +316,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
           <CloseIcon className="w-6 h-6" />
         </button>
 
-        {trailerVideoId && <CustomVideoPlayer videoId={trailerVideoId} onClose={() => setTrailerVideoId(null)} videoTitle={`${pageTitle} - Official Trailer`} />}
+        {trailerVideoId && <CustomVideoPlayer videoId={trailerVideoId} onClose={handleClosePlayer} videoTitle={`${pageTitle} - Official Trailer`} />}
         
         <div className="overflow-y-auto media-row rounded-[24px]">
           <div className="relative min-h-[400px] md:min-h-[500px] flex flex-col justify-end text-white rounded-t-[24px] overflow-hidden p-6 md:p-8">
