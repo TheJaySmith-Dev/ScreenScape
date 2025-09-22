@@ -90,7 +90,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         setTmdb(prev => ({ ...prev, state: 'loading' }));
         try {
             const requestToken = await tmdbAuthService.createRequestToken();
-            const redirectUrl = `${window.location.origin}${window.location.pathname}?tmdb_callback=true`;
+            const redirectUrl = `${window.location.origin}${window.location.pathname}`;
             window.location.href = `https://www.themoviedb.org/authenticate/${requestToken}?redirect_to=${encodeURIComponent(redirectUrl)}`;
         } catch (error) {
             console.error("TMDb login failed to start:", error);
