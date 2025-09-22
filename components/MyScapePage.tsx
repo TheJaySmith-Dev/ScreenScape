@@ -3,29 +3,26 @@ import { useSettings } from '../hooks/useSettings.ts';
 import { useTrakt } from '../hooks/useTrakt.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { OnboardingModal } from './OnboardingModal.tsx';
-// FIX: Added TraktIcon for UI branding.
 import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon, TraktIcon } from './icons.tsx';
 import type { MediaDetails } from '../types.ts';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
-// FIX: Added TraktAuthButton for connecting/disconnecting Trakt.
 import { TraktAuthButton } from './TraktAuthButton.tsx';
+import { REDIRECT_URI } from '../services/traktService.ts';
 
 interface MyScapePageProps {
   onSelectMedia: (media: MediaDetails) => void;
 }
 
 export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
-    // FIX: Get trakt state from useSettings.
     const { rateLimit, tmdbApiKey, geminiApiKey, saveApiKeys, clearAllSettings, isAllClearMode, toggleAllClearMode, trakt } = useSettings();
-    // FIX: Replaced usePreferences with useTrakt.
     const { watchlist, isLoading: preferencesLoading } = useTrakt();
     const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
+    const [copyText, setCopyText] = useState('Copy');
 
     if (preferencesLoading) {
         return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
     }
 
-    // FIX: Map Trakt watchlist items instead of old 'likes'.
     const watchlistItems: MediaDetails[] = watchlist.map(item => ({
         ...item,
         overview: '',
@@ -44,6 +41,12 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
     } else if (usagePercentage >= 75) {
         progressBarColor = 'bg-yellow-500';
     }
+    
+    const handleCopyUri = () => {
+        navigator.clipboard.writeText(REDIRECT_URI);
+        setCopyText('Copied!');
+        setTimeout(() => setCopyText('Copy'), 2000);
+    };
 
 
     return (
@@ -112,6 +115,21 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                         </div>
                         <div className="mt-auto">
                            <TraktAuthButton />
+                           {trakt.state !== 'authenticated' && (
+                               <div className="mt-4 text-xs text-gray-400">
+                                   <p className="font-semibold mb-1">Having trouble connecting?</p>
+                                   <p>Make sure your Redirect URI in your Trakt app settings is set to:</p>
+                                   <div className="flex items-center justify-between gap-2 mt-1 p-2 bg-black/20 rounded-md">
+                                       <code className="truncate text-gray-300">{REDIRECT_URI}</code>
+                                       <button 
+                                           onClick={handleCopyUri} 
+                                           className="text-indigo-400 hover:text-indigo-300 font-bold flex-shrink-0"
+                                       >
+                                           {copyText}
+                                       </button>
+                                   </div>
+                               </div>
+                           )}
                         </div>
                     </div>
                     {/* Usage */}
@@ -141,12 +159,10 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
 
                 {/* Watchlist Section */}
                 <div>
-                    {/* FIX: Updated title and icon to reflect Trakt integration. */}
                     <h2 className="text-3xl font-bold mb-6 text-white flex items-center gap-3">
                         <TraktIcon className="w-6 h-6"/>
                         My Trakt Watchlist
                     </h2>
-                    {/* FIX: Show conditional content based on Trakt auth state. */}
                     {trakt.state !== 'authenticated' ? (
                          <div className="text-center py-12 glass-panel rounded-2xl">
                             <p className="text-gray-300">Connect your Trakt account to see your watchlist.</p>
