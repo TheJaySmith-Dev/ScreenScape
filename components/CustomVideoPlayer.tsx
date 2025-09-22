@@ -140,7 +140,7 @@ export const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId, o
       if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
       window.onYouTubeIframeAPIReady = undefined;
     };
-  }, [videoId, hideControls, showControls, onClose, duration]);
+  }, [videoId, hideControls, showControls, onClose]);
   
   const togglePlay = () => {
     const player = playerInstanceRef.current;
