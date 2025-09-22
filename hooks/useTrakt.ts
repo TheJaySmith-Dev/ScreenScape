@@ -8,13 +8,13 @@ import type { MediaDetails, TraktWatchlistItem } from '../types.ts';
 const posterCache = new Map<number, string>();
 
 export const useTrakt = () => {
-    const { trakt } = useSettings();
+    const { trakt, getValidAccessToken } = useSettings();
     const [watchlist, setWatchlist] = useState<TraktWatchlistItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     const fetchWatchlist = useCallback(async () => {
-        if (trakt.state !== 'authenticated' || !trakt.accessToken) {
+        if (trakt.state !== 'authenticated') {
             setWatchlist([]);
             setIsLoading(false);
             return;
@@ -22,8 +22,16 @@ export const useTrakt = () => {
 
         setIsLoading(true);
         setError(null);
+        
+        const accessToken = await getValidAccessToken();
+        if (!accessToken) {
+            setWatchlist([]);
+            setIsLoading(false);
+            return;
+        }
+
         try {
-            const items = await traktService.getWatchlist(trakt.accessToken);
+            const items = await traktService.getWatchlist(accessToken);
 
             // Fetch poster URLs for items that don't have them in the cache
             const itemsWithPosters = await Promise.all(items.map(async (item) => {
@@ -50,7 +58,7 @@ export const useTrakt = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [trakt.state, trakt.accessToken]);
+    }, [trakt.state, getValidAccessToken]);
 
     useEffect(() => {
         fetchWatchlist();
@@ -59,11 +67,12 @@ export const useTrakt = () => {
     const isOnWatchlist = (tmdbId: number) => watchlist.some(item => item.id === tmdbId);
 
     const addToWatchlist = async (media: MediaDetails) => {
-        if (trakt.state !== 'authenticated' || !trakt.accessToken) return;
         if (isOnWatchlist(media.id)) return;
+        
+        const accessToken = await getValidAccessToken();
+        if (!accessToken) return;
 
         try {
-            await traktService.addToWatchlist(media, trakt.accessToken);
             // Optimistically update UI
             const newItem: TraktWatchlistItem = {
                 id: media.id,
@@ -73,23 +82,28 @@ export const useTrakt = () => {
                 releaseYear: media.releaseYear,
             };
             setWatchlist(prev => [newItem, ...prev]);
+            await traktService.addToWatchlist(media, accessToken);
         } catch (err) {
             console.error("Failed to add to watchlist:", err);
             // Revert optimistic update if API call fails
+            setError("Failed to add to watchlist. Please try again.");
             fetchWatchlist(); 
         }
     };
 
     const removeFromWatchlist = async (media: MediaDetails) => {
-        if (trakt.state !== 'authenticated' || !trakt.accessToken) return;
         if (!isOnWatchlist(media.id)) return;
+        
+        const accessToken = await getValidAccessToken();
+        if (!accessToken) return;
 
         try {
-            await traktService.removeFromWatchlist(media, trakt.accessToken);
              // Optimistically update UI
             setWatchlist(prev => prev.filter(item => item.id !== media.id));
+            await traktService.removeFromWatchlist(media, accessToken);
         } catch (err) {
             console.error("Failed to remove from watchlist:", err);
+            setError("Failed to remove from watchlist. Please try again.");
             // Revert optimistic update
             fetchWatchlist();
         }

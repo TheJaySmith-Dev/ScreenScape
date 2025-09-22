@@ -340,6 +340,7 @@ export interface SettingsContextType {
   initiateTraktAuth: () => void;
   handleTraktCallback: (code: string) => Promise<void>;
   disconnectTrakt: () => void;
+  getValidAccessToken: () => Promise<string | null>;
   toggleAllClearMode: () => void;
   canMakeRequest: () => { canRequest: boolean; resetTime: number | null };
   incrementRequestCount: () => void;

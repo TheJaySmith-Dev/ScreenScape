@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import { setLocalTmdbApiKey } from '../services/apiService.ts';
 import * as traktService from '../services/traktService.ts';
@@ -33,7 +33,8 @@ const getInitialTraktAuth = (): TraktAuth => {
         const stored = localStorage.getItem(LOCAL_STORAGE_KEY_TRAKT);
         if (stored) {
             const state: TraktAuth = JSON.parse(stored);
-            if (state.accessToken && state.expiresAt && new Date().getTime() < state.expiresAt) {
+            // Even if token is expired, keep state so we can refresh it
+            if (state.accessToken) {
                  return { ...state, state: 'authenticated' };
             }
         }
@@ -51,6 +52,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     const [isInitialized, setIsInitialized] = useState(false);
     const [isAllClearMode, setIsAllClearMode] = useState<boolean>(false);
     const [trakt, setTrakt] = useState<TraktAuth>(getInitialTraktAuth());
+    const isRefreshingToken = useRef(false);
 
     useEffect(() => {
         const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
@@ -96,6 +98,12 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         setTrakt(prev => ({ ...prev, state: 'loading' }));
         traktService.initiateAuth();
     }, []);
+    
+    const disconnectTrakt = useCallback(() => {
+        const newAuthState: TraktAuth = { accessToken: null, refreshToken: null, expiresAt: null, state: 'idle' };
+        setTrakt(newAuthState);
+        localStorage.removeItem(LOCAL_STORAGE_KEY_TRAKT);
+    }, []);
 
     const handleTraktCallback = useCallback(async (code: string) => {
         setTrakt(prev => ({...prev, state: 'loading' }));
@@ -112,16 +120,70 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
             localStorage.setItem(LOCAL_STORAGE_KEY_TRAKT, JSON.stringify(newAuthState));
         } catch(e) {
             console.error(e);
-            setTrakt({ accessToken: null, refreshToken: null, expiresAt: null, state: 'error' });
+            disconnectTrakt();
             throw e;
         }
-    }, []);
+    }, [disconnectTrakt]);
 
-    const disconnectTrakt = useCallback(() => {
-        const newAuthState: TraktAuth = { accessToken: null, refreshToken: null, expiresAt: null, state: 'idle' };
-        setTrakt(newAuthState);
-        localStorage.removeItem(LOCAL_STORAGE_KEY_TRAKT);
-    }, []);
+    const getValidAccessToken = useCallback(async (): Promise<string | null> => {
+        if (trakt.state !== 'authenticated' || !trakt.accessToken || !trakt.expiresAt) {
+            return null;
+        }
+
+        const buffer = 10 * 60 * 1000; // 10 minutes
+        if (new Date().getTime() < trakt.expiresAt - buffer) {
+            return trakt.accessToken;
+        }
+
+        if (!trakt.refreshToken) {
+            console.warn("Trakt access token expired, but no refresh token available. Disconnecting.");
+            disconnectTrakt();
+            return null;
+        }
+        
+        if (isRefreshingToken.current) {
+            // Wait for the ongoing refresh to complete by checking state periodically
+            return new Promise((resolve) => {
+                const interval = setInterval(() => {
+                    if (!isRefreshingToken.current) {
+                        clearInterval(interval);
+                        // After refresh, the global 'trakt' state is updated. We re-read it from a fresh closure.
+                        setTrakt(currentTraktState => {
+                            if (currentTraktState.state === 'authenticated') {
+                                resolve(currentTraktState.accessToken);
+                            } else {
+                                resolve(null);
+                            }
+                            return currentTraktState;
+                        });
+                    }
+                }, 200);
+            });
+        }
+
+        isRefreshingToken.current = true;
+        setTrakt(prev => ({ ...prev, state: 'loading' }));
+
+        try {
+            const tokenData = await traktService.refreshToken(trakt.refreshToken);
+            const expiresAt = (tokenData.created_at + tokenData.expires_in) * 1000;
+            const newAuthState: TraktAuth = {
+                accessToken: tokenData.access_token,
+                refreshToken: tokenData.refresh_token,
+                expiresAt,
+                state: 'authenticated',
+            };
+            setTrakt(newAuthState);
+            localStorage.setItem(LOCAL_STORAGE_KEY_TRAKT, JSON.stringify(newAuthState));
+            return newAuthState.accessToken;
+        } catch (e) {
+            console.error("Failed to refresh Trakt token. Disconnecting.", e);
+            disconnectTrakt();
+            return null;
+        } finally {
+            isRefreshingToken.current = false;
+        }
+    }, [trakt, disconnectTrakt]);
 
     const toggleAllClearMode = useCallback(() => {
         setIsAllClearMode(prev => {
@@ -180,6 +242,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         initiateTraktAuth,
         handleTraktCallback,
         disconnectTrakt,
+        getValidAccessToken,
         toggleAllClearMode,
         canMakeRequest,
         incrementRequestCount,

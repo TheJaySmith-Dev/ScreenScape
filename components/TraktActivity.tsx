@@ -23,19 +23,26 @@ const StatItem: React.FC<{ label: string; value: number }> = ({ label, value }) 
 );
 
 export const TraktActivity: React.FC<TraktActivityProps> = ({ media }) => {
-    const { trakt } = useSettings();
+    const { trakt, getValidAccessToken } = useSettings();
     const [stats, setStats] = useState<TraktStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchStats = async () => {
-            if (trakt.state !== 'authenticated' || !trakt.accessToken) {
+            if (trakt.state !== 'authenticated') {
                 setIsLoading(false);
                 return;
             }
             setIsLoading(true);
+            
+            const accessToken = await getValidAccessToken();
+            if (!accessToken) {
+                setIsLoading(false);
+                return;
+            }
+
             try {
-                const fetchedStats = await traktService.getTraktStats(media.id, media.type, trakt.accessToken);
+                const fetchedStats = await traktService.getTraktStats(media.id, media.type, accessToken);
                 setStats(fetchedStats);
             } catch (error) {
                 console.error('Failed to fetch Trakt stats', error);
@@ -45,7 +52,7 @@ export const TraktActivity: React.FC<TraktActivityProps> = ({ media }) => {
         };
 
         fetchStats();
-    }, [media.id, media.type, trakt.accessToken, trakt.state]);
+    }, [media.id, media.type, getValidAccessToken, trakt.state]);
     
     if (trakt.state !== 'authenticated') {
         return null; // Don't show this component if user is not logged into Trakt
