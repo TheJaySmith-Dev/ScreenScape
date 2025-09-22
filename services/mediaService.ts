@@ -1,6 +1,6 @@
 import type { MediaDetails, CastMember, CrewMember, Collection, CollectionDetails, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor, AiSearchParams, SeasonDetails, Episode, AiCuratedCarousel } from '../types.ts';
 import { supportedProviders } from './streamingService.ts';
-import { getTmdbApiKey } from './apiService.ts';
+import { TMDB_API_KEY } from './constants.ts';
 import { fetchBoxOffice } from './omdbService.ts';
 
 const API_BASE_URL = 'https://api.themoviedb.org/3';
@@ -26,9 +26,10 @@ const genreMap: { [key: string]: number } = {
 };
 
 export const fetchApi = async <T,>(endpoint: string): Promise<T> => {
-    const apiKey = getTmdbApiKey();
+    const apiKey = TMDB_API_KEY;
+    // FIX: Removed comparison to placeholder key 'YOUR_TMDB_API_KEY_V3' which caused a type error because the constant has a real value.
     if (!apiKey) {
-        throw new Error("TMDb API key is not set. Please add it via the UI.");
+        throw new Error("TMDb API key is not set. Please add it to services/constants.ts.");
     }
     const separator = endpoint.includes('?') ? '&' : '?';
     const url = `${API_BASE_URL}${endpoint}${separator}api_key=${apiKey}&language=en-US`;
@@ -484,7 +485,7 @@ export const getMediaByPerson = async (personId: number, role: 'actor' | 'direct
         .filter((item): item is MediaDetails => item !== null);
 };
 
-
+// FIX: Implement fetchActorDetails to return a complete ActorDetails object.
 export const fetchActorDetails = async (actorId: number): Promise<ActorDetails> => {
     const appendToResponse = 'movie_credits';
     const endpoint = `/person/${actorId}?append_to_response=${appendToResponse}`;
@@ -500,223 +501,164 @@ export const fetchActorDetails = async (actorId: number): Promise<ActorDetails> 
         id: details.id,
         name: details.name,
         biography: details.biography,
-        profilePath: details.profile_path
-            ? `https://image.tmdb.org/t/p/w500${details.profile_path}`
-            : `https://ui-avatars.com/api/?name=${encodeURIComponent(details.name)}&background=374151&color=fff&size=500`,
+        profilePath: details.profile_path ? `https://image.tmdb.org/t/p/h632${details.profile_path}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(details.name)}&background=374151&color=fff&size=632`,
         birthday: details.birthday,
         placeOfBirth: details.place_of_birth,
-        filmography
+        filmography: filmography,
     };
 };
 
-// --- Game Data Fetchers ---
-
-const formatGameMovie = async (movie: any): Promise<GameMovie | null> => {
-    if (!movie.imdb_id || !movie.popularity) return null;
-    const boxOffice = await fetchBoxOffice(movie.imdb_id);
-    if (boxOffice === null || boxOffice < 100000) return null; // Filter out movies with no box office data or very low gross
-    
-    return {
-        id: movie.id,
-        imdbId: movie.imdb_id,
-        title: movie.title,
-        posterUrl: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : 'https://picsum.photos/500/750',
-        releaseYear: movie.release_date.substring(0, 4),
-        boxOffice,
-        popularity: movie.popularity,
-    };
-};
-
-export const fetchMoviesForGame = async (page: number): Promise<GameMovie[]> => {
-    const endpoint = `/discover/movie?sort_by=revenue.desc&page=${page}&vote_count.gte=300&with_runtime.gte=60`;
-    const data = await fetchApi<{ results: any[] }>(endpoint);
-
-    const formattedMovies = await Promise.all(data.results.map(formatGameMovie));
-    return formattedMovies.filter((movie): movie is GameMovie => movie !== null);
-};
-
-const formatGameMedia = (media: any): GameMedia | null => {
-    const type = media.media_type;
-    if (!type || (type !== 'movie' && type !== 'tv')) return null;
-    if (!media.poster_path || !media.popularity || media.popularity < 100) return null;
-
-    return {
-        id: media.id,
-        title: media.title || media.name,
-        posterUrl: `https://image.tmdb.org/t/p/w500${media.poster_path}`,
-        releaseYear: (media.release_date || media.first_air_date || '').substring(0, 4),
-        type,
-        popularity: media.popularity,
-    };
-};
-
-export const fetchMediaForPopularityGame = async (page: number): Promise<GameMedia[]> => {
-    const endpoint = `/trending/all/week?page=${page}`;
-    const data = await fetchApi<{ results: any[] }>(endpoint);
-    return data.results
-        .map(formatGameMedia)
-        .filter((media): media is GameMedia => media !== null);
-};
-
-const formatGameActor = (actor: any): GameActor | null => {
-    if (!actor.profile_path || !actor.birthday || actor.popularity < 30) return null;
-
-    return {
-        id: actor.id,
-        name: actor.name,
-        profileUrl: `https://image.tmdb.org/t/p/w500${actor.profile_path}`,
-        birthday: actor.birthday,
-    };
-};
-
-export const fetchActorsForAgeGame = async (page: number): Promise<GameActor[]> => {
-    const peopleResponse = await fetchApi<{ results: any[] }>(`/person/popular?page=${page}`);
-    const actorsWithDetails: GameActor[] = [];
-
-    for (const person of peopleResponse.results) {
-        try {
-            const details = await fetchApi<any>(`/person/${person.id}`);
-            const formatted = formatGameActor(details);
-            if (formatted) {
-                actorsWithDetails.push(formatted);
-            }
-        } catch (error) {
-            console.warn(`Could not fetch details for person ${person.id}`);
-        }
-    }
-    return actorsWithDetails;
-};
-
-// --- AI Search Helper ---
-
-const getEntityId = async (name: string, type: 'genre' | 'company' | 'person' | 'keyword'): Promise<number | null> => {
-    let searchName = name;
-    // For companies, use the alias map to find the more specific, correct name before searching.
-    if (type === 'company') {
-        const normalizedName = name.toLowerCase();
-        if (companyAliasMap[normalizedName]) {
-            searchName = companyAliasMap[normalizedName];
-        }
-    }
-
-    const cacheKey = `${type}:${searchName.toLowerCase()}`;
+// FIX: Implement functions for the Higher/Lower game.
+const getEntityId = async (query: string, type: 'person' | 'company'): Promise<number | null> => {
+    const cacheKey = `${type}-${query.toLowerCase()}`;
     if (entityCache.has(cacheKey)) {
-        return entityCache.get(cacheKey) ?? null;
+        return entityCache.get(cacheKey)!;
     }
-
-    if (type === 'genre') {
-        const normalizedGenre = name.toLowerCase().replace(/[-_]/g, ' ');
-        const genreId = genreMap[normalizedGenre];
-        if (genreId) {
-            entityCache.set(cacheKey, genreId);
-            return genreId;
-        }
-        return null;
-    }
-    
     try {
-        const data = await fetchApi<{ results: any[] }>(`/search/${type}?query=${encodeURIComponent(searchName)}`);
+        const data = await fetchApi<{ results: { id: number }[] }>(`/search/${type}?query=${encodeURIComponent(query)}`);
         if (data.results.length > 0) {
-            const entityId = data.results[0].id;
-            entityCache.set(cacheKey, entityId);
-            return entityId;
+            const id = data.results[0].id;
+            entityCache.set(cacheKey, id);
+            return id;
         }
         return null;
     } catch (error) {
-        console.error(`Failed to get ID for ${type} '${name}':`, error);
+        console.error(`Failed to get ID for ${type} "${query}":`, error);
         return null;
     }
 };
 
-
 export const discoverMediaFromAi = async (params: AiSearchParams): Promise<MediaDetails[]> => {
-    let endpoint = `/discover/${params.media_type === 'tv' ? 'tv' : 'movie'}?`;
-    const queryParams: string[] = [];
+    const mediaType = params.media_type === 'tv' ? 'tv' : 'movie';
+    let endpoint = `/discover/${mediaType}?`;
     
+    const queryParts: string[] = [];
+
+    if (params.sort_by) {
+        queryParts.push(`sort_by=${params.sort_by}`);
+    } else {
+        queryParts.push('sort_by=popularity.desc');
+    }
+
     if (params.genres && params.genres.length > 0) {
-        const genreIds = (await Promise.all(params.genres.map(g => getEntityId(g, 'genre')))).filter(id => id !== null);
-        if (genreIds.length > 0) queryParams.push(`with_genres=${genreIds.join(',')}`);
+        const genreIds = params.genres.map(g => genreMap[g.toLowerCase()]).filter(id => id);
+        if (genreIds.length > 0) {
+            queryParts.push(`with_genres=${genreIds.join(',')}`);
+        }
     }
-    if (params.companies && params.companies.length > 0) {
-        const companyIds = (await Promise.all(params.companies.map(c => getEntityId(c, 'company')))).filter(id => id !== null);
-        if (companyIds.length > 0) queryParams.push(`with_companies=${companyIds.join('|')}`);
-    }
-    if (params.actors && params.actors.length > 0) {
-        const actorIds = (await Promise.all(params.actors.map(a => getEntityId(a, 'person')))).filter(id => id !== null);
-        if (actorIds.length > 0) queryParams.push(`with_cast=${actorIds.join(',')}`);
-    }
-    if (params.directors && params.directors.length > 0) {
-        const directorIds = (await Promise.all(params.directors.map(d => getEntityId(d, 'person')))).filter(id => id !== null);
-        if (directorIds.length > 0) queryParams.push(`with_crew=${directorIds.join(',')}`);
-    }
+
     if (params.keywords && params.keywords.length > 0) {
-        const keywordIds = (await Promise.all(params.keywords.map(k => getEntityId(k, 'keyword')))).filter(id => id !== null);
-        if (keywordIds.length > 0) queryParams.push(`with_keywords=${keywordIds.join('|')}`);
+        queryParts.push(`with_keywords=${encodeURIComponent(params.keywords.join(','))}`);
     }
 
-    if (params.year_from) queryParams.push(`primary_release_date.gte=${params.year_from}-01-01`);
-    if (params.year_to) queryParams.push(`primary_release_date.lte=${params.year_to}-12-31`);
+    if (params.year_from) {
+        queryParts.push(`${mediaType === 'tv' ? 'first_air_date' : 'primary_release_date'}.gte=${params.year_from}-01-01`);
+    }
+    if (params.year_to) {
+        queryParts.push(`${mediaType === 'tv' ? 'first_air_date' : 'primary_release_date'}.lte=${params.year_to}-12-31`);
+    }
 
-    queryParams.push(`sort_by=${params.sort_by || 'popularity.desc'}`);
-
-    endpoint += queryParams.join('&');
+    // Handle people (actors/directors) and companies
+    if (params.actors && params.actors.length > 0) {
+        const actorIds = (await Promise.all(params.actors.map(name => getEntityId(name, 'person')))).filter(id => id);
+        if (actorIds.length > 0) {
+            queryParts.push(`with_cast=${actorIds.join(',')}`);
+        }
+    }
     
-    return fetchList(endpoint, params.media_type === 'tv' ? 'tv' : 'movie');
+    if (params.directors && params.directors.length > 0) {
+        const directorIds = (await Promise.all(params.directors.map(name => getEntityId(name, 'person')))).filter(id => id);
+        if (directorIds.length > 0) {
+            const crewQuery = directorIds.map(id => `${id}`).join(',');
+            queryParts.push(`with_crew=${crewQuery}`);
+        }
+    }
+    
+    if (params.companies && params.companies.length > 0) {
+        const normalizedCompanies = params.companies.map(c => companyAliasMap[c.toLowerCase()] || c);
+        const companyIds = (await Promise.all(normalizedCompanies.map(name => getEntityId(name, 'company')))).filter(id => id);
+        if (companyIds.length > 0) {
+            queryParts.push(`with_companies=${companyIds.join('|')}`);
+        }
+    }
+    
+    endpoint += queryParts.join('&');
+    
+    return fetchList(endpoint, mediaType);
 };
 
-/**
- * Generates personalized carousels of recommendations based on user's liked items using TMDb.
- */
-export const getTmdbCuratedRecommendations = async (
-    watchlist: MediaDetails[]
-): Promise<AiCuratedCarousel[]> => {
-    if (watchlist.length === 0) {
-        return [];
-    }
-
-    // Use the 3 most recently liked items as seeds for recommendations
-    const seedItems = watchlist.slice(0, 3);
-    const watchlistItemIds = new Set(watchlist.map(item => item.id));
-
-    const recommendationPromises = seedItems.map(async (seed) => {
-        try {
-            const endpoint = `/${seed.type}/${seed.id}/recommendations`;
-            const recommendedMedia = await fetchList(endpoint, seed.type);
-
-            // Filter out items the user has already on their watchlist
-            const filteredRecommendations = recommendedMedia.filter(
-                (rec) => !watchlistItemIds.has(rec.id)
-            );
-
-            if (filteredRecommendations.length > 0) {
-                return {
-                    title: `Because you added ${seed.title} to your watchlist`,
-                    items: filteredRecommendations.slice(0, 10), // Limit to 10 per row
-                };
+export const fetchMoviesForGame = async (page: number = 1): Promise<GameMovie[]> => {
+    const data = await fetchApi<{ results: any[] }>(`/discover/movie?sort_by=revenue.desc&page=${page}&vote_count.gte=500&with_runtime.gte=60`);
+    
+    const moviesWithImdbId = await Promise.all(
+        data.results.slice(0, 10).map(async (movie) => {
+            try {
+                const details = await fetchApi<{ imdb_id: string }>(`/movie/${movie.id}/external_ids`);
+                return { ...movie, imdb_id: details.imdb_id };
+            } catch {
+                return null;
             }
-            return null;
-        } catch (error) {
-            console.error(`Could not fetch recommendations for ${seed.title}:`, error);
-            return null;
-        }
-    });
-
-    const carousels = (await Promise.all(recommendationPromises)).filter(
-        (carousel): carousel is AiCuratedCarousel => carousel !== null
+        })
     );
 
-    // De-dupe items across carousels to ensure variety
-    const seenIds = new Set<number>();
-    const uniqueCarousels = carousels.map(carousel => {
-        const uniqueItems = carousel.items.filter(item => {
-            if (seenIds.has(item.id)) {
-                return false;
-            }
-            seenIds.add(item.id);
-            return true;
-        });
-        return { ...carousel, items: uniqueItems };
-    }).filter(carousel => carousel.items.length > 0); // Remove carousels that are now empty
+    const validMovies = moviesWithImdbId.filter(m => m && m.imdb_id);
 
-    return uniqueCarousels;
+    const moviesWithBoxOffice = await Promise.all(
+        validMovies.map(async (movie) => {
+            if (movie) {
+                const boxOffice = await fetchBoxOffice(movie.imdb_id);
+                if (boxOffice && boxOffice > 1000000) {
+                    return {
+                        id: movie.id,
+                        imdbId: movie.imdb_id,
+                        title: movie.title,
+                        posterUrl: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+                        releaseYear: (movie.release_date || '').substring(0, 4),
+                        boxOffice: boxOffice,
+                        popularity: movie.popularity,
+                    };
+                }
+            }
+            return null;
+        })
+    );
+
+    return moviesWithBoxOffice.filter((m): m is GameMovie => m !== null);
+};
+
+export const fetchMediaForPopularityGame = async (page: number = 1): Promise<GameMedia[]> => {
+    const data = await fetchApi<{ results: any[] }>(`/discover/movie?sort_by=popularity.desc&page=${page}&vote_count.gte=500`);
+    return data.results
+        .filter(item => item.poster_path)
+        .map(item => ({
+            id: item.id,
+            title: item.title,
+            posterUrl: `https://image.tmdb.org/t/p/w500${item.poster_path}`,
+            releaseYear: (item.release_date || '').substring(0, 4),
+            type: 'movie',
+            popularity: item.popularity,
+        }));
+};
+
+export const fetchActorsForAgeGame = async (page: number = 1): Promise<GameActor[]> => {
+    const data = await fetchApi<{ results: any[] }>(`/person/popular?page=${page}`);
+    const actorsWithDetails = await Promise.all(
+        data.results.map(async (person) => {
+            try {
+                const details = await fetchApi<{ birthday: string }>(`/person/${person.id}`);
+                if (details.birthday) {
+                    return {
+                        id: person.id,
+                        name: person.name,
+                        profileUrl: `https://image.tmdb.org/t/p/w500${person.profile_path}`,
+                        birthday: details.birthday,
+                    };
+                }
+                return null;
+            } catch {
+                return null;
+            }
+        })
+    );
+    return actorsWithDetails.filter((a): a is GameActor => a !== null);
 };

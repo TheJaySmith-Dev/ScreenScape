@@ -312,3 +312,77 @@ export const startChatForBrand = (brand: Brand, aiClient: GoogleGenAI): Chat => 
     });
     return chat;
 };
+
+// FIX: Add getTmdbCuratedRecommendations function.
+const curatedCarouselsSchema = {
+    type: Type.OBJECT,
+    properties: {
+        carousels: {
+            type: Type.ARRAY,
+            description: "A list of recommendation carousels.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    title: { type: Type.STRING, description: "A creative and relevant title for the carousel." },
+                    search_params: {
+                        type: Type.OBJECT,
+                        description: "Structured search parameters for this carousel.",
+                        properties: {
+                            genres: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            actors: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            directors: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            year_from: { type: Type.INTEGER },
+                            year_to: { type: Type.INTEGER },
+                        }
+                    }
+                },
+                required: ['title', 'search_params']
+            }
+        }
+    },
+    required: ['carousels']
+};
+
+export const getTmdbCuratedRecommendations = async (likes: MediaDetails[], aiClient: GoogleGenAI): Promise<AiCuratedCarousel[]> => {
+    const likedTitles = likes.map(item => `${item.title} (${item.releaseYear})`).join(', ');
+    
+    try {
+        const response = await aiClient.models.generateContent({
+            model,
+            contents: `Based on this list of liked movies and TV shows, generate 5 diverse and interesting recommendation carousels.
+            
+            Liked items: ${likedTitles}
+            
+            For each carousel, provide a creative title and a set of TMDb search parameters (genres, keywords, actors, directors, year ranges) that can be used to find relevant content.
+            The recommendations should be inspired by the liked items but explore new directions, not just show similar items. For example, if the user likes "The Dark Knight", you could suggest a carousel for "Gritty Comic Book Adaptations" or "Complex Movie Villains".`,
+            config: {
+                systemInstruction: `You are a movie recommendation expert. Your job is to create diverse recommendation categories based on a user's taste. You must respond with a JSON object containing a 'carousels' array. Each item in the array must have a 'title' and 'search_params'.`,
+                responseMimeType: "application/json",
+                responseSchema: curatedCarouselsSchema,
+            }
+        });
+
+        const responseText = response.text.trim();
+        const aiResult = JSON.parse(responseText);
+
+        if (!aiResult.carousels || aiResult.carousels.length === 0) {
+            return [];
+        }
+
+        const carouselPromises = aiResult.carousels.map(async (carousel: { title: string; search_params: AiSearchParams }) => {
+            const items = await discoverMediaFromAi(carousel.search_params);
+            return {
+                title: carousel.title,
+                items: items.slice(0, 10), // Limit to 10 items per carousel
+            };
+        });
+
+        const carousels = await Promise.all(carouselPromises);
+        return carousels.filter(c => c.items.length > 0); // Only return carousels with results
+
+    } catch (error) {
+        console.error("Failed to get AI curated recommendations:", error);
+        throw new Error("Could not generate recommendations at this time.");
+    }
+};

@@ -1,20 +1,16 @@
 import type { MediaDetails, TmdbAccountDetails } from '../types.ts';
+import { TMDB_API_KEY } from './constants.ts';
 
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 
-// The user-provided v3 key for general API calls
-let userV3ApiKey: string | null = null;
-
-export const setUserV3ApiKey = (key: string | null) => {
-    userV3ApiKey = key;
-};
-
 const tmdbApiRequest = async <T>(endpoint: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', body: object | null = null, sessionId?: string): Promise<T> => {
-    if (!userV3ApiKey) {
-        throw new Error("TMDb user API key (v3) is not set.");
+    const apiKey = TMDB_API_KEY;
+    // FIX: This comparison appears to be unintentional because the types '"c45a857c193f6302f2b5061c3b85e743"' and '"YOUR_TMDB_API_KEY_V3"' have no overlap.
+    if (!apiKey) {
+        throw new Error("TMDb API key is not set. Please add it to services/constants.ts.");
     }
     
-    const url = `${API_BASE_URL}${endpoint}?api_key=${userV3ApiKey}${sessionId ? `&session_id=${sessionId}` : ''}`;
+    const url = `${API_BASE_URL}${endpoint}?api_key=${apiKey}${sessionId ? `&session_id=${sessionId}` : ''}`;
     
     const response = await fetch(url, {
         method,
@@ -53,7 +49,7 @@ export const getAccountDetails = async (sessionId: string): Promise<TmdbAccountD
 
 // --- Watchlist Management ---
 
-export const getWatchlist = async (accountId: number, sessionId: string): Promise<MediaDetails[]> => {
+export const getLikes = async (accountId: number, sessionId: string): Promise<MediaDetails[]> => {
     const movies = await tmdbApiRequest<{ results: any[] }>(`/account/${accountId}/watchlist/movies`, 'GET', null, sessionId);
     const tvShows = await tmdbApiRequest<{ results: any[] }>(`/account/${accountId}/watchlist/tv`, 'GET', null, sessionId);
 
@@ -76,7 +72,7 @@ export const getWatchlist = async (accountId: number, sessionId: string): Promis
     return [...formattedMovies, ...formattedTv];
 };
 
-export const modifyWatchlist = async (accountId: number, sessionId: string, mediaId: number, mediaType: 'movie' | 'tv', isInWatchlist: boolean): Promise<void> => {
+export const modifyLikes = async (accountId: number, sessionId: string, mediaId: number, mediaType: 'movie' | 'tv', isInWatchlist: boolean): Promise<void> => {
     const body = {
         media_type: mediaType,
         media_id: mediaId,

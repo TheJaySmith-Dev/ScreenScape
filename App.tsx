@@ -5,7 +5,6 @@ import { MediaRow } from './components/MediaRow.tsx';
 import { DetailModal } from './components/DetailModal.tsx';
 import { LoadingSpinner } from './components/LoadingSpinner.tsx';
 import { ActorPage } from './components/ActorPage.tsx';
-import { OnboardingModal } from './components/OnboardingModal.tsx';
 import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { SearchModal } from './components/SearchModal.tsx';
 import { ViewingGuideModal } from './components/ViewingGuideModal.tsx';
@@ -23,7 +22,8 @@ import { popularNetworks } from './services/networkService.ts';
 import { people } from './services/peopleService.ts';
 
 import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Person, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy, AiCuratedCarousel } from './types.ts';
-import { getViewingGuidesForBrand, getAiDescriptionForBrand } from './services/aiService.ts';
+// FIX: Import 'getTmdbCuratedRecommendations' from aiService to resolve missing property error.
+import { getViewingGuidesForBrand, getAiDescriptionForBrand, getTmdbCuratedRecommendations } from './services/aiService.ts';
 import { useSettings } from './hooks/useSettings.ts';
 import { useTmdbAccount } from './hooks/useTmdbAccount.ts';
 
@@ -40,11 +40,11 @@ const RecommendationGrid = React.lazy(() => import('./components/RecommendationG
 const ComingSoonPage = React.lazy(() => import('./components/ComingSoonPage.tsx').then(module => ({ default: module.ComingSoonPage })));
 const TmdbCallbackPage = React.lazy(() => import('./pages/Callback/TmdbCallback.tsx').then(module => ({ default: module.TmdbCallbackPage })));
 
-const getPathRoute = () => window.location.pathname.replace(/^\/?|\/$/g, '').split('/');
+const getPathRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
 
 const App: React.FC = () => {
-    const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount, tmdb } = useSettings();
-    const { watchlist, isLoading: isAccountLoading } = useTmdbAccount();
+    const { isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount, tmdb } = useSettings();
+    const { likes, isLoading: isAccountLoading } = useTmdbAccount();
     const [route, setRoute] = useState<string[]>(getPathRoute());
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -98,32 +98,20 @@ const App: React.FC = () => {
     const [sortBy, setSortBy] = useState<SortBy>('trending');
 
     const navigate = useCallback((path: string, replace = false) => {
-        const method = replace ? history.replaceState : history.pushState;
-        method.call(history, null, '', path);
-        setRoute(getPathRoute());
+        const newPath = `#/${path.replace(/^\//, '')}`;
+        if (replace) {
+            window.location.replace(newPath);
+        } else {
+            window.location.hash = newPath;
+        }
     }, []);
 
     useEffect(() => {
-        // This effect handles client-side routing.
-        const handleLocationChange = () => setRoute(getPathRoute());
+        const handleHashChange = () => setRoute(getPathRoute());
+        window.addEventListener('hashchange', handleHashChange);
         
-        // Listen to popstate for browser back/forward navigation
-        window.addEventListener('popstate', handleLocationChange);
-
-        // Intercept all internal link clicks to prevent full page reloads
-        const handleLinkClick = (e: MouseEvent) => {
-            const target = e.target as HTMLElement;
-            const anchor = target.closest('a');
-            if (anchor && anchor.target !== '_blank' && !e.metaKey && !e.ctrlKey) {
-                const url = new URL(anchor.href);
-                if (url.origin === window.location.origin) {
-                    e.preventDefault();
-                    history.pushState(null, '', url.pathname + url.search + url.hash);
-                    handleLocationChange();
-                }
-            }
-        };
-        document.addEventListener('click', handleLinkClick);
+        // Set initial route
+        handleHashChange();
 
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20);
@@ -131,8 +119,7 @@ const App: React.FC = () => {
         window.addEventListener('scroll', handleScroll, { passive: true });
         
         return () => {
-            window.removeEventListener('popstate', handleLocationChange);
-            document.removeEventListener('click', handleLinkClick);
+            window.removeEventListener('hashchange', handleHashChange);
             window.removeEventListener('scroll', handleScroll);
         };
     }, []);
@@ -172,14 +159,14 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (isInitialized && tmdbApiKey) {
+        if (isInitialized) {
             fetchInitialData();
         }
-    }, [isInitialized, tmdbApiKey, fetchInitialData]);
+    }, [isInitialized, fetchInitialData]);
 
     const MIN_ITEMS_FOR_RECOMMENDATIONS = 3;
     const fetchForYouRecommendations = useCallback(async () => {
-        if (tmdb.state !== 'authenticated' || watchlist.length < MIN_ITEMS_FOR_RECOMMENDATIONS || isForYouLoading) {
+        if (tmdb.state !== 'authenticated' || likes.length < MIN_ITEMS_FOR_RECOMMENDATIONS || isForYouLoading) {
             return;
         }
 
@@ -187,10 +174,15 @@ const App: React.FC = () => {
         setForYouError(null);
         
         try {
-            const results = await mediaService.getTmdbCuratedRecommendations(watchlist);
+            // FIX: Call getTmdbCuratedRecommendations from aiService and pass aiClient.
+            if (!aiClient) {
+                setForYouError("AI client is not configured. Please add a Gemini API key in MyScape.");
+                return;
+            }
+            const results = await getTmdbCuratedRecommendations(likes, aiClient);
             
             if (results.length === 0) {
-                setForYouError("Couldn't generate recommendations. Add a few more titles to your watchlist!");
+                setForYouError("Couldn't generate recommendations. Add a few more titles to your likes!");
             } else {
                 setCuratedRows(results);
             }
@@ -201,18 +193,18 @@ const App: React.FC = () => {
         } finally {
             setIsForYouLoading(false);
         }
-    }, [watchlist, isForYouLoading, tmdb.state]);
+    }, [likes, isForYouLoading, tmdb.state, aiClient]);
 
     useEffect(() => {
         const page = route[0] || 'home';
-        if (page === 'home' && isInitialized && tmdbApiKey && !isAccountLoading) {
+        if (page === 'home' && isInitialized && !isAccountLoading) {
             fetchForYouRecommendations();
         }
-    }, [route, isInitialized, tmdbApiKey, isAccountLoading, fetchForYouRecommendations]);
+    }, [route, isInitialized, isAccountLoading, fetchForYouRecommendations]);
 
     useEffect(() => {
         const [page, id] = route;
-        if (!isInitialized || !tmdbApiKey) return;
+        if (!isInitialized) return;
     
         const fetchBrandData = async (brandId: string) => {
             if (selectedBrand && selectedBrand.id === brandId) {
@@ -240,7 +232,7 @@ const App: React.FC = () => {
                     setIsLoading(false);
                 }
             } else if (page === 'brand') {
-                navigate('/brands', true); // Redirect if brand not found
+                navigate('brands', true); // Redirect if brand not found
             }
         };
     
@@ -251,11 +243,11 @@ const App: React.FC = () => {
             setSelectedBrand(null);
             setBrandContent([]);
         }
-    }, [route, isInitialized, tmdbApiKey, selectedBrand, navigate]);
+    }, [route, isInitialized, selectedBrand, navigate]);
 
     useEffect(() => {
         const [page, id] = route;
-        if (!isInitialized || !tmdbApiKey) return;
+        if (!isInitialized) return;
     
         const fetchPersonData = async (personId: string) => {
             if (selectedPerson && selectedPerson.id === personId) {
@@ -276,7 +268,7 @@ const App: React.FC = () => {
                     setIsLoading(false);
                 }
             } else if (page === 'person') {
-                navigate('/people', true); // Redirect if person not found
+                navigate('people', true); // Redirect if person not found
             }
         };
     
@@ -287,7 +279,7 @@ const App: React.FC = () => {
             setSelectedPerson(null);
             setPersonContent([]);
         }
-    }, [route, isInitialized, tmdbApiKey, selectedPerson, navigate]);
+    }, [route, isInitialized, selectedPerson, navigate]);
 
     const handleSelectMedia = useCallback(async (media: MediaDetails) => {
         setSelectedActor(null); // Clear actor modal when opening media modal
@@ -362,7 +354,7 @@ const App: React.FC = () => {
         try {
             const results = await mediaService.searchMedia(query);
             setSearchResults(results);
-            navigate('/search');
+            navigate('search');
         } catch (error) {
             console.error("Search failed:", error);
         } finally {
@@ -371,7 +363,7 @@ const App: React.FC = () => {
     };
     
     const openBrandDetail = (brand: Brand) => {
-      navigate(`/brand/${brand.id}`);
+      navigate(`brand/${brand.id}`);
     };
 
     const handleGenerateGuides = async (brand: Brand, media: MediaDetails[]) => {
@@ -430,7 +422,7 @@ const App: React.FC = () => {
                 : [studio.id];
             const results = await mediaService.getMediaByStudio(idsToFetch);
             setStudioContent(results);
-            navigate(`/studio/${studio.id}`);
+            navigate(`studio/${studio.id}`);
         } catch(e) {
             console.error(`Failed to get content for studio ${studio.name}`, e);
         } finally {
@@ -443,7 +435,7 @@ const App: React.FC = () => {
         try {
             const results = await mediaService.getMediaByNetwork(network.id);
             setNetworkContent(results);
-            navigate(`/network/${network.id}`);
+            navigate(`network/${network.id}`);
         } catch(e) {
             console.error(`Failed to get content for network ${network.name}`, e);
         } finally {
@@ -456,7 +448,7 @@ const App: React.FC = () => {
         try {
             const results = await mediaService.getMediaByStreamingProvider(provider.key, selectedLocation.code);
             setStreamingContent(results);
-            navigate(`/streaming/${provider.key}`);
+            navigate(`streaming/${provider.key}`);
         } catch(e) {
             console.error(`Failed to get content for provider ${provider.name}`, e);
         } finally {
@@ -465,7 +457,7 @@ const App: React.FC = () => {
     };
 
     const handleSelectPerson = (person: Person) => {
-        navigate(`/person/${person.id}`);
+        navigate(`person/${person.id}`);
     };
 
     const handleOpenChatModal = (media: MediaDetails) => {
@@ -494,14 +486,6 @@ const App: React.FC = () => {
         const page = route[0] === '' ? 'home' : route[0] || 'home';
         const id = route[1];
 
-        if (!isInitialized) {
-            return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
-        }
-        
-        if (!tmdbApiKey || !geminiApiKey) {
-            return <OnboardingModal onSave={saveApiKeys} />;
-        }
-        
         if (isLoading) return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
 
         const pageContent = (() => {
@@ -516,20 +500,20 @@ const App: React.FC = () => {
                                     <div className="text-center text-gray-300 fade-in glass-panel p-8">
                                         <UserIcon className="w-12 h-12 text-blue-400 mx-auto mb-4" />
                                         <h2 className="text-2xl font-bold mb-4 text-white">Connect to TMDb</h2>
-                                        <p>Log in with your TMDb account in <a href="/myscape" className="font-bold text-white hover:underline">MyScape</a> to get personalized recommendations.</p>
+                                        <p>Log in with your TMDb account in <a href="#/myscape" className="font-bold text-white hover:underline">MyScape</a> to get personalized recommendations.</p>
                                     </div>
                                 </div>
                             );
                         }
 
-                        if (watchlist.length < MIN_ITEMS_FOR_RECOMMENDATIONS) {
+                        if (likes.length < MIN_ITEMS_FOR_RECOMMENDATIONS) {
                             return (
                                 <div className="mt-12 md:mt-16 px-4 sm:px-6 lg:px-8">
                                     <div className="text-center text-gray-300 fade-in glass-panel p-8">
                                         <ThumbsUpIcon className="w-12 h-12 text-green-400 mx-auto mb-4" />
                                         <h2 className="text-2xl font-bold mb-4 text-white">Personalized Recommendations</h2>
-                                        <p>Add at least <span className="font-bold text-white">{MIN_ITEMS_FOR_RECOMMENDATIONS}</span> movies or shows to your TMDb watchlist to unlock your feed.</p>
-                                        <p className="text-sm mt-2">You have <span className="font-bold text-white">{watchlist.length}</span> items so far.</p>
+                                        <p>Like at least <span className="font-bold text-white">{MIN_ITEMS_FOR_RECOMMENDATIONS}</span> movies or shows to unlock your feed.</p>
+                                        <p className="text-sm mt-2">You have <span className="font-bold text-white">{likes.length}</span> items liked so far.</p>
                                     </div>
                                 </div>
                             );
@@ -595,7 +579,7 @@ const App: React.FC = () => {
                 case 'collections': return <ComingSoonPage media={comingSoonContent} onSelectMedia={handleSelectMedia} />;
                 case 'studios': return <StudioGrid studios={popularStudios} onSelect={handleSelectStudio} />;
                 case 'brands':
-                    return <BrandGrid brands={brands} onSelect={openBrandDetail} onAiInfoClick={handleOpenAiDescription} />;
+                    return <BrandGrid brands={brands} onSelect={openBrandDetail} onAiInfoClick={aiClient ? handleOpenAiDescription : undefined} />;
                 case 'streaming':
                     if (id) {
                         return <RecommendationGrid recommendations={streamingContent} onSelect={handleSelectMedia} />;
@@ -610,7 +594,7 @@ const App: React.FC = () => {
                     return <RecommendationGrid recommendations={searchResults} onSelect={handleSelectMedia} />;
                 case 'brand':
                     if (selectedBrand) {
-                        return <BrandDetail brand={selectedBrand} media={brandContent} onBack={() => navigate('/brands')} onSelectMedia={handleSelectMedia} onSelectCollection={handleSelectCollection} mediaTypeFilter={mediaTypeFilter} setMediaTypeFilter={setMediaTypeFilter} sortBy={sortBy} setSortBy={setSortBy} onGenerateGuides={handleGenerateGuides} onOpenChat={handleOpenBrandChatModal} />;
+                        return <BrandDetail brand={selectedBrand} media={brandContent} onBack={() => navigate('brands')} onSelectMedia={handleSelectMedia} onSelectCollection={handleSelectCollection} mediaTypeFilter={mediaTypeFilter} setMediaTypeFilter={setMediaTypeFilter} sortBy={sortBy} setSortBy={setSortBy} onGenerateGuides={aiClient ? handleGenerateGuides : undefined} onOpenChat={aiClient ? handleOpenBrandChatModal : undefined} />;
                     }
                     return <div className="text-center">Loading brand...</div>;
                 case 'studio':
@@ -622,7 +606,7 @@ const App: React.FC = () => {
                         return <PersonPage 
                                     person={selectedPerson} 
                                     media={personContent} 
-                                    onBack={() => navigate('/people')} 
+                                    onBack={() => navigate('people')} 
                                     onSelectMedia={handleSelectMedia}
                                     onSelectActor={handleSelectActor} />;
                     }
@@ -659,22 +643,24 @@ const App: React.FC = () => {
        return (
             <div className={`transition-transform duration-500 ease-in-out ${isScrolled ? 'scale-90' : 'scale-100'}`}>
                 <div className="flex items-center gap-1 p-1 sm:p-1.5 glass-panel rounded-full">
-                    <a href="/" className={`flex items-center justify-center p-2.5 sm:px-4 sm:py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${activeRoute === 'home' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}>
+                    <a href="#/" className={`flex items-center justify-center p-2.5 sm:px-4 sm:py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${activeRoute === 'home' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}>
                         <HomeIcon className="w-5 h-5 sm:hidden" />
                         <span className="hidden sm:inline">Home</span>
                     </a>
                     <button onClick={() => setIsSearchOpen(true)} className="p-2.5 rounded-full hover:bg-white/5 transition-colors" aria-label="Open Search">
                         <SearchIcon className="w-5 h-5" />
                     </button>
-                    <button onClick={() => setIsAiSearchOpen(true)} className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-semibold text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-full transition-colors" aria-label="Open ScapeAI Search">
-                        <img src="https://img.icons8.com/?size=100&id=eoxMN35Z6JKg&format=png&color=FFFFFF" alt="ScapeAI logo" className="w-5 h-5" />
-                        <span className="hidden sm:inline">ScapeAI</span>
-                    </button>
+                    {aiClient && (
+                        <button onClick={() => setIsAiSearchOpen(true)} className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-semibold text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-full transition-colors" aria-label="Open ScapeAI Search">
+                            <img src="https://img.icons8.com/?size=100&id=eoxMN35Z6JKg&format=png&color=FFFFFF" alt="ScapeAI logo" className="w-5 h-5" />
+                            <span className="hidden sm:inline">ScapeAI</span>
+                        </button>
+                    )}
                      <button onClick={() => setIsBrowseMenuOpen(true)} className="flex items-center justify-center gap-2 px-3 py-1.5 text-sm font-semibold text-gray-300 bg-white/5 hover:bg-white/10 rounded-full transition-colors" aria-label="Open browse menu">
                         <GridIcon className="w-5 h-5" />
                         <span className="hidden sm:inline">Browse</span>
                     </button>
-                    <a href="/myscape" className={`flex items-center justify-center p-2.5 sm:px-4 sm:py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${activeRoute === 'myscape' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}>
+                    <a href="#/myscape" className={`flex items-center justify-center p-2.5 sm:px-4 sm:py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${activeRoute === 'myscape' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}>
                         <UserIcon className="w-5 h-5 sm:hidden" />
                         <span className="hidden sm:inline">MyScape</span>
                     </a>
@@ -682,6 +668,10 @@ const App: React.FC = () => {
             </div>
        );
     };
+    
+    if (!isInitialized) {
+        return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
+    }
 
     return (
         <div id="app-container" className="min-h-screen">

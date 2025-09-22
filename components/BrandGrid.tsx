@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { BrandCard } from './BrandCard.tsx';
 import type { Brand } from '../types.ts';
@@ -7,7 +5,7 @@ import type { Brand } from '../types.ts';
 interface BrandGridProps {
   brands: Brand[];
   onSelect: (brand: Brand) => void;
-  onAiInfoClick: (brand: Brand) => void;
+  onAiInfoClick?: (brand: Brand) => void;
 }
 
 export const BrandGrid: React.FC<BrandGridProps> = ({ brands, onSelect, onAiInfoClick }) => {
@@ -23,7 +21,7 @@ export const BrandGrid: React.FC<BrandGridProps> = ({ brands, onSelect, onAiInfo
           className="fade-in" 
           style={{ animationDelay: `${index * 100}ms`, opacity: 0 }}
         >
-          <BrandCard brand={brand} onSelect={() => onSelect(brand)} onAiInfoClick={() => onAiInfoClick(brand)} />
+          <BrandCard brand={brand} onSelect={() => onSelect(brand)} onAiInfoClick={onAiInfoClick ? () => onAiInfoClick(brand) : undefined} />
         </div>
       ))}
     </div>

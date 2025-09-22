@@ -1,6 +1,3 @@
-
-
-
 import React from 'react';
 import type { Brand } from '../types.ts';
 import { SparklesIcon } from './icons.tsx';
@@ -8,7 +5,7 @@ import { SparklesIcon } from './icons.tsx';
 interface BrandCardProps {
   brand: Brand;
   onSelect: () => void;
-  onAiInfoClick: () => void;
+  onAiInfoClick?: () => void;
 }
 
 export const BrandCard: React.FC<BrandCardProps> = ({ brand, onSelect, onAiInfoClick }) => {
@@ -39,17 +36,19 @@ export const BrandCard: React.FC<BrandCardProps> = ({ brand, onSelect, onAiInfoC
         aria-label={`View the ${brand.name} brand hub`}
         onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect()}
       >
-        <button
-            onClick={(e) => {
-                e.stopPropagation();
-                onAiInfoClick();
-            }}
-            className="absolute top-3 right-3 z-10 p-2 glass-button !rounded-full opacity-70 md:group-hover:opacity-100 transition-opacity"
-            aria-label={`Get AI insights for ${brand.name}`}
-            title={`Get AI insights for ${brand.name}`}
-        >
-            <SparklesIcon className="w-5 h-5" />
-        </button>
+        {onAiInfoClick && (
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onAiInfoClick();
+                }}
+                className="absolute top-3 right-3 z-10 p-2 glass-button !rounded-full opacity-70 md:group-hover:opacity-100 transition-opacity"
+                aria-label={`Get AI insights for ${brand.name}`}
+                title={`Get AI insights for ${brand.name}`}
+            >
+                <SparklesIcon className="w-5 h-5" />
+            </button>
+        )}
         {hoverGif && (
           <div
             style={{ backgroundImage: `url(${hoverGif})` }}
@@ -77,17 +76,19 @@ export const BrandCard: React.FC<BrandCardProps> = ({ brand, onSelect, onAiInfoC
       aria-label={`View details for ${brand.name}`}
       onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onSelect()}
     >
-      <button
-            onClick={(e) => {
-                e.stopPropagation();
-                onAiInfoClick();
-            }}
-            className="absolute top-3 right-3 z-20 p-2 glass-button !rounded-full opacity-70 md:group-hover:opacity-100 transition-opacity"
-            aria-label={`Get AI insights for ${brand.name}`}
-            title={`Get AI insights for ${brand.name}`}
-        >
-            <SparklesIcon className="w-5 h-5" />
-        </button>
+      {onAiInfoClick && (
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onAiInfoClick();
+                }}
+                className="absolute top-3 right-3 z-20 p-2 glass-button !rounded-full opacity-70 md:group-hover:opacity-100 transition-opacity"
+                aria-label={`Get AI insights for ${brand.name}`}
+                title={`Get AI insights for ${brand.name}`}
+            >
+                <SparklesIcon className="w-5 h-5" />
+            </button>
+        )}
       <img 
         src={brand.posterUrl} 
         alt={`Poster for ${brand.name}`} 

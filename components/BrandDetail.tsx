@@ -15,8 +15,8 @@ interface BrandDetailProps {
     onBack: () => void;
     onSelectMedia: (media: MediaDetails) => void;
     onSelectCollection: (collection: Collection) => void;
-    onGenerateGuides: (brand: Brand, media: MediaDetails[]) => void;
-    onOpenChat: (brand: Brand) => void;
+    onGenerateGuides?: (brand: Brand, media: MediaDetails[]) => void;
+    onOpenChat?: (brand: Brand) => void;
 }
 
 export const BrandDetail: React.FC<BrandDetailProps> = ({
@@ -80,22 +80,26 @@ export const BrandDetail: React.FC<BrandDetailProps> = ({
                 <div className="flex items-center gap-4 mb-8 flex-wrap">
                     <button onClick={onBack} className="px-4 py-2 text-sm text-gray-200 glass-panel rounded-full hover:bg-white/5 transition-colors">&larr; Back to Brands</button>
                     <h2 className="text-3xl font-bold text-white">{brand.name}</h2>
-                    <button
-                        onClick={() => onGenerateGuides(brand, media)}
-                        className="glass-button text-sm"
-                        aria-label={`Generate AI viewing guides for ${brand.name}`}
-                    >
-                        <SparklesIcon className="w-5 h-5 text-indigo-400" />
-                        <span>AI Viewing Guides</span>
-                    </button>
-                    <button
-                        onClick={() => onOpenChat(brand)}
-                        className="glass-button text-sm"
-                        aria-label={`Chat with ScapeAI about ${brand.name}`}
-                    >
-                        <ChatBubbleIcon className="w-5 h-5"/>
-                        <span>Chat with ScapeAI</span>
-                    </button>
+                    {onGenerateGuides && (
+                        <button
+                            onClick={() => onGenerateGuides(brand, media)}
+                            className="glass-button text-sm"
+                            aria-label={`Generate AI viewing guides for ${brand.name}`}
+                        >
+                            <SparklesIcon className="w-5 h-5 text-indigo-400" />
+                            <span>AI Viewing Guides</span>
+                        </button>
+                    )}
+                    {onOpenChat && (
+                        <button
+                            onClick={() => onOpenChat(brand)}
+                            className="glass-button text-sm"
+                            aria-label={`Chat with ScapeAI about ${brand.name}`}
+                        >
+                            <ChatBubbleIcon className="w-5 h-5"/>
+                            <span>Chat with ScapeAI</span>
+                        </button>
+                    )}
                 </div>
 
                 {brand.characterCollections.length > 0 && (

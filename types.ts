@@ -322,7 +322,6 @@ export interface TmdbAuth {
 }
 
 export interface SettingsContextType {
-  tmdbApiKey: string | null;
   geminiApiKey: string | null;
   aiClient: GoogleGenAI | null;
   rateLimit: RateLimitState;
@@ -335,7 +334,7 @@ export interface SettingsContextType {
   toggleAllClearMode: () => void;
   canMakeRequest: () => { canRequest: boolean; resetTime: number | null };
   incrementRequestCount: () => void;
-  saveApiKeys: (keys: { tmdbKey: string; geminiKey: string }) => void;
+  saveGeminiKey: (key: string) => void;
   clearAllSettings: () => void;
 }
 

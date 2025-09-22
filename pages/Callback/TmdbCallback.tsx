@@ -11,7 +11,7 @@ export const TmdbCallbackPage: React.FC<TmdbCallbackPageProps> = ({ onNavigate }
 
     useEffect(() => {
         const processCallback = async () => {
-            const params = new URLSearchParams(window.location.search);
+            const params = new URLSearchParams(window.location.hash.split('?')[1] || '');
             const requestToken = params.get('request_token');
             const approved = params.get('approved');
 

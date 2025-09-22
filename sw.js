@@ -16,7 +16,6 @@ const API_HOSTS = [
     'api.themoviedb.org',
     'ipinfo.io',
     'www.omdbapi.com',
-    'api.trakt.tv',
 ];
 
 self.addEventListener('install', event => {

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, CrewMember, UserLocation, WatchProviders, OmdbDetails, FunFact, SeasonDetails, Episode, SeasonSummary } from '../types.ts';
-import { StarIcon, PlayIcon, PlusIcon, CheckIcon, TvIcon, SparklesIcon, InfoIcon, ChatBubbleIcon, CloseIcon, BellIcon } from './icons.tsx';
+import { StarIcon, PlayIcon, ThumbsUpIcon, TvIcon, SparklesIcon, InfoIcon, ChatBubbleIcon, CloseIcon, BellIcon } from './icons.tsx';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
@@ -154,8 +154,7 @@ const getTvDateRange = (firstAirDate: string | undefined, lastAirDate: string | 
 };
 
 const formatAiText = (text: string): { __html: string } => {
-    // Sanitize and format basic markdown.
-    const formattedContent = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); // Bold
+    const formattedContent = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     return { __html: formattedContent };
 };
 
@@ -188,25 +187,22 @@ const CrewMemberCard: React.FC<{ member: CrewMember; onSelect: (id: number) => v
     </div>
 );
 
-// Type guard to differentiate between MediaDetails and CollectionDetails
 const isMediaDetails = (item: MediaDetails | CollectionDetails): item is MediaDetails => {
   return 'title' in item && 'type' in item;
 };
 
 export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, onSelectActor, selectedLocation, onLocationChange, onOpenChat, onOpenReminderModal }) => {
     const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
-    const { addToWatchlist, removeFromWatchlist, isOnWatchlist } = useTmdbAccount();
+    const { addToLikes, removeFromLikes, isOnLikes } = useTmdbAccount();
     const [omdbDetails, setOmdbDetails] = useState<OmdbDetails | null>(null);
     const [isOmdbLoading, setIsOmdbLoading] = useState(false);
     const [isDetailsVisible, setIsDetailsVisible] = useState(false);
     const { aiClient, canMakeRequest, incrementRequestCount, tmdb } = useSettings();
 
-    // State for AI-generated Fun Facts
     const [funFacts, setFunFacts] = useState<FunFact[] | null>(null);
     const [isFactsLoading, setIsFactsLoading] = useState(false);
     const [factsError, setFactsError] = useState<string | null>(null);
 
-    // Effect for keyboard shortcuts and scrolling to top
     useEffect(() => {
         const handleEsc = (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
@@ -218,21 +214,18 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
             }
         };
         window.addEventListener('keydown', handleEsc);
-        document.querySelector('#root')?.scrollTo(0, 0); // Scroll page view to top on mount
+        document.querySelector('#root')?.scrollTo(0, 0);
         return () => window.removeEventListener('keydown', handleEsc);
     }, [onClose, trailerVideoId]);
 
-    // Effect to fetch OMDb data
     useEffect(() => {
-        setOmdbDetails(null); // Reset on item change
+        setOmdbDetails(null);
         if (isMediaDetails(item) && item.imdbId) {
             const fetchDetails = async () => {
                 setIsOmdbLoading(true);
                 try {
                     const details = await fetchOmdbDetails(item.imdbId);
-                    if(details) {
-                        setOmdbDetails(details);
-                    }
+                    if(details) setOmdbDetails(details);
                 } catch (e) {
                     console.error("Failed to fetch OMDb details", e);
                 } finally {
@@ -250,9 +243,9 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         }
     };
 
-    const handleWatchlistToggle = () => {
+    const handleLikeToggle = () => {
         if (isMediaDetails(item)) {
-            isOnWatchlist(item.id) ? removeFromWatchlist(item) : addToWatchlist(item);
+            isOnLikes(item.id) ? removeFromLikes(item) : addToLikes(item);
         }
     };
 
@@ -274,29 +267,22 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         }
     }, [aiClient, item, canMakeRequest, incrementRequestCount]);
     
-    // Reset fun facts when item changes
     useEffect(() => {
         setFunFacts(null);
         setFactsError(null);
     }, [item.id]);
 
     const handleChatClick = () => {
-        if (isMediaDetails(item)) {
-            onOpenChat(item);
-        }
+        if (isMediaDetails(item)) onOpenChat(item);
     }
     
     const handleReminderClick = () => {
-        if (isMediaDetails(item)) {
-            onOpenReminderModal(item);
-        }
+        if (isMediaDetails(item)) onOpenReminderModal(item);
     }
 
     const handleCountryChange = (countryCode: string) => {
         const country = supportedCountries.find(c => c.code === countryCode);
-        if (country) {
-            onLocationChange({ name: country.name, code: country.code });
-        }
+        if (country) onLocationChange({ name: country.name, code: country.code });
     };
 
     const countryListForSelector = useMemo(() => {
@@ -306,7 +292,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         return [userCountry, ...otherCountries];
     }, [selectedLocation.code]);
 
-    const itemIsOnWatchlist = isMediaDetails(item) && isOnWatchlist(item.id);
+    const itemIsOnLikes = isMediaDetails(item) && isOnLikes(item.id);
 
     const backgroundImageUrl = isMediaDetails(item)
         ? (item.textlessBackdropUrl || item.backdropUrl)
@@ -368,12 +354,12 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                       <span>More Info</span>
                     </button>
                     {isMediaDetails(item) && tmdb.state === 'authenticated' && (
-                        <button onClick={handleWatchlistToggle} className={`glass-button text-sm transition-colors ${itemIsOnWatchlist ? 'bg-white/20' : ''}`} aria-label={itemIsOnWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}>
-                            {itemIsOnWatchlist ? <CheckIcon className="w-5 h-5" /> : <PlusIcon className="w-5 h-5" />}
-                            <span>Watchlist</span>
+                        <button onClick={handleLikeToggle} className={`glass-button text-sm transition-colors ${itemIsOnLikes ? 'bg-white/20' : ''}`} aria-label={itemIsOnLikes ? 'Remove from likes' : 'Add to likes'}>
+                            <ThumbsUpIcon className="w-5 h-5" />
+                            <span>{itemIsOnLikes ? 'Liked' : 'Like'}</span>
                         </button>
                     )}
-                    {isMediaDetails(item) && (
+                    {isMediaDetails(item) && aiClient && (
                       <>
                         {item.type === 'tv' && (
                           <button onClick={handleReminderClick} className="glass-button !p-3" aria-label="Set Reminder">

@@ -1,10 +1,8 @@
 import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import { setLocalTmdbApiKey } from '../services/apiService.ts';
 import * as tmdbAuthService from '../services/tmdbAuthService.ts';
 import type { SettingsContextType, RateLimitState, TmdbAuth } from '../types.ts';
 
-const LOCAL_STORAGE_KEY_TMDB = 'screenscape_tmdb_api_key';
 const LOCAL_STORAGE_KEY_GEMINI = 'screenscape_gemini_api_key';
 const LOCAL_STORAGE_KEY_RATE_LIMIT = 'screenscape_rate_limit';
 const LOCAL_STORAGE_KEY_ALL_CLEAR = 'screenscape_all_clear_mode';
@@ -44,7 +42,6 @@ const getInitialTmdbAuth = (): TmdbAuth => {
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [tmdbApiKey, setTmdbApiKey] = useState<string | null>(null);
     const [geminiApiKey, setGeminiApiKey] = useState<string | null>(null);
     const [aiClient, setAiClient] = useState<GoogleGenAI | null>(null);
     const [rateLimit, setRateLimit] = useState<RateLimitState>(getInitialRateLimit());
@@ -53,15 +50,9 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     const [tmdb, setTmdb] = useState<TmdbAuth>(getInitialTmdbAuth());
 
     useEffect(() => {
-        const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
         const localGeminiKey = localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI);
         const localAllClear = localStorage.getItem(LOCAL_STORAGE_KEY_ALL_CLEAR);
         
-        if (localTmdbKey) {
-            setTmdbApiKey(localTmdbKey);
-            setLocalTmdbApiKey(localTmdbKey);
-            tmdbAuthService.setUserV3ApiKey(localTmdbKey);
-        }
         if (localAllClear) setIsAllClearMode(JSON.parse(localAllClear));
         
         setGeminiApiKey(localGeminiKey);
@@ -85,20 +76,21 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
     }, [geminiApiKey]);
 
-    const saveApiKeys = useCallback((keys: { tmdbKey: string; geminiKey: string }) => {
-        setTmdbApiKey(keys.tmdbKey);
-        setLocalTmdbApiKey(keys.tmdbKey);
-        tmdbAuthService.setUserV3ApiKey(keys.tmdbKey);
-        setGeminiApiKey(keys.geminiKey);
-        localStorage.setItem(LOCAL_STORAGE_KEY_TMDB, keys.tmdbKey);
-        localStorage.setItem(LOCAL_STORAGE_KEY_GEMINI, keys.geminiKey);
+    const saveGeminiKey = useCallback((key: string) => {
+        const trimmedKey = key.trim();
+        setGeminiApiKey(trimmedKey || null);
+        if (trimmedKey) {
+            localStorage.setItem(LOCAL_STORAGE_KEY_GEMINI, trimmedKey);
+        } else {
+            localStorage.removeItem(LOCAL_STORAGE_KEY_GEMINI);
+        }
     }, []);
     
     const loginWithTmdb = useCallback(async () => {
         setTmdb(prev => ({ ...prev, state: 'loading' }));
         try {
             const requestToken = await tmdbAuthService.createRequestToken();
-            const redirectUrl = `${window.location.origin}/callback/tmdb`;
+            const redirectUrl = `${window.location.origin}${window.location.pathname}?tmdb_callback=true`;
             window.location.href = `https://www.themoviedb.org/authenticate/${requestToken}?redirect_to=${encodeURIComponent(redirectUrl)}`;
         } catch (error) {
             console.error("TMDb login failed to start:", error);
@@ -158,23 +150,18 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     const clearAllSettings = useCallback(() => {
         const newResetTime = new Date().setHours(23, 59, 59, 999);
-        setTmdbApiKey(null);
-        setLocalTmdbApiKey(null);
-        tmdbAuthService.setUserV3ApiKey(null);
         setGeminiApiKey(null);
         setAiClient(null);
         setRateLimit({ count: 0, resetTime: newResetTime });
         setIsAllClearMode(false);
         logoutTmdb();
         
-        localStorage.removeItem(LOCAL_STORAGE_KEY_TMDB);
         localStorage.removeItem(LOCAL_STORAGE_KEY_GEMINI);
         localStorage.removeItem(LOCAL_STORAGE_KEY_RATE_LIMIT);
         localStorage.removeItem(LOCAL_STORAGE_KEY_ALL_CLEAR);
     }, [logoutTmdb]);
 
     const value = {
-        tmdbApiKey,
         geminiApiKey,
         aiClient,
         rateLimit,
@@ -187,7 +174,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         toggleAllClearMode,
         canMakeRequest,
         incrementRequestCount,
-        saveApiKeys,
+        saveGeminiKey,
         clearAllSettings,
     };
 
