@@ -47,14 +47,14 @@ export const BrowseMenuModal: React.FC<BrowseMenuModalProps> = ({ isOpen, onClos
                     </button>
                 </div>
                 <nav className="flex-grow overflow-y-auto">
-                    <MenuLink href="#/movies" label="Movies" onClick={onClose} />
-                    <MenuLink href="#/tv" label="TV Shows" onClick={onClose} />
-                    <MenuLink href="#/collections" label="Coming Soon" onClick={onClose} />
-                    <MenuLink href="#/people" label="Talent" onClick={onClose} />
-                    <MenuLink href="#/studios" label="Studios" onClick={onClose} />
-                    <MenuLink href="#/brands" label="Brands" onClick={onClose} />
-                    <MenuLink href="#/streaming" label="Streaming" onClick={onClose} />
-                    <MenuLink href="#/networks" label="Networks" onClick={onClose} />
+                    <MenuLink href="/movies" label="Movies" onClick={onClose} />
+                    <MenuLink href="/tv" label="TV Shows" onClick={onClose} />
+                    <MenuLink href="/collections" label="Coming Soon" onClick={onClose} />
+                    <MenuLink href="/people" label="Talent" onClick={onClose} />
+                    <MenuLink href="/studios" label="Studios" onClick={onClose} />
+                    <MenuLink href="/brands" label="Brands" onClick={onClose} />
+                    <MenuLink href="/streaming" label="Streaming" onClick={onClose} />
+                    <MenuLink href="/networks" label="Networks" onClick={onClose} />
                 </nav>
             </div>
         </div>

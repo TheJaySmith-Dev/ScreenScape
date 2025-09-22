@@ -38,12 +38,12 @@ import { getViewingGuidesForBrand, getAiDescriptionForBrand } from './services/a
 import { useSettings } from './hooks/useSettings.ts';
 import { useTrakt } from './hooks/useTrakt.ts';
 
-const getHashRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
+const getPathRoute = () => window.location.pathname.replace(/^\/?|\/$/g, '').split('/');
 
 const App: React.FC = () => {
     const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount, trakt } = useSettings();
     const { watchlist, isLoading: isTraktLoading } = useTrakt();
-    const [route, setRoute] = useState<string[]>(getHashRoute());
+    const [route, setRoute] = useState<string[]>(getPathRoute());
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
@@ -95,15 +95,42 @@ const App: React.FC = () => {
     const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaTypeFilter>('all');
     const [sortBy, setSortBy] = useState<SortBy>('trending');
 
+    const navigate = useCallback((path: string, replace = false) => {
+        const method = replace ? history.replaceState : history.pushState;
+        method.call(history, null, '', path);
+        setRoute(getPathRoute());
+    }, []);
+
     useEffect(() => {
-        const handleHashChange = () => setRoute(getHashRoute());
+        // This effect handles client-side routing.
+        const handleLocationChange = () => setRoute(getPathRoute());
+        
+        // Listen to popstate for browser back/forward navigation
+        window.addEventListener('popstate', handleLocationChange);
+
+        // Intercept all internal link clicks to prevent full page reloads
+        const handleLinkClick = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            const anchor = target.closest('a');
+            if (anchor && anchor.target !== '_blank' && !e.metaKey && !e.ctrlKey) {
+                const url = new URL(anchor.href);
+                if (url.origin === window.location.origin) {
+                    e.preventDefault();
+                    history.pushState(null, '', url.pathname + url.search + url.hash);
+                    handleLocationChange();
+                }
+            }
+        };
+        document.addEventListener('click', handleLinkClick);
+
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20);
         };
-        window.addEventListener('hashchange', handleHashChange);
         window.addEventListener('scroll', handleScroll, { passive: true });
+        
         return () => {
-            window.removeEventListener('hashchange', handleHashChange);
+            window.removeEventListener('popstate', handleLocationChange);
+            document.removeEventListener('click', handleLinkClick);
             window.removeEventListener('scroll', handleScroll);
         };
     }, []);
@@ -183,8 +210,6 @@ const App: React.FC = () => {
         }
     }, [route, isInitialized, tmdbApiKey, isTraktLoading, fetchForYouRecommendations]);
 
-    // FIX: Add a useEffect hook to handle fetching data for brand pages based on the current route.
-    // This ensures content loads correctly on both direct navigation and clicks.
     useEffect(() => {
         const [page, id] = route;
         if (!isInitialized || !tmdbApiKey) return;
@@ -215,7 +240,7 @@ const App: React.FC = () => {
                     setIsLoading(false);
                 }
             } else if (page === 'brand') {
-                window.location.hash = '/brands'; // Redirect if brand not found
+                navigate('/brands', true); // Redirect if brand not found
             }
         };
     
@@ -226,7 +251,7 @@ const App: React.FC = () => {
             setSelectedBrand(null);
             setBrandContent([]);
         }
-    }, [route, isInitialized, tmdbApiKey, selectedBrand]);
+    }, [route, isInitialized, tmdbApiKey, selectedBrand, navigate]);
 
     useEffect(() => {
         const [page, id] = route;
@@ -251,7 +276,7 @@ const App: React.FC = () => {
                     setIsLoading(false);
                 }
             } else if (page === 'person') {
-                window.location.hash = '/people'; // Redirect if person not found
+                navigate('/people', true); // Redirect if person not found
             }
         };
     
@@ -262,7 +287,7 @@ const App: React.FC = () => {
             setSelectedPerson(null);
             setPersonContent([]);
         }
-    }, [route, isInitialized, tmdbApiKey, selectedPerson]);
+    }, [route, isInitialized, tmdbApiKey, selectedPerson, navigate]);
 
     const handleSelectMedia = useCallback(async (media: MediaDetails) => {
         setSelectedActor(null); // Clear actor modal when opening media modal
@@ -337,7 +362,7 @@ const App: React.FC = () => {
         try {
             const results = await mediaService.searchMedia(query);
             setSearchResults(results);
-            window.location.hash = '/search';
+            navigate('/search');
         } catch (error) {
             console.error("Search failed:", error);
         } finally {
@@ -345,10 +370,8 @@ const App: React.FC = () => {
         }
     };
     
-    // FIX: Simplify the brand selection function to only change the URL hash.
-    // The new useEffect hook will handle the data fetching and state updates.
     const openBrandDetail = (brand: Brand) => {
-      window.location.hash = `/brand/${brand.id}`;
+      navigate(`/brand/${brand.id}`);
     };
 
     const handleGenerateGuides = async (brand: Brand, media: MediaDetails[]) => {
@@ -407,7 +430,7 @@ const App: React.FC = () => {
                 : [studio.id];
             const results = await mediaService.getMediaByStudio(idsToFetch);
             setStudioContent(results);
-            window.location.hash = `/studio/${studio.id}`;
+            navigate(`/studio/${studio.id}`);
         } catch(e) {
             console.error(`Failed to get content for studio ${studio.name}`, e);
         } finally {
@@ -420,7 +443,7 @@ const App: React.FC = () => {
         try {
             const results = await mediaService.getMediaByNetwork(network.id);
             setNetworkContent(results);
-            window.location.hash = `/network/${network.id}`;
+            navigate(`/network/${network.id}`);
         } catch(e) {
             console.error(`Failed to get content for network ${network.name}`, e);
         } finally {
@@ -433,7 +456,7 @@ const App: React.FC = () => {
         try {
             const results = await mediaService.getMediaByStreamingProvider(provider.key, selectedLocation.code);
             setStreamingContent(results);
-            window.location.hash = `/streaming/${provider.key}`;
+            navigate(`/streaming/${provider.key}`);
         } catch(e) {
             console.error(`Failed to get content for provider ${provider.name}`, e);
         } finally {
@@ -442,7 +465,7 @@ const App: React.FC = () => {
     };
 
     const handleSelectPerson = (person: Person) => {
-        window.location.hash = `/person/${person.id}`;
+        navigate(`/person/${person.id}`);
     };
 
     const handleOpenChatModal = (media: MediaDetails) => {
@@ -468,7 +491,7 @@ const App: React.FC = () => {
     }, []);
 
     const renderPage = () => {
-        const page = route[0] || 'home';
+        const page = route[0] === '' ? 'home' : route[0] || 'home';
         const id = route[1];
 
         if (!isInitialized) {
@@ -493,7 +516,7 @@ const App: React.FC = () => {
                                     <div className="text-center text-gray-300 fade-in glass-panel p-8">
                                         <UserIcon className="w-12 h-12 text-blue-400 mx-auto mb-4" />
                                         <h2 className="text-2xl font-bold mb-4 text-white">Connect to Trakt</h2>
-                                        <p>Connect your Trakt.tv account in <a href="#/myscape" className="font-bold text-white hover:underline">MyScape</a> to get personalized recommendations.</p>
+                                        <p>Connect your Trakt.tv account in <a href="/myscape" className="font-bold text-white hover:underline">MyScape</a> to get personalized recommendations.</p>
                                     </div>
                                 </div>
                             );
@@ -581,7 +604,7 @@ const App: React.FC = () => {
                     return <RecommendationGrid recommendations={searchResults} onSelect={handleSelectMedia} />;
                 case 'brand':
                     if (selectedBrand) {
-                        return <BrandDetail brand={selectedBrand} media={brandContent} onBack={() => window.location.hash = '/brands'} onSelectMedia={handleSelectMedia} onSelectCollection={handleSelectCollection} mediaTypeFilter={mediaTypeFilter} setMediaTypeFilter={setMediaTypeFilter} sortBy={sortBy} setSortBy={setSortBy} onGenerateGuides={handleGenerateGuides} onOpenChat={handleOpenBrandChatModal} />;
+                        return <BrandDetail brand={selectedBrand} media={brandContent} onBack={() => navigate('/brands')} onSelectMedia={handleSelectMedia} onSelectCollection={handleSelectCollection} mediaTypeFilter={mediaTypeFilter} setMediaTypeFilter={setMediaTypeFilter} sortBy={sortBy} setSortBy={setSortBy} onGenerateGuides={handleGenerateGuides} onOpenChat={handleOpenBrandChatModal} />;
                     }
                     return <div className="text-center">Loading brand...</div>;
                 case 'studio':
@@ -593,7 +616,7 @@ const App: React.FC = () => {
                         return <PersonPage 
                                     person={selectedPerson} 
                                     media={personContent} 
-                                    onBack={() => window.location.hash = '/people'} 
+                                    onBack={() => navigate('/people')} 
                                     onSelectMedia={handleSelectMedia}
                                     onSelectActor={handleSelectActor} />;
                     }
@@ -604,7 +627,7 @@ const App: React.FC = () => {
                     }
                     // Fallthrough to default
                 default:
-                     window.location.hash = '/home';
+                     navigate('/', true);
                      return null;
             }
         })();
@@ -631,11 +654,11 @@ const App: React.FC = () => {
     };
     
     const PillNavigation: React.FC = () => {
-       const activeRoute = route[0] || 'home';
+       const activeRoute = route[0] === '' ? 'home' : route[0] || 'home';
        return (
             <div className={`transition-transform duration-500 ease-in-out ${isScrolled ? 'scale-90' : 'scale-100'}`}>
                 <div className="flex items-center gap-1 p-1 sm:p-1.5 glass-panel rounded-full">
-                    <a href="#/home" className={`flex items-center justify-center p-2.5 sm:px-4 sm:py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${activeRoute === 'home' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}>
+                    <a href="/" className={`flex items-center justify-center p-2.5 sm:px-4 sm:py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${activeRoute === 'home' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}>
                         <HomeIcon className="w-5 h-5 sm:hidden" />
                         <span className="hidden sm:inline">Home</span>
                     </a>
@@ -650,7 +673,7 @@ const App: React.FC = () => {
                         <GridIcon className="w-5 h-5" />
                         <span className="hidden sm:inline">Browse</span>
                     </button>
-                    <a href="#/myscape" className={`flex items-center justify-center p-2.5 sm:px-4 sm:py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${activeRoute === 'myscape' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}>
+                    <a href="/myscape" className={`flex items-center justify-center p-2.5 sm:px-4 sm:py-2 text-sm font-semibold rounded-full transition-colors duration-300 ${activeRoute === 'myscape' ? 'bg-white/10 text-white' : 'text-gray-300 hover:bg-white/5'}`}>
                         <UserIcon className="w-5 h-5 sm:hidden" />
                         <span className="hidden sm:inline">MyScape</span>
                     </a>

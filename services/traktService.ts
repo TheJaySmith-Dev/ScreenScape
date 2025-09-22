@@ -2,8 +2,8 @@ import type { MediaDetails, TraktWatchlistItem, TraktStats } from '../types.ts';
 
 const CLIENT_ID = '73f5fc3ac40020a73a2d207f82c08ad274a1bd702513bc7d686f1facb8dea492';
 const CLIENT_SECRET = 'cd44e8061745f1113a53fbb769a9b59103283e36a8d75af3891f43fe8a46aab8';
-// FIX: Export the REDIRECT_URI so it can be displayed in the UI for easy copying.
-export const REDIRECT_URI = window.location.href.split('#')[0].replace(/\/$/, '') + '/#/callback/trakt';
+// Use a clean, path-based redirect URI for the new routing system.
+export const REDIRECT_URI = `${window.location.origin}/callback/trakt`;
 const API_URL = 'https://api.trakt.tv';
 
 interface TokenResponse {
@@ -39,13 +39,6 @@ const apiRequest = async <T>(endpoint: string, method: 'GET' | 'POST', accessTok
 };
 
 export const initiateAuth = () => {
-    console.log(
-        '%cTRAKT AUTH:', 
-        'font-weight: bold; color: #ed1c24;', 
-        'Your Redirect URI is:', 
-        `'${REDIRECT_URI}'`,
-        '\nPlease make sure this EXACTLY matches the Redirect URI in your Trakt application settings.'
-    );
     const authUrl = `https://trakt.tv/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
     window.location.href = authUrl;
 };
