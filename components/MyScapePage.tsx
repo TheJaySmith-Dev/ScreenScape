@@ -7,6 +7,7 @@ import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon, TraktIcon } from './icons.ts
 import type { MediaDetails } from '../types.ts';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { TraktAuthButton } from './TraktAuthButton.tsx';
+import { REDIRECT_URI } from '../services/traktService.ts';
 
 interface MyScapePageProps {
   onSelectMedia: (media: MediaDetails) => void;
@@ -17,7 +18,6 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
     const { watchlist, isLoading: preferencesLoading } = useTrakt();
     const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
     const [copyText, setCopyText] = useState('Copy');
-    const [copyTextWww, setCopyTextWww] = useState('Copy');
 
     if (preferencesLoading) {
         return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
@@ -42,19 +42,10 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
         progressBarColor = 'bg-yellow-500';
     }
 
-    const baseDomain = window.location.hostname.replace('www.', '');
-    const nonWwwUri = `https://${baseDomain}/callback/trakt`;
-    const wwwUri = `https://www.${baseDomain}/callback/trakt`;
-
-    const handleCopyUri = (uri: string, type: 'www' | 'non-www') => {
-        navigator.clipboard.writeText(uri);
-        if (type === 'non-www') {
-            setCopyText('Copied!');
-            setTimeout(() => setCopyText('Copy'), 2000);
-        } else {
-            setCopyTextWww('Copied!');
-            setTimeout(() => setCopyTextWww('Copy'), 2000);
-        }
+    const handleCopyUri = () => {
+        navigator.clipboard.writeText(REDIRECT_URI);
+        setCopyText('Copied!');
+        setTimeout(() => setCopyText('Copy'), 2000);
     };
 
 
@@ -127,27 +118,16 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                            {trakt.state !== 'authenticated' && (
                                <div className="mt-4 text-xs text-gray-400">
                                    <p className="font-semibold mb-2 text-sm text-gray-200">Connection Help</p>
-                                   <p className="mb-2">The "Authentication Failed" error is almost always caused by a mismatch in the Redirect URI. For best results, add <strong>both</strong> of the following URIs to your <a href="https://trakt.tv/oauth/applications" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">Trakt Application settings</a>, each on a new line.</p>
+                                   <p className="mb-2">To fix authentication errors, ensure the URI below is the <strong>only one</strong> in your <a href="https://trakt.tv/oauth/applications" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">Trakt Application settings</a>. We automatically handle `www` redirects.</p>
                                    
-                                   <label className="font-semibold text-gray-300">Primary URI (non-www):</label>
-                                   <div className="flex items-center justify-between gap-2 mt-1 mb-3 p-2 bg-black/20 rounded-md">
-                                       <code className="truncate text-gray-300">{nonWwwUri}</code>
+                                   <label className="font-semibold text-gray-300">Canonical Redirect URI:</label>
+                                   <div className="flex items-center justify-between gap-2 mt-1 p-2 bg-black/20 rounded-md">
+                                       <code className="truncate text-gray-300">{REDIRECT_URI}</code>
                                        <button 
-                                           onClick={() => handleCopyUri(nonWwwUri, 'non-www')} 
+                                           onClick={handleCopyUri} 
                                            className="text-indigo-400 hover:text-indigo-300 font-bold flex-shrink-0 w-12 text-center"
                                        >
                                            {copyText}
-                                       </button>
-                                   </div>
-
-                                   <label className="font-semibold text-gray-300">Secondary URI (www):</label>
-                                   <div className="flex items-center justify-between gap-2 mt-1 p-2 bg-black/20 rounded-md">
-                                       <code className="truncate text-gray-300">{wwwUri}</code>
-                                       <button 
-                                           onClick={() => handleCopyUri(wwwUri, 'www')} 
-                                           className="text-indigo-400 hover:text-indigo-300 font-bold flex-shrink-0 w-12 text-center"
-                                       >
-                                           {copyTextWww}
                                        </button>
                                    </div>
                                </div>

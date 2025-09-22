@@ -1,20 +1,10 @@
 // FIX: Correctly import React hooks (useState, useEffect, useCallback) to resolve 'Cannot find name' errors.
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { HeroSection } from './components/HeroSection.tsx';
 import { MediaRow } from './components/MediaRow.tsx';
 import { DetailModal } from './components/DetailModal.tsx';
-import { MyScapePage } from './components/MyScapePage.tsx';
 import { LoadingSpinner } from './components/LoadingSpinner.tsx';
-import { StudioGrid } from './components/StudioGrid.tsx';
-import { BrandGrid } from './components/BrandGrid.tsx';
-import { NetworkGrid } from './components/NetworkGrid.tsx';
-import { PersonGrid } from './components/PersonGrid.tsx';
-import { PersonPage } from './components/PersonPage.tsx';
-import { StreamingGrid } from './components/StreamingGrid.tsx';
-import { BrandDetail } from './components/BrandDetail.tsx';
-import { RecommendationGrid } from './components/RecommendationGrid.tsx';
 import { ActorPage } from './components/ActorPage.tsx';
-import { ComingSoonPage } from './components/ComingSoonPage.tsx';
 import { OnboardingModal } from './components/OnboardingModal.tsx';
 import { AiSearchModal } from './components/AiSearchModal.tsx';
 import { SearchModal } from './components/SearchModal.tsx';
@@ -24,7 +14,6 @@ import { ChatModal } from './components/ChatModal.tsx';
 import { AiDescriptionModal } from './components/AiDescriptionModal.tsx';
 import { ReminderModal } from './components/ReminderModal.tsx';
 import { SearchIcon, GridIcon, ThumbsUpIcon, HomeIcon, UserIcon } from './components/icons.tsx';
-import { TraktCallbackPage } from './pages/Callback/index.tsx';
 
 import * as mediaService from './services/mediaService.ts';
 import { popularStudios } from './services/studioService.ts';
@@ -37,6 +26,19 @@ import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, 
 import { getViewingGuidesForBrand, getAiDescriptionForBrand } from './services/aiService.ts';
 import { useSettings } from './hooks/useSettings.ts';
 import { useTrakt } from './hooks/useTrakt.ts';
+
+// Lazy load page components for code-splitting and performance
+const MyScapePage = React.lazy(() => import('./components/MyScapePage.tsx').then(module => ({ default: module.MyScapePage })));
+const StudioGrid = React.lazy(() => import('./components/StudioGrid.tsx').then(module => ({ default: module.StudioGrid })));
+const BrandGrid = React.lazy(() => import('./components/BrandGrid.tsx').then(module => ({ default: module.BrandGrid })));
+const NetworkGrid = React.lazy(() => import('./components/NetworkGrid.tsx').then(module => ({ default: module.NetworkGrid })));
+const PersonGrid = React.lazy(() => import('./components/PersonGrid.tsx').then(module => ({ default: module.PersonGrid })));
+const PersonPage = React.lazy(() => import('./components/PersonPage.tsx').then(module => ({ default: module.PersonPage })));
+const StreamingGrid = React.lazy(() => import('./components/StreamingGrid.tsx').then(module => ({ default: module.StreamingGrid })));
+const BrandDetail = React.lazy(() => import('./components/BrandDetail.tsx').then(module => ({ default: module.BrandDetail })));
+const RecommendationGrid = React.lazy(() => import('./components/RecommendationGrid.tsx').then(module => ({ default: module.RecommendationGrid })));
+const ComingSoonPage = React.lazy(() => import('./components/ComingSoonPage.tsx').then(module => ({ default: module.ComingSoonPage })));
+const TraktCallbackPage = React.lazy(() => import('./pages/Callback/index.tsx').then(module => ({ default: module.TraktCallbackPage })));
 
 const getPathRoute = () => window.location.pathname.replace(/^\/?|\/$/g, '').split('/');
 
@@ -689,7 +691,9 @@ const App: React.FC = () => {
             </header>
 
             <main className="transition-opacity duration-500">
-                {renderPage()}
+                <Suspense fallback={<div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>}>
+                    {renderPage()}
+                </Suspense>
             </main>
 
             {selectedItem && (
