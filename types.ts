@@ -77,7 +77,6 @@ export interface Collection {
 }
 
 export interface CollectionDetails extends Collection {
-    // FIX: Made overview and parts optional to allow a Collection to be a valid intermediate state.
     overview?: string;
     parts?: MediaDetails[];
 }
@@ -127,7 +126,6 @@ export interface Brand {
   mediaIds?: { id: number; type: 'movie' | 'tv' }[];
   collectionIds?: number[];
   defaultSort?: SortBy;
-  // New properties for richer brand cards
   logoUrl?: string;
   bgColor?: string;
   hoverGifUrl?: string;
@@ -163,7 +161,6 @@ export interface TraktWatchlistItem {
   releaseYear: string;
 }
 
-// FIX: Add missing ExternalRatings type definition to fix import error in ExternalRatings.tsx.
 export interface ExternalRatings {
   rottenTomatoes?: string;
   metacritic?: string;
@@ -188,7 +185,6 @@ export interface SeasonDetails {
   episodes: Episode[];
 }
 
-// TMDB Watch Provider Types
 export interface WatchProvider {
     provider_id: number;
     provider_name: string;
@@ -213,7 +209,6 @@ export interface StreamingProviderInfo {
   hoverGifUrl?: string;
   borderColor?: string;
   edgeToEdge?: boolean;
-  // New properties for hub pages
   hubBgColor?: string;
   hubLogoUrl?: string;
   hubLogoHeight?: string;
@@ -221,7 +216,6 @@ export interface StreamingProviderInfo {
   forceWhiteLogo?: boolean;
 }
 
-// Types for the Higher or Lower game
 export interface GameMovie {
   id: number;
   imdbId: string;

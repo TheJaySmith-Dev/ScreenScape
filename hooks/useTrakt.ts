@@ -1,7 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSettings } from './useSettings.ts';
 import * as traktService from '../services/traktService.ts';
+import * as mediaService from '../services/mediaService.ts';
 import type { MediaDetails, TraktWatchlistItem } from '../types.ts';
+
+// Cache to store fetched posters to avoid re-fetching
+const posterCache = new Map<number, string>();
 
 export const useTrakt = () => {
     const { trakt } = useSettings();
@@ -19,13 +23,27 @@ export const useTrakt = () => {
         setIsLoading(true);
         setError(null);
         try {
-            // This is a simplified fetch. A full implementation would fetch posters from TMDB.
             const items = await traktService.getWatchlist(trakt.accessToken);
-            
-            // For now, we'll just use the basic info. A more robust solution might
-            // involve fetching full MediaDetails for each watchlist item from TMDB.
-            setWatchlist(items);
 
+            // Fetch poster URLs for items that don't have them in the cache
+            const itemsWithPosters = await Promise.all(items.map(async (item) => {
+                if (posterCache.has(item.id)) {
+                    return { ...item, posterUrl: posterCache.get(item.id)! };
+                }
+                try {
+                    // This is a minimal fetch just to get the poster
+                    const details = await mediaService.fetchApi<any>(`/${item.type}/${item.id}`);
+                    const posterUrl = details.poster_path ? `https://image.tmdb.org/t/p/w500${details.poster_path}` : `https://picsum.photos/seed/${encodeURIComponent(item.title)}/500/750`;
+                    posterCache.set(item.id, posterUrl);
+                    return { ...item, posterUrl };
+                } catch (e) {
+                    console.error(`Failed to fetch poster for ${item.title}`);
+                    // Use a placeholder if the fetch fails
+                    return { ...item, posterUrl: `https://picsum.photos/seed/${encodeURIComponent(item.title)}/500/750` };
+                }
+            }));
+
+            setWatchlist(itemsWithPosters);
         } catch (err) {
             setError('Could not load your Trakt watchlist.');
             console.error(err);

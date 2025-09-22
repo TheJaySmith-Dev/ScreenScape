@@ -72,7 +72,7 @@ export const TraktActivity: React.FC<TraktActivityProps> = ({ media }) => {
                 <StatItem label="Lists" value={stats.lists} />
             </div>
              <a
-                href={`https://trakt.tv/${media.type === 'tv' ? 'shows' : 'movies'}/${media.imdbId || media.id}/watch`}
+                href={`https://trakt.tv/${media.type === 'tv' ? 'shows' : 'movies'}/${media.imdbId || media.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block text-center w-full p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors duration-200 text-sm font-medium text-gray-200"

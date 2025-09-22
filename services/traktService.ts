@@ -39,6 +39,7 @@ const apiRequest = async <T>(endpoint: string, method: 'GET' | 'POST', accessTok
 };
 
 export const initiateAuth = () => {
+    console.log(`TRAKT AUTH: Your Redirect URI is: ${REDIRECT_URI}`);
     const authUrl = `https://trakt.tv/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
     window.location.href = authUrl;
 };
@@ -57,6 +58,8 @@ export const exchangeCodeForToken = async (code: string): Promise<TokenResponse>
     });
 
     if (!response.ok) {
+        const errorDetails = await response.text();
+        console.error("Token exchange failed:", errorDetails);
         throw new Error('Failed to exchange auth code for token');
     }
     return response.json();
@@ -80,44 +83,47 @@ export const refreshToken = async (refreshToken: string): Promise<TokenResponse>
     return response.json();
 }
 
-const getTraktItemFromMedia = async (media: MediaDetails, accessToken: string) => {
-    // Trakt uses slugs for shows, but TMDB ID works for lookup.
-    // The sync/watchlist endpoint requires a more detailed object structure.
-    const searchType = media.type === 'tv' ? 'show' : 'movie';
-    const searchResult = await apiRequest<any[]>(`/search/tmdb/${media.id}?type=${searchType}`, 'GET', accessToken);
-
-    if (searchResult && searchResult.length > 0) {
-        return searchResult[0]; // The first result is usually the correct one
-    }
-    throw new Error(`Could not find ${media.title} on Trakt.`);
+const getTraktPayloadFromMedia = (media: MediaDetails) => {
+    return {
+        title: media.title,
+        year: parseInt(media.releaseYear, 10),
+        ids: {
+            tmdb: media.id,
+            imdb: media.imdbId
+        }
+    };
 };
 
 export const getWatchlist = async (accessToken: string): Promise<TraktWatchlistItem[]> => {
     const traktItems = await apiRequest<any[]>('/sync/watchlist/movies,shows', 'GET', accessToken);
-    return traktItems.map(item => {
+    const watchlist: TraktWatchlistItem[] = [];
+
+    for (const item of traktItems) {
         const media = item.movie || item.show;
-        return {
-            id: media.ids.tmdb,
-            type: item.type === 'show' ? 'tv' : 'movie',
-            title: media.title,
-            releaseYear: media.year,
-            posterUrl: `https://image.tmdb.org/t/p/w500${media.ids.tmdb ? '' : ''}`, // Poster needs separate fetch if not available
-        };
-    });
+        if (media.ids.tmdb) {
+            watchlist.push({
+                id: media.ids.tmdb,
+                type: item.type === 'show' ? 'tv' : 'movie',
+                title: media.title,
+                releaseYear: String(media.year),
+                // Poster URL needs to be fetched separately.
+                posterUrl: '', 
+            });
+        }
+    }
+    return watchlist;
 };
 
 export const addToWatchlist = async (media: MediaDetails, accessToken: string): Promise<void> => {
-    const traktItem = await getTraktItemFromMedia(media, accessToken);
     const body = {
-        [media.type === 'tv' ? 'shows' : 'movies']: [traktItem.show || traktItem.movie]
+        [media.type === 'tv' ? 'shows' : 'movies']: [getTraktPayloadFromMedia(media)]
     };
     await apiRequest('/sync/watchlist', 'POST', accessToken, body);
 };
 
 export const removeFromWatchlist = async (media: MediaDetails, accessToken: string): Promise<void> => {
-    const traktItem = await getTraktItemFromMedia(media, accessToken);
      const body = {
-        [media.type === 'tv' ? 'shows' : 'movies']: [traktItem.show || traktItem.movie]
+        [media.type === 'tv' ? 'shows' : 'movies']: [getTraktPayloadFromMedia(media)]
     };
     await apiRequest('/sync/watchlist/remove', 'POST', accessToken, body);
 };
@@ -125,7 +131,6 @@ export const removeFromWatchlist = async (media: MediaDetails, accessToken: stri
 export const getTraktStats = async (tmdbId: number, type: 'movie' | 'tv', accessToken: string): Promise<TraktStats | null> => {
      try {
         const searchType = type === 'tv' ? 'show' : 'movie';
-        // Trakt requires its own ID or slug for stats, so we must look it up first
         const searchResult = await apiRequest<any[]>(`/search/tmdb/${tmdbId}?type=${searchType}`, 'GET', accessToken);
         if (!searchResult || searchResult.length === 0) return null;
         

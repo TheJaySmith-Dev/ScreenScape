@@ -1,12 +1,9 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, CrewMember, UserLocation, WatchProviders, OmdbDetails, FunFact, SeasonDetails, Episode, SeasonSummary } from '../types.ts';
-// FIX: Replaced ThumbsUp/Down icons with Plus/Check icons for watchlist functionality.
 import { StarIcon, PlayIcon, PlusIcon, CheckIcon, TvIcon, SparklesIcon, InfoIcon, ChatBubbleIcon, CloseIcon, BellIcon } from './icons.tsx';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
-// FIX: Replaced deprecated usePreferences hook with useTrakt.
 import { useTrakt } from '../hooks/useTrakt.ts';
 import { CinemaAvailability } from './CinemaAvailability.tsx';
 import { fetchOmdbDetails } from '../services/omdbService.ts';

@@ -41,7 +41,29 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // For other requests, use a cache-first strategy.
+  // Handle navigation requests (SPA fallback)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      (async () => {
+        try {
+          const networkResponse = await fetch(event.request);
+          // If the network returns a 404 or other error, fall back to the cache.
+          if (!networkResponse.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            return await cache.match('/');
+          }
+          return networkResponse;
+        } catch (error) {
+          // This catches network errors (e.g., offline).
+          const cache = await caches.open(CACHE_NAME);
+          return await cache.match('/');
+        }
+      })()
+    );
+    return;
+  }
+
+  // Handle asset requests (cache-first)
   event.respondWith(
     caches.match(event.request)
       .then(response => {
@@ -50,7 +72,7 @@ self.addEventListener('fetch', event => {
           return response;
         }
 
-        // Not in cache, go to network.
+        // Not in cache, go to network, then cache it.
         return fetch(event.request).then(
           response => {
             // Check if we received a valid response
@@ -58,12 +80,7 @@ self.addEventListener('fetch', event => {
               return response;
             }
 
-            // IMPORTANT: Clone the response. A response is a stream
-            // and because we want the browser to consume the response
-            // as well as the cache consuming the response, we need
-            // to clone it so we have two streams.
             const responseToCache = response.clone();
-
             caches.open(CACHE_NAME)
               .then(cache => {
                 cache.put(event.request, responseToCache);
