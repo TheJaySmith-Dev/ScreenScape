@@ -108,6 +108,18 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
+        // Handle the redirect from TMDb which uses query parameters
+        const params = new URLSearchParams(window.location.search);
+        const isTmdbCallback = params.get('approved') === 'true' && params.get('request_token');
+
+        if (isTmdbCallback) {
+            const requestToken = params.get('request_token');
+            // Convert the query param URL to a hash-based one for the SPA router
+            navigate(`callback/tmdb?request_token=${requestToken}&approved=true`, true);
+        }
+    }, [navigate]);
+
+    useEffect(() => {
         const handleHashChange = () => setRoute(getPathRoute());
         window.addEventListener('hashchange', handleHashChange);
         
