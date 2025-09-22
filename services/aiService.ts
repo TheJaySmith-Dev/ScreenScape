@@ -302,7 +302,7 @@ export const startChatForMedia = (media: MediaDetails, aiClient: GoogleGenAI): C
  * @param brand The brand to chat about.
  * @returns An initialized `Chat` object from the Gemini SDK.
  */
-export const startChatForBrand = (brand: Brand, aiClient: GoogleGenAI): Chat => {
+export const startChatForBrandNew = (brand: Brand, aiClient: GoogleGenAI): Chat => {
     const chat = aiClient.chats.create({
         model,
         config: {

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { MediaDetails, ChatMessage, Brand } from '../types.ts';
 import { CloseIcon, SendIcon } from './icons.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
-import { startChatForMedia, startChatForBrand } from '../services/aiService.ts';
+import { startChatForMedia, startChatForBrandNew } from '../services/aiService.ts';
 import { RateLimitMessage } from './RateLimitMessage.tsx';
 import type { Chat } from '@google/genai';
 import { useSettings } from '../hooks/useSettings.ts';
@@ -38,7 +38,7 @@ export const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, media, br
         let initialMessage: ChatMessage;
 
         if (brand) {
-            session = startChatForBrand(brand, aiClient);
+            session = startChatForBrandNew(brand, aiClient);
             initialMessage = { role: 'model', content: `Hi! I'm ScapeAI. I can answer any questions you have about the "${brand.name}" franchise. What would you like to know?` };
         } else if (media) {
             session = startChatForMedia(media, aiClient);
