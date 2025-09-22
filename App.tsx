@@ -39,12 +39,12 @@ const BrandDetail = React.lazy(() => import('./components/BrandDetail.tsx').then
 const RecommendationGrid = React.lazy(() => import('./components/RecommendationGrid.tsx').then(module => ({ default: module.RecommendationGrid })));
 const ComingSoonPage = React.lazy(() => import('./components/ComingSoonPage.tsx').then(module => ({ default: module.ComingSoonPage })));
 const TmdbCallbackPage = React.lazy(() => import('./pages/Callback/TmdbCallback.tsx').then(module => ({ default: module.TmdbCallbackPage })));
-const OnboardingPage = React.lazy(() => import('./components/OnboardingPage.tsx').then(module => ({ default: module.OnboardingPage })));
+const SetupPage = React.lazy(() => import('./components/SetupPage.tsx').then(module => ({ default: module.SetupPage })));
 
 const getPathRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
 
 const App: React.FC = () => {
-    const { isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount, tmdb } = useSettings();
+    const { isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount, setupState } = useSettings();
     const { likes, isLoading: isAccountLoading } = useTmdbAccount();
     const [route, setRoute] = useState<string[]>(getPathRoute());
     const [isLoading, setIsLoading] = useState(true);
@@ -160,14 +160,14 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (isInitialized && tmdb.state === 'authenticated') {
+        if (setupState === 'complete') {
             fetchInitialData();
         }
-    }, [isInitialized, tmdb.state, fetchInitialData]);
+    }, [setupState, fetchInitialData]);
 
     const MIN_ITEMS_FOR_RECOMMENDATIONS = 3;
     const fetchForYouRecommendations = useCallback(async () => {
-        if (tmdb.state !== 'authenticated' || likes.length < MIN_ITEMS_FOR_RECOMMENDATIONS || isForYouLoading) {
+        if (setupState !== 'complete' || likes.length < MIN_ITEMS_FOR_RECOMMENDATIONS || isForYouLoading) {
             return;
         }
 
@@ -194,14 +194,14 @@ const App: React.FC = () => {
         } finally {
             setIsForYouLoading(false);
         }
-    }, [likes, isForYouLoading, tmdb.state, aiClient]);
+    }, [likes, isForYouLoading, setupState, aiClient]);
 
     useEffect(() => {
         const page = route[0] || 'home';
-        if (page === 'home' && isInitialized && !isAccountLoading && tmdb.state === 'authenticated') {
+        if (page === 'home' && setupState === 'complete' && !isAccountLoading) {
             fetchForYouRecommendations();
         }
-    }, [route, isInitialized, isAccountLoading, tmdb.state, fetchForYouRecommendations]);
+    }, [route, setupState, isAccountLoading, fetchForYouRecommendations]);
 
     useEffect(() => {
         const [page, id] = route;
@@ -487,7 +487,7 @@ const App: React.FC = () => {
         const page = route[0] === '' ? 'home' : route[0] || 'home';
         const id = route[1];
 
-        if (isLoading && tmdb.state === 'authenticated') return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
+        if (isLoading && setupState === 'complete') return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
 
         const pageContent = (() => {
             switch(page) {
@@ -663,10 +663,10 @@ const App: React.FC = () => {
     }
 
     const page = route[0] || 'home';
-    if (tmdb.state !== 'authenticated' && page !== 'callback') {
+    if (setupState !== 'complete' && page !== 'callback') {
         return (
             <Suspense fallback={<div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>}>
-                <OnboardingPage />
+                <SetupPage />
             </Suspense>
         );
     }

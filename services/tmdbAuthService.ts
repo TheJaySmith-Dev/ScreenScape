@@ -1,13 +1,12 @@
 import type { MediaDetails, TmdbAccountDetails } from '../types.ts';
-import { TMDB_API_KEY } from './constants.ts';
+import { getTmdbApiKey } from './apiKeyManager.ts';
 
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 
 const tmdbApiRequest = async <T>(endpoint: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', body: object | null = null, sessionId?: string): Promise<T> => {
-    const apiKey = TMDB_API_KEY;
-    // FIX: This comparison appears to be unintentional because the types '"c45a857c193f6302f2b5061c3b85e743"' and '"YOUR_TMDB_API_KEY_V3"' have no overlap.
+    const apiKey = getTmdbApiKey();
     if (!apiKey) {
-        throw new Error("TMDb API key is not set. Please add it to services/constants.ts.");
+        throw new Error("TMDb API key is not set. Please provide one in the setup screen.");
     }
     
     const url = `${API_BASE_URL}${endpoint}?api_key=${apiKey}${sessionId ? `&session_id=${sessionId}` : ''}`;

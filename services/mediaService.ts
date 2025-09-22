@@ -1,6 +1,6 @@
 import type { MediaDetails, CastMember, CrewMember, Collection, CollectionDetails, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor, AiSearchParams, SeasonDetails, Episode, AiCuratedCarousel } from '../types.ts';
 import { supportedProviders } from './streamingService.ts';
-import { TMDB_API_KEY } from './constants.ts';
+import { getTmdbApiKey } from './apiKeyManager.ts';
 import { fetchBoxOffice } from './omdbService.ts';
 
 const API_BASE_URL = 'https://api.themoviedb.org/3';
@@ -26,10 +26,9 @@ const genreMap: { [key: string]: number } = {
 };
 
 export const fetchApi = async <T,>(endpoint: string): Promise<T> => {
-    const apiKey = TMDB_API_KEY;
-    // FIX: Removed comparison to placeholder key 'YOUR_TMDB_API_KEY_V3' which caused a type error because the constant has a real value.
+    const apiKey = getTmdbApiKey();
     if (!apiKey) {
-        throw new Error("TMDb API key is not set. Please add it to services/constants.ts.");
+        throw new Error("TMDb API key is not set. Please provide one in the setup screen.");
     }
     const separator = endpoint.includes('?') ? '&' : '?';
     const url = `${API_BASE_URL}${endpoint}${separator}api_key=${apiKey}&language=en-US`;
