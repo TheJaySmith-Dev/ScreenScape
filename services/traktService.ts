@@ -1,6 +1,9 @@
 import type { MediaDetails, TraktWatchlistItem, TraktStats } from '../types.ts';
 
 const CLIENT_ID = '73f5fc3ac40020a73a2d207f82c08ad274a1bd702513bc7d686f1facb8dea492';
+// SECURITY WARNING: Storing and using a client_secret in a client-side application is a significant security risk.
+// It should ideally be handled by a backend proxy. This implementation proceeds because it's the only option
+// in a purely client-side environment where the API provider does not support the PKCE flow.
 const CLIENT_SECRET = 'cd44e8061745f1113a53fbb769a9b59103283e36a8d75af3891f43fe8a46aab8';
 const API_URL = 'https://api.trakt.tv';
 
@@ -47,7 +50,11 @@ const apiRequest = async <T>(endpoint: string, method: 'GET' | 'POST', accessTok
 export const getDeviceCode = async (): Promise<DeviceCodeResponse> => {
     const response = await fetch(`${API_URL}/oauth/device/code`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'trakt-api-version': '2',
+            'trakt-api-key': CLIENT_ID,
+        },
         body: JSON.stringify({ client_id: CLIENT_ID }),
     });
     if (!response.ok) throw new Error('Failed to get device code from Trakt.');
@@ -57,7 +64,11 @@ export const getDeviceCode = async (): Promise<DeviceCodeResponse> => {
 export const pollForToken = async (deviceCode: string): Promise<TokenResponse> => {
     const response = await fetch(`${API_URL}/oauth/device/token`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'trakt-api-version': '2',
+            'trakt-api-key': CLIENT_ID,
+        },
         body: JSON.stringify({
             code: deviceCode,
             client_id: CLIENT_ID,
@@ -82,7 +93,11 @@ export const pollForToken = async (deviceCode: string): Promise<TokenResponse> =
 export const refreshToken = async (refreshToken: string): Promise<TokenResponse> => {
     const response = await fetch(`${API_URL}/oauth/token`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'trakt-api-version': '2',
+            'trakt-api-key': CLIENT_ID,
+        },
         body: JSON.stringify({
             refresh_token: refreshToken,
             client_id: CLIENT_ID,
