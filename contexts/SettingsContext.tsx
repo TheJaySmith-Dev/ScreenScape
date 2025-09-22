@@ -1,21 +1,21 @@
 import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import { setLocalTmdbApiKey } from '../services/apiService.ts';
-import type { SettingsContextType, RateLimitState } from '../types.ts';
+import * as traktService from '../services/traktService.ts';
+import type { SettingsContextType, RateLimitState, TraktAuth } from '../types.ts';
 
 const LOCAL_STORAGE_KEY_TMDB = 'screenscape_tmdb_api_key';
 const LOCAL_STORAGE_KEY_GEMINI = 'screenscape_gemini_api_key';
 const LOCAL_STORAGE_KEY_RATE_LIMIT = 'screenscape_rate_limit';
 const LOCAL_STORAGE_KEY_ALL_CLEAR = 'screenscape_all_clear_mode';
+const LOCAL_STORAGE_KEY_TRAKT = 'screenscape_trakt_auth';
 
 const getInitialRateLimit = (): RateLimitState => {
     try {
         const stored = localStorage.getItem(LOCAL_STORAGE_KEY_RATE_LIMIT);
         if (stored) {
             const state: RateLimitState = JSON.parse(stored);
-            // Check if the current time is past the stored reset time.
             if (new Date().getTime() > state.resetTime) {
-                // If it is, reset the counter for a new 24-hour window.
                 const newResetTime = new Date().setHours(23, 59, 59, 999);
                 return { count: 0, resetTime: newResetTime };
             }
@@ -24,9 +24,21 @@ const getInitialRateLimit = (): RateLimitState => {
     } catch (e) {
         console.error("Failed to parse rate limit state from local storage", e);
     }
-    // Default state if nothing is stored or parsing fails.
     const newResetTime = new Date().setHours(23, 59, 59, 999);
     return { count: 0, resetTime: newResetTime };
+};
+
+const getInitialTraktAuth = (): TraktAuth => {
+    try {
+        const stored = localStorage.getItem(LOCAL_STORAGE_KEY_TRAKT);
+        if (stored) {
+            const state: TraktAuth = JSON.parse(stored);
+            if (state.accessToken && state.expiresAt && new Date().getTime() < state.expiresAt) {
+                 return { ...state, state: 'authenticated' };
+            }
+        }
+    } catch (e) { console.error("Failed to parse trakt auth state", e); }
+    return { accessToken: null, refreshToken: null, expiresAt: null, state: 'idle' };
 };
 
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -38,8 +50,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     const [rateLimit, setRateLimit] = useState<RateLimitState>(getInitialRateLimit());
     const [isInitialized, setIsInitialized] = useState(false);
     const [isAllClearMode, setIsAllClearMode] = useState<boolean>(false);
+    const [trakt, setTrakt] = useState<TraktAuth>(getInitialTraktAuth());
 
-    // Initialize settings from local storage on component mount
     useEffect(() => {
         const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
         const localGeminiKey = localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI);
@@ -47,15 +59,13 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         
         if (localTmdbKey) {
             setTmdbApiKey(localTmdbKey);
-            // Immediately sync with the apiService to prevent race conditions
             setLocalTmdbApiKey(localTmdbKey);
         }
-        if (localAllClear) {
-            setIsAllClearMode(JSON.parse(localAllClear));
-        }
+        if (localAllClear) setIsAllClearMode(JSON.parse(localAllClear));
         
         setGeminiApiKey(localGeminiKey);
         setRateLimit(getInitialRateLimit());
+        setTrakt(getInitialTraktAuth());
         
         setIsInitialized(true);
     }, []);
@@ -63,7 +73,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     useEffect(() => {
         if (geminiApiKey) {
             try {
-                // All AI calls use the efficient gemini-2.5-flash model
                 const client = new GoogleGenAI({ apiKey: geminiApiKey });
                 setAiClient(client);
             } catch (error) {
@@ -77,10 +86,41 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     const saveApiKeys = useCallback((keys: { tmdbKey: string; geminiKey: string }) => {
         setTmdbApiKey(keys.tmdbKey);
-        setLocalTmdbApiKey(keys.tmdbKey); // Sync immediately
+        setLocalTmdbApiKey(keys.tmdbKey);
         setGeminiApiKey(keys.geminiKey);
         localStorage.setItem(LOCAL_STORAGE_KEY_TMDB, keys.tmdbKey);
         localStorage.setItem(LOCAL_STORAGE_KEY_GEMINI, keys.geminiKey);
+    }, []);
+    
+    const initiateTraktAuth = useCallback(() => {
+        setTrakt(prev => ({ ...prev, state: 'loading' }));
+        traktService.initiateAuth();
+    }, []);
+
+    const handleTraktCallback = useCallback(async (code: string) => {
+        setTrakt(prev => ({...prev, state: 'loading' }));
+        try {
+            const tokenData = await traktService.exchangeCodeForToken(code);
+            const expiresAt = (tokenData.created_at + tokenData.expires_in) * 1000;
+            const newAuthState: TraktAuth = {
+                accessToken: tokenData.access_token,
+                refreshToken: tokenData.refresh_token,
+                expiresAt,
+                state: 'authenticated',
+            };
+            setTrakt(newAuthState);
+            localStorage.setItem(LOCAL_STORAGE_KEY_TRAKT, JSON.stringify(newAuthState));
+        } catch(e) {
+            console.error(e);
+            setTrakt({ accessToken: null, refreshToken: null, expiresAt: null, state: 'error' });
+            throw e;
+        }
+    }, []);
+
+    const disconnectTrakt = useCallback(() => {
+        const newAuthState: TraktAuth = { accessToken: null, refreshToken: null, expiresAt: null, state: 'idle' };
+        setTrakt(newAuthState);
+        localStorage.removeItem(LOCAL_STORAGE_KEY_TRAKT);
     }, []);
 
     const toggleAllClearMode = useCallback(() => {
@@ -101,7 +141,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
             } else {
                 newRateLimit = { ...currentRateLimit, count: currentRateLimit.count + 1 };
             }
-            
             localStorage.setItem(LOCAL_STORAGE_KEY_RATE_LIMIT, JSON.stringify(newRateLimit));
             return newRateLimit;
         });
@@ -109,31 +148,26 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     const canMakeRequest = useCallback(() => {
         const now = new Date().getTime();
-        if (now > rateLimit.resetTime) {
-            return { canRequest: true, resetTime: null };
-        }
-        if (rateLimit.count < 500) { // Hardcoded limit
-            return { canRequest: true, resetTime: null };
-        }
+        if (now > rateLimit.resetTime) return { canRequest: true, resetTime: null };
+        if (rateLimit.count < 500) return { canRequest: true, resetTime: null };
         return { canRequest: false, resetTime: rateLimit.resetTime };
     }, [rateLimit]);
 
     const clearAllSettings = useCallback(() => {
         const newResetTime = new Date().setHours(23, 59, 59, 999);
-        const newRateLimit = { count: 0, resetTime: newResetTime };
-
         setTmdbApiKey(null);
-        setLocalTmdbApiKey(null); // Sync immediately
+        setLocalTmdbApiKey(null);
         setGeminiApiKey(null);
         setAiClient(null);
-        setRateLimit(newRateLimit);
+        setRateLimit({ count: 0, resetTime: newResetTime });
         setIsAllClearMode(false);
+        disconnectTrakt();
         
         localStorage.removeItem(LOCAL_STORAGE_KEY_TMDB);
         localStorage.removeItem(LOCAL_STORAGE_KEY_GEMINI);
         localStorage.removeItem(LOCAL_STORAGE_KEY_RATE_LIMIT);
         localStorage.removeItem(LOCAL_STORAGE_KEY_ALL_CLEAR);
-    }, []);
+    }, [disconnectTrakt]);
 
     const value = {
         tmdbApiKey,
@@ -142,6 +176,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         rateLimit,
         isInitialized,
         isAllClearMode,
+        trakt,
+        initiateTraktAuth,
+        handleTraktCallback,
+        disconnectTrakt,
         toggleAllClearMode,
         canMakeRequest,
         incrementRequestCount,

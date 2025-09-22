@@ -1,4 +1,5 @@
-import type { MediaDetails, CastMember, CrewMember, Collection, CollectionDetails, LikedItem, DislikedItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor, AiSearchParams, SeasonDetails, Episode, AiCuratedCarousel } from '../types.ts';
+// FIX: Replaced LikedItem and DislikedItem with TraktWatchlistItem to align with the new preference system.
+import type { MediaDetails, CastMember, CrewMember, Collection, CollectionDetails, TraktWatchlistItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor, AiSearchParams, SeasonDetails, Episode, AiCuratedCarousel } from '../types.ts';
 import { supportedProviders } from './streamingService.ts';
 import { getTmdbApiKey } from './apiService.ts';
 import { fetchBoxOffice } from './omdbService.ts';
@@ -667,8 +668,9 @@ export const discoverMediaFromAi = async (params: AiSearchParams): Promise<Media
 /**
  * Generates personalized carousels of recommendations based on user's liked items using TMDb.
  */
+// FIX: Updated function signature to use TraktWatchlistItem.
 export const getTmdbCuratedRecommendations = async (
-    likedItems: LikedItem[]
+    likedItems: TraktWatchlistItem[]
 ): Promise<AiCuratedCarousel[]> => {
     if (likedItems.length === 0) {
         return [];

@@ -3,11 +3,9 @@ import { useSettings } from '../hooks/useSettings.ts';
 import { useTrakt } from '../hooks/useTrakt.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { OnboardingModal } from './OnboardingModal.tsx';
-// FIX: Added TraktIcon for UI branding.
 import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon, TraktIcon } from './icons.tsx';
 import type { MediaDetails } from '../types.ts';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
-// FIX: Added TraktAuthButton for connecting/disconnecting Trakt.
 import { TraktAuthButton } from './TraktAuthButton.tsx';
 
 interface MyScapePageProps {
@@ -15,9 +13,7 @@ interface MyScapePageProps {
 }
 
 export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
-    // FIX: Get trakt state from useSettings.
     const { rateLimit, tmdbApiKey, geminiApiKey, saveApiKeys, clearAllSettings, isAllClearMode, toggleAllClearMode, trakt } = useSettings();
-    // FIX: Replaced usePreferences with useTrakt.
     const { watchlist, isLoading: preferencesLoading } = useTrakt();
     const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
 
@@ -25,7 +21,6 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
         return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
     }
 
-    // FIX: Map Trakt watchlist items instead of old 'likes'.
     const watchlistItems: MediaDetails[] = watchlist.map(item => ({
         ...item,
         overview: '',
@@ -141,12 +136,10 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
 
                 {/* Watchlist Section */}
                 <div>
-                    {/* FIX: Updated title and icon to reflect Trakt integration. */}
                     <h2 className="text-3xl font-bold mb-6 text-white flex items-center gap-3">
                         <TraktIcon className="w-6 h-6"/>
                         My Trakt Watchlist
                     </h2>
-                    {/* FIX: Show conditional content based on Trakt auth state. */}
                     {trakt.state !== 'authenticated' ? (
                          <div className="text-center py-12 glass-panel rounded-2xl">
                             <p className="text-gray-300">Connect your Trakt account to see your watchlist.</p>

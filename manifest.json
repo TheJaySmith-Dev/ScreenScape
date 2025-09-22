@@ -4,17 +4,12 @@
   "description": "A sleek movie and TV show recommendation platform, featuring metadata from TMDb. Discover your next favorite watch with a stunning liquid glass interface.",
   "icons": [
     {
-      "src": "favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
-    },
-    {
-      "src": "/icon-192.png",
+      "src": "https://i.ibb.co/W4QG4kFf/A221491-C-929-D-44-DD-9-D09-97163-D81-EB61.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "/icon-512.png",
+      "src": "https://i.ibb.co/W4QG4kFf/A221491-C-929-D-44-DD-9-D09-97163-D81-EB61.png",
       "type": "image/png",
       "sizes": "512x512"
     }

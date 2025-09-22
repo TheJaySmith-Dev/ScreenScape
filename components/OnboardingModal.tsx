@@ -84,7 +84,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             case 0: // Welcome
                 return (
                     <div className="text-center">
-                        <img src="/favicon.svg" alt="ScreenScape Logo" className="w-24 h-24 mx-auto mb-4 animate-pulse-loader" />
+                        <img src="https://i.ibb.co/W4QG4kFf/A221491-C-929-D-44-DD-9-D09-97163-D81-EB61.png" alt="ScreenScape Logo" className="w-24 h-24 mx-auto mb-4" />
                         <h2 className="text-4xl font-bold mb-4">Welcome to ScreenScape</h2>
                         <p className="text-lg text-gray-300 max-w-md mx-auto">Your portal to the cinematic universe. Let's get you set up in a few quick steps.</p>
                     </div>

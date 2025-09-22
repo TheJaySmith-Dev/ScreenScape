@@ -24,7 +24,7 @@ import { ChatModal } from './components/ChatModal.tsx';
 import { AiDescriptionModal } from './components/AiDescriptionModal.tsx';
 import { ReminderModal } from './components/ReminderModal.tsx';
 import { SearchIcon, GridIcon, ThumbsUpIcon, HomeIcon, UserIcon } from './components/icons.tsx';
-import { RateLimitMessage } from './components/RateLimitMessage.tsx';
+import { TraktCallbackPage } from './pages/Callback/index.tsx';
 
 import * as mediaService from './services/mediaService.ts';
 import { popularStudios } from './services/studioService.ts';
@@ -33,16 +33,16 @@ import { supportedProviders } from './services/streamingService.ts';
 import { popularNetworks } from './services/networkService.ts';
 import { people } from './services/peopleService.ts';
 
-import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Person, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy, AiCuratedCarousel } from './types.ts';
+import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Person, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy, AiCuratedCarousel, TraktWatchlistItem } from './types.ts';
 import { getViewingGuidesForBrand, getAiDescriptionForBrand } from './services/aiService.ts';
 import { useSettings } from './hooks/useSettings.ts';
-import { usePreferences } from './hooks/usePreferences.ts';
+import { useTrakt } from './hooks/useTrakt.ts';
 
 const getHashRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
 
 const App: React.FC = () => {
-    const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount } = useSettings();
-    const { likes, isLoading: isPreferencesLoading } = usePreferences();
+    const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount, trakt } = useSettings();
+    const { watchlist, isLoading: isTraktLoading } = useTrakt();
     const [route, setRoute] = useState<string[]>(getHashRoute());
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -148,9 +148,9 @@ const App: React.FC = () => {
         }
     }, [isInitialized, tmdbApiKey, fetchInitialData]);
 
-    const MIN_LIKES_FOR_RECOMMENDATIONS = 3;
+    const MIN_ITEMS_FOR_RECOMMENDATIONS = 3;
     const fetchForYouRecommendations = useCallback(async () => {
-        if (likes.length < MIN_LIKES_FOR_RECOMMENDATIONS || isForYouLoading) {
+        if (trakt.state !== 'authenticated' || watchlist.length < MIN_ITEMS_FOR_RECOMMENDATIONS || isForYouLoading) {
             return;
         }
 
@@ -158,10 +158,12 @@ const App: React.FC = () => {
         setForYouError(null);
         
         try {
-            const results = await mediaService.getTmdbCuratedRecommendations(likes);
+            // Convert TraktWatchlistItem to the format expected by the service if needed
+            const likedItemsForRecs = watchlist.map(item => ({...item, posterUrl: ''})); // Poster URL not needed for recs logic
+            const results = await mediaService.getTmdbCuratedRecommendations(likedItemsForRecs);
             
             if (results.length === 0) {
-                setForYouError("Couldn't generate recommendations. Try liking a few more titles!");
+                setForYouError("Couldn't generate recommendations. Add a few more titles to your watchlist!");
             } else {
                 setCuratedRows(results);
             }
@@ -172,14 +174,14 @@ const App: React.FC = () => {
         } finally {
             setIsForYouLoading(false);
         }
-    }, [likes, isForYouLoading]);
+    }, [watchlist, isForYouLoading, trakt.state]);
 
     useEffect(() => {
         const page = route[0] || 'home';
-        if (page === 'home' && isInitialized && tmdbApiKey && !isPreferencesLoading) {
+        if (page === 'home' && isInitialized && tmdbApiKey && !isTraktLoading) {
             fetchForYouRecommendations();
         }
-    }, [route, isInitialized, tmdbApiKey, isPreferencesLoading, fetchForYouRecommendations]);
+    }, [route, isInitialized, tmdbApiKey, isTraktLoading, fetchForYouRecommendations]);
 
     // FIX: Add a useEffect hook to handle fetching data for brand pages based on the current route.
     // This ensures content loads correctly on both direct navigation and clicks.
@@ -483,16 +485,28 @@ const App: React.FC = () => {
             switch(page) {
                 case 'home':
                     const forYouContent = () => {
-                        if (isPreferencesLoading) return null;
+                        if (isTraktLoading) return null;
 
-                        if (likes.length < MIN_LIKES_FOR_RECOMMENDATIONS) {
+                        if (trakt.state !== 'authenticated') {
+                             return (
+                                <div className="mt-12 md:mt-16 px-4 sm:px-6 lg:px-8">
+                                    <div className="text-center text-gray-300 fade-in glass-panel p-8">
+                                        <UserIcon className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+                                        <h2 className="text-2xl font-bold mb-4 text-white">Connect to Trakt</h2>
+                                        <p>Connect your Trakt.tv account in <a href="#/myscape" className="font-bold text-white hover:underline">MyScape</a> to get personalized recommendations.</p>
+                                    </div>
+                                </div>
+                            );
+                        }
+
+                        if (watchlist.length < MIN_ITEMS_FOR_RECOMMENDATIONS) {
                             return (
                                 <div className="mt-12 md:mt-16 px-4 sm:px-6 lg:px-8">
                                     <div className="text-center text-gray-300 fade-in glass-panel p-8">
                                         <ThumbsUpIcon className="w-12 h-12 text-green-400 mx-auto mb-4" />
                                         <h2 className="text-2xl font-bold mb-4 text-white">Personalized Recommendations</h2>
-                                        <p>Like at least <span className="font-bold text-white">{MIN_LIKES_FOR_RECOMMENDATIONS}</span> movies or shows to unlock your personal feed right here.</p>
-                                        <p className="text-sm mt-2">You've liked <span className="font-bold text-white">{likes.length}</span> so far.</p>
+                                        <p>Add at least <span className="font-bold text-white">{MIN_ITEMS_FOR_RECOMMENDATIONS}</span> movies or shows to your Trakt watchlist to unlock your feed.</p>
+                                        <p className="text-sm mt-2">You have <span className="font-bold text-white">{watchlist.length}</span> items so far.</p>
                                     </div>
                                 </div>
                             );
@@ -584,6 +598,11 @@ const App: React.FC = () => {
                                     onSelectActor={handleSelectActor} />;
                     }
                     return <div className="text-center">Loading talent...</div>;
+                case 'callback':
+                    if (id === 'trakt') {
+                        return <TraktCallbackPage />;
+                    }
+                    // Fallthrough to default
                 default:
                      window.location.hash = '/home';
                      return null;

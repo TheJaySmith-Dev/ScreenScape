@@ -1,6 +1,7 @@
 import type { GoogleGenAI } from "@google/genai";
 import { Type, GenerateContentResponse, Chat } from "@google/genai";
-import type { MediaDetails, ViewingGuide, FunFact, AiSearchParams, LikedItem, AiCuratedCarousel, Brand } from '../types.ts';
+// FIX: Removed unused and deprecated LikedItem type.
+import type { MediaDetails, ViewingGuide, FunFact, AiSearchParams, AiCuratedCarousel, Brand } from '../types.ts';
 import { searchMedia, discoverMediaFromAi } from './mediaService.ts';
 
 const model = 'gemini-2.5-flash';
