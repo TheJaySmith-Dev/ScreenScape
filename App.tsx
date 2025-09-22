@@ -187,17 +187,16 @@ const App: React.FC = () => {
         setForYouError(null);
         
         try {
-            // FIX: Call getTmdbCuratedRecommendations from aiService and pass aiClient.
-            if (!aiClient) {
-                setForYouError("AI client is not configured. Please add a Gemini API key in MyScape.");
-                return;
-            }
-            const results = await getTmdbCuratedRecommendations(likes, aiClient);
-            
-            if (results.length === 0) {
-                setForYouError("Couldn't generate recommendations. Add a few more titles to your likes!");
+            if (aiClient) {
+                const results = await getTmdbCuratedRecommendations(likes, aiClient);
+
+                if (results.length === 0) {
+                    setForYouError("Couldn't generate recommendations. Add a few more titles to your likes!");
+                } else {
+                    setCuratedRows(results);
+                }
             } else {
-                setCuratedRows(results);
+                setForYouError("AI client is not configured. Please add a Gemini API key in MyScape.");
             }
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred.';
