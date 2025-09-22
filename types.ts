@@ -153,14 +153,6 @@ export interface ActorDetails extends Actor {
   filmography: MediaDetails[];
 }
 
-export interface TraktWatchlistItem {
-  id: number;
-  type: 'movie' | 'tv';
-  title: string;
-  posterUrl: string;
-  releaseYear: string;
-}
-
 export interface ExternalRatings {
   rottenTomatoes?: string;
   metacritic?: string;
@@ -312,22 +304,22 @@ export interface RateLimitState {
   resetTime: number; // Timestamp
 }
 
-export interface TraktAuth {
-  accessToken: string | null;
-  refreshToken: string | null;
-  expiresAt: number | null; // Timestamp in ms
+export interface TmdbAccountDetails {
+    id: number;
+    username: string;
+    name: string;
+    avatar: {
+        tmdb: {
+            avatar_path: string | null;
+        }
+    }
+}
+
+export interface TmdbAuth {
+  sessionId: string | null;
+  accountDetails: TmdbAccountDetails | null;
   state: 'idle' | 'loading' | 'authenticated' | 'error';
 }
-
-export interface TraktStats {
-    watchers: number;
-    plays: number;
-    collectors: number;
-    comments: number;
-    lists: number;
-    votes: number;
-}
-
 
 export interface SettingsContextType {
   tmdbApiKey: string | null;
@@ -336,10 +328,10 @@ export interface SettingsContextType {
   rateLimit: RateLimitState;
   isInitialized: boolean;
   isAllClearMode: boolean;
-  trakt: TraktAuth;
-  startTraktDeviceAuth: () => Promise<import('../services/traktService.ts').DeviceCodeResponse>;
-  disconnectTrakt: () => void;
-  getValidAccessToken: () => Promise<string | null>;
+  tmdb: TmdbAuth;
+  loginWithTmdb: () => void;
+  logoutTmdb: () => void;
+  handleTmdbCallback: (requestToken: string) => Promise<void>;
   toggleAllClearMode: () => void;
   canMakeRequest: () => { canRequest: boolean; resetTime: number | null };
   incrementRequestCount: () => void;

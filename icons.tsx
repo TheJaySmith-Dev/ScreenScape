@@ -235,3 +235,10 @@ export const TraktIcon: React.FC<IconProps> = ({ className }) => (
         <path d="M22.28 17.842c.48 0 .84-.42.84-.84V7.126c0-.48-.42-.84-.84-.84h-3.349v11.558h3.35zM15.442 24c.48 0 .84-.42.84-.84V1.028c0-.48-.42-.84-.84-.84h-3.35c-.48 0-.84.42-.84.84v22.132c0 .48.42.84.84.84h3.35zM8.528 17.842c.48 0 .84-.42.84-.84V7.126c0-.48-.42-.84-.84-.84H5.18c-.48 0-.84.42-.84.84v9.878c0 .48.42.84.84.84h3.348z"/>
     </svg>
 );
+
+// FIX: Add missing LoginIcon export to resolve import error in MyScapePage.tsx.
+export const LoginIcon: React.FC<IconProps> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+    </svg>
+);

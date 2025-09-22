@@ -1,14 +1,14 @@
-import React, { createContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
+import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import { setLocalTmdbApiKey } from '../services/apiService.ts';
-import * as traktService from '../services/traktService.ts';
-import type { SettingsContextType, RateLimitState, TraktAuth } from '../types.ts';
+import * as tmdbAuthService from '../services/tmdbAuthService.ts';
+import type { SettingsContextType, RateLimitState, TmdbAuth } from '../types.ts';
 
 const LOCAL_STORAGE_KEY_TMDB = 'screenscape_tmdb_api_key';
 const LOCAL_STORAGE_KEY_GEMINI = 'screenscape_gemini_api_key';
 const LOCAL_STORAGE_KEY_RATE_LIMIT = 'screenscape_rate_limit';
 const LOCAL_STORAGE_KEY_ALL_CLEAR = 'screenscape_all_clear_mode';
-const LOCAL_STORAGE_KEY_TRAKT = 'screenscape_trakt_auth';
+const LOCAL_STORAGE_KEY_TMDB_AUTH = 'screenscape_tmdb_auth';
 
 const getInitialRateLimit = (): RateLimitState => {
     try {
@@ -28,18 +28,17 @@ const getInitialRateLimit = (): RateLimitState => {
     return { count: 0, resetTime: newResetTime };
 };
 
-const getInitialTraktAuth = (): TraktAuth => {
+const getInitialTmdbAuth = (): TmdbAuth => {
     try {
-        const stored = localStorage.getItem(LOCAL_STORAGE_KEY_TRAKT);
+        const stored = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB_AUTH);
         if (stored) {
-            const state: TraktAuth = JSON.parse(stored);
-            // Even if token is expired, keep state so we can refresh it
-            if (state.accessToken) {
+            const state: TmdbAuth = JSON.parse(stored);
+            if (state.sessionId && state.accountDetails) {
                  return { ...state, state: 'authenticated' };
             }
         }
-    } catch (e) { console.error("Failed to parse trakt auth state", e); }
-    return { accessToken: null, refreshToken: null, expiresAt: null, state: 'idle' };
+    } catch (e) { console.error("Failed to parse tmdb auth state", e); }
+    return { sessionId: null, accountDetails: null, state: 'idle' };
 };
 
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -51,9 +50,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     const [rateLimit, setRateLimit] = useState<RateLimitState>(getInitialRateLimit());
     const [isInitialized, setIsInitialized] = useState(false);
     const [isAllClearMode, setIsAllClearMode] = useState<boolean>(false);
-    const [trakt, setTrakt] = useState<TraktAuth>(getInitialTraktAuth());
-    const isRefreshingToken = useRef(false);
-    const pollingTimeoutRef = useRef<number | null>(null);
+    const [tmdb, setTmdb] = useState<TmdbAuth>(getInitialTmdbAuth());
 
     useEffect(() => {
         const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
@@ -63,18 +60,15 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         if (localTmdbKey) {
             setTmdbApiKey(localTmdbKey);
             setLocalTmdbApiKey(localTmdbKey);
+            tmdbAuthService.setUserV3ApiKey(localTmdbKey);
         }
         if (localAllClear) setIsAllClearMode(JSON.parse(localAllClear));
         
         setGeminiApiKey(localGeminiKey);
         setRateLimit(getInitialRateLimit());
-        setTrakt(getInitialTraktAuth());
+        setTmdb(getInitialTmdbAuth());
         
         setIsInitialized(true);
-
-        return () => {
-             if (pollingTimeoutRef.current) clearTimeout(pollingTimeoutRef.current);
-        }
     }, []);
 
     useEffect(() => {
@@ -94,122 +88,43 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     const saveApiKeys = useCallback((keys: { tmdbKey: string; geminiKey: string }) => {
         setTmdbApiKey(keys.tmdbKey);
         setLocalTmdbApiKey(keys.tmdbKey);
+        tmdbAuthService.setUserV3ApiKey(keys.tmdbKey);
         setGeminiApiKey(keys.geminiKey);
         localStorage.setItem(LOCAL_STORAGE_KEY_TMDB, keys.tmdbKey);
         localStorage.setItem(LOCAL_STORAGE_KEY_GEMINI, keys.geminiKey);
     }, []);
     
-    const disconnectTrakt = useCallback(() => {
-        const newAuthState: TraktAuth = { accessToken: null, refreshToken: null, expiresAt: null, state: 'idle' };
-        setTrakt(newAuthState);
-        localStorage.removeItem(LOCAL_STORAGE_KEY_TRAKT);
-        if (pollingTimeoutRef.current) clearTimeout(pollingTimeoutRef.current);
+    const loginWithTmdb = useCallback(async () => {
+        setTmdb(prev => ({ ...prev, state: 'loading' }));
+        try {
+            const requestToken = await tmdbAuthService.createRequestToken();
+            const redirectUrl = `${window.location.origin}/callback/tmdb`;
+            window.location.href = `https://www.themoviedb.org/authenticate/${requestToken}?redirect_to=${encodeURIComponent(redirectUrl)}`;
+        } catch (error) {
+            console.error("TMDb login failed to start:", error);
+            setTmdb(prev => ({...prev, state: 'error'}));
+        }
     }, []);
 
-    const startTraktDeviceAuth = useCallback(async () => {
-        setTrakt(prev => ({ ...prev, state: 'loading' }));
-        if (pollingTimeoutRef.current) clearTimeout(pollingTimeoutRef.current);
-    
-        const authDetails = await traktService.getDeviceCode();
-        const pollUntilSuccess = async () => {
-            try {
-                const tokenData = await traktService.pollForToken(authDetails.device_code);
-                const expiresAt = (tokenData.created_at + tokenData.expires_in) * 1000;
-                const newAuthState: TraktAuth = {
-                    accessToken: tokenData.access_token,
-                    refreshToken: tokenData.refresh_token,
-                    expiresAt,
-                    state: 'authenticated',
-                };
-                setTrakt(newAuthState);
-                localStorage.setItem(LOCAL_STORAGE_KEY_TRAKT, JSON.stringify(newAuthState));
-                if (pollingTimeoutRef.current) clearTimeout(pollingTimeoutRef.current);
-            } catch (error: any) {
-                // If user hasn't authorized yet, just poll again.
-                if (error.message.includes('Pending')) {
-                    pollingTimeoutRef.current = window.setTimeout(pollUntilSuccess, authDetails.interval * 1000);
-                } else {
-                    // For terminal errors (Expired, Denied), stop polling and show error.
-                    console.error("Trakt auth failed:", error.message);
-                    disconnectTrakt(); 
-                }
-            }
-        };
+    const logoutTmdb = useCallback(() => {
+        setTmdb({ sessionId: null, accountDetails: null, state: 'idle' });
+        localStorage.removeItem(LOCAL_STORAGE_KEY_TMDB_AUTH);
+    }, []);
 
-        // Start the first poll
-        pollingTimeoutRef.current = window.setTimeout(pollUntilSuccess, authDetails.interval * 1000);
-
-        // Set a master timeout for the whole process
-        setTimeout(() => {
-            if (pollingTimeoutRef.current) {
-                clearTimeout(pollingTimeoutRef.current);
-                // Check the state one last time before declaring timeout
-                setTrakt(currentTraktState => {
-                    if (currentTraktState.state !== 'authenticated') {
-                        console.error("Trakt auth timed out.");
-                        disconnectTrakt();
-                    }
-                    return currentTraktState;
-                });
-            }
-        }, authDetails.expires_in * 1000);
-        
-        return authDetails;
-    }, [disconnectTrakt]);
-
-    const getValidAccessToken = useCallback(async (): Promise<string | null> => {
-        if (trakt.state !== 'authenticated' || !trakt.accessToken || !trakt.expiresAt) {
-            return null;
-        }
-
-        const buffer = 10 * 60 * 1000; // 10 minutes
-        if (new Date().getTime() < trakt.expiresAt - buffer) {
-            return trakt.accessToken;
-        }
-
-        if (!trakt.refreshToken) {
-            console.warn("Trakt access token expired, but no refresh token available. Disconnecting.");
-            disconnectTrakt();
-            return null;
-        }
-        
-        if (isRefreshingToken.current) {
-            return new Promise((resolve) => {
-                const interval = setInterval(() => {
-                    if (!isRefreshingToken.current) {
-                        clearInterval(interval);
-                        setTrakt(currentTraktState => {
-                            resolve(currentTraktState.state === 'authenticated' ? currentTraktState.accessToken : null);
-                            return currentTraktState;
-                        });
-                    }
-                }, 200);
-            });
-        }
-
-        isRefreshingToken.current = true;
-        setTrakt(prev => ({ ...prev, state: 'loading' }));
-
+    const handleTmdbCallback = useCallback(async (requestToken: string) => {
+        setTmdb(prev => ({ ...prev, state: 'loading' }));
         try {
-            const tokenData = await traktService.refreshToken(trakt.refreshToken);
-            const expiresAt = (tokenData.created_at + tokenData.expires_in) * 1000;
-            const newAuthState: TraktAuth = {
-                accessToken: tokenData.access_token,
-                refreshToken: tokenData.refresh_token,
-                expiresAt,
-                state: 'authenticated',
-            };
-            setTrakt(newAuthState);
-            localStorage.setItem(LOCAL_STORAGE_KEY_TRAKT, JSON.stringify(newAuthState));
-            return newAuthState.accessToken;
-        } catch (e) {
-            console.error("Failed to refresh Trakt token. Disconnecting.", e);
-            disconnectTrakt();
-            return null;
-        } finally {
-            isRefreshingToken.current = false;
+            const { session_id } = await tmdbAuthService.createSession(requestToken);
+            const accountDetails = await tmdbAuthService.getAccountDetails(session_id);
+            const newAuthState: TmdbAuth = { sessionId: session_id, accountDetails, state: 'authenticated' };
+            setTmdb(newAuthState);
+            localStorage.setItem(LOCAL_STORAGE_KEY_TMDB_AUTH, JSON.stringify(newAuthState));
+        } catch (error) {
+            console.error("Failed to handle TMDb callback:", error);
+            logoutTmdb(); // Reset on failure
+            throw error;
         }
-    }, [trakt, disconnectTrakt]);
+    }, [logoutTmdb]);
 
     const toggleAllClearMode = useCallback(() => {
         setIsAllClearMode(prev => {
@@ -245,17 +160,18 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         const newResetTime = new Date().setHours(23, 59, 59, 999);
         setTmdbApiKey(null);
         setLocalTmdbApiKey(null);
+        tmdbAuthService.setUserV3ApiKey(null);
         setGeminiApiKey(null);
         setAiClient(null);
         setRateLimit({ count: 0, resetTime: newResetTime });
         setIsAllClearMode(false);
-        disconnectTrakt();
+        logoutTmdb();
         
         localStorage.removeItem(LOCAL_STORAGE_KEY_TMDB);
         localStorage.removeItem(LOCAL_STORAGE_KEY_GEMINI);
         localStorage.removeItem(LOCAL_STORAGE_KEY_RATE_LIMIT);
         localStorage.removeItem(LOCAL_STORAGE_KEY_ALL_CLEAR);
-    }, [disconnectTrakt]);
+    }, [logoutTmdb]);
 
     const value = {
         tmdbApiKey,
@@ -264,10 +180,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         rateLimit,
         isInitialized,
         isAllClearMode,
-        trakt,
-        startTraktDeviceAuth,
-        disconnectTrakt,
-        getValidAccessToken,
+        tmdb,
+        loginWithTmdb,
+        logoutTmdb,
+        handleTmdbCallback,
         toggleAllClearMode,
         canMakeRequest,
         incrementRequestCount,

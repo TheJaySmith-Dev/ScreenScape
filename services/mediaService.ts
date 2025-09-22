@@ -1,5 +1,4 @@
-// FIX: Replaced LikedItem and DislikedItem with TraktWatchlistItem to align with the new preference system.
-import type { MediaDetails, CastMember, CrewMember, Collection, CollectionDetails, TraktWatchlistItem, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor, AiSearchParams, SeasonDetails, Episode, AiCuratedCarousel } from '../types.ts';
+import type { MediaDetails, CastMember, CrewMember, Collection, CollectionDetails, WatchProviders, StreamingProviderInfo, ActorDetails, GameMovie, GameMedia, GameActor, AiSearchParams, SeasonDetails, Episode, AiCuratedCarousel } from '../types.ts';
 import { supportedProviders } from './streamingService.ts';
 import { getTmdbApiKey } from './apiService.ts';
 import { fetchBoxOffice } from './omdbService.ts';
@@ -668,31 +667,30 @@ export const discoverMediaFromAi = async (params: AiSearchParams): Promise<Media
 /**
  * Generates personalized carousels of recommendations based on user's liked items using TMDb.
  */
-// FIX: Updated function signature to use TraktWatchlistItem.
 export const getTmdbCuratedRecommendations = async (
-    likedItems: TraktWatchlistItem[]
+    watchlist: MediaDetails[]
 ): Promise<AiCuratedCarousel[]> => {
-    if (likedItems.length === 0) {
+    if (watchlist.length === 0) {
         return [];
     }
 
     // Use the 3 most recently liked items as seeds for recommendations
-    const seedItems = likedItems.slice(-3).reverse();
-    const likedItemIds = new Set(likedItems.map(item => item.id));
+    const seedItems = watchlist.slice(0, 3);
+    const watchlistItemIds = new Set(watchlist.map(item => item.id));
 
     const recommendationPromises = seedItems.map(async (seed) => {
         try {
             const endpoint = `/${seed.type}/${seed.id}/recommendations`;
             const recommendedMedia = await fetchList(endpoint, seed.type);
 
-            // Filter out items the user has already liked
+            // Filter out items the user has already on their watchlist
             const filteredRecommendations = recommendedMedia.filter(
-                (rec) => !likedItemIds.has(rec.id)
+                (rec) => !watchlistItemIds.has(rec.id)
             );
 
             if (filteredRecommendations.length > 0) {
                 return {
-                    title: `Because you liked ${seed.title}`,
+                    title: `Because you added ${seed.title} to your watchlist`,
                     items: filteredRecommendations.slice(0, 10), // Limit to 10 per row
                 };
             }

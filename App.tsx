@@ -22,10 +22,10 @@ import { supportedProviders } from './services/streamingService.ts';
 import { popularNetworks } from './services/networkService.ts';
 import { people } from './services/peopleService.ts';
 
-import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Person, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy, AiCuratedCarousel, TraktWatchlistItem } from './types.ts';
+import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, Person, Studio, Network, StreamingProviderInfo, UserLocation, ViewingGuide, MediaTypeFilter, SortBy, AiCuratedCarousel } from './types.ts';
 import { getViewingGuidesForBrand, getAiDescriptionForBrand } from './services/aiService.ts';
 import { useSettings } from './hooks/useSettings.ts';
-import { useTrakt } from './hooks/useTrakt.ts';
+import { useTmdbAccount } from './hooks/useTmdbAccount.ts';
 
 // Lazy load page components for code-splitting and performance
 const MyScapePage = React.lazy(() => import('./components/MyScapePage.tsx').then(module => ({ default: module.MyScapePage })));
@@ -38,12 +38,13 @@ const StreamingGrid = React.lazy(() => import('./components/StreamingGrid.tsx').
 const BrandDetail = React.lazy(() => import('./components/BrandDetail.tsx').then(module => ({ default: module.BrandDetail })));
 const RecommendationGrid = React.lazy(() => import('./components/RecommendationGrid.tsx').then(module => ({ default: module.RecommendationGrid })));
 const ComingSoonPage = React.lazy(() => import('./components/ComingSoonPage.tsx').then(module => ({ default: module.ComingSoonPage })));
+const TmdbCallbackPage = React.lazy(() => import('./pages/Callback/TmdbCallback.tsx').then(module => ({ default: module.TmdbCallbackPage })));
 
 const getPathRoute = () => window.location.pathname.replace(/^\/?|\/$/g, '').split('/');
 
 const App: React.FC = () => {
-    const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount, trakt } = useSettings();
-    const { watchlist, isLoading: isTraktLoading } = useTrakt();
+    const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount, tmdb } = useSettings();
+    const { watchlist, isLoading: isAccountLoading } = useTmdbAccount();
     const [route, setRoute] = useState<string[]>(getPathRoute());
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -178,7 +179,7 @@ const App: React.FC = () => {
 
     const MIN_ITEMS_FOR_RECOMMENDATIONS = 3;
     const fetchForYouRecommendations = useCallback(async () => {
-        if (trakt.state !== 'authenticated' || watchlist.length < MIN_ITEMS_FOR_RECOMMENDATIONS || isForYouLoading) {
+        if (tmdb.state !== 'authenticated' || watchlist.length < MIN_ITEMS_FOR_RECOMMENDATIONS || isForYouLoading) {
             return;
         }
 
@@ -186,9 +187,7 @@ const App: React.FC = () => {
         setForYouError(null);
         
         try {
-            // Convert TraktWatchlistItem to the format expected by the service if needed
-            const likedItemsForRecs = watchlist.map(item => ({...item, posterUrl: ''})); // Poster URL not needed for recs logic
-            const results = await mediaService.getTmdbCuratedRecommendations(likedItemsForRecs);
+            const results = await mediaService.getTmdbCuratedRecommendations(watchlist);
             
             if (results.length === 0) {
                 setForYouError("Couldn't generate recommendations. Add a few more titles to your watchlist!");
@@ -202,14 +201,14 @@ const App: React.FC = () => {
         } finally {
             setIsForYouLoading(false);
         }
-    }, [watchlist, isForYouLoading, trakt.state]);
+    }, [watchlist, isForYouLoading, tmdb.state]);
 
     useEffect(() => {
         const page = route[0] || 'home';
-        if (page === 'home' && isInitialized && tmdbApiKey && !isTraktLoading) {
+        if (page === 'home' && isInitialized && tmdbApiKey && !isAccountLoading) {
             fetchForYouRecommendations();
         }
-    }, [route, isInitialized, tmdbApiKey, isTraktLoading, fetchForYouRecommendations]);
+    }, [route, isInitialized, tmdbApiKey, isAccountLoading, fetchForYouRecommendations]);
 
     useEffect(() => {
         const [page, id] = route;
@@ -509,15 +508,15 @@ const App: React.FC = () => {
             switch(page) {
                 case 'home':
                     const forYouContent = () => {
-                        if (isTraktLoading) return null;
+                        if (isAccountLoading) return null;
 
-                        if (trakt.state !== 'authenticated') {
+                        if (tmdb.state !== 'authenticated') {
                              return (
                                 <div className="mt-12 md:mt-16 px-4 sm:px-6 lg:px-8">
                                     <div className="text-center text-gray-300 fade-in glass-panel p-8">
                                         <UserIcon className="w-12 h-12 text-blue-400 mx-auto mb-4" />
-                                        <h2 className="text-2xl font-bold mb-4 text-white">Connect to Trakt</h2>
-                                        <p>Connect your Trakt.tv account in <a href="/myscape" className="font-bold text-white hover:underline">MyScape</a> to get personalized recommendations.</p>
+                                        <h2 className="text-2xl font-bold mb-4 text-white">Connect to TMDb</h2>
+                                        <p>Log in with your TMDb account in <a href="/myscape" className="font-bold text-white hover:underline">MyScape</a> to get personalized recommendations.</p>
                                     </div>
                                 </div>
                             );
@@ -529,7 +528,7 @@ const App: React.FC = () => {
                                     <div className="text-center text-gray-300 fade-in glass-panel p-8">
                                         <ThumbsUpIcon className="w-12 h-12 text-green-400 mx-auto mb-4" />
                                         <h2 className="text-2xl font-bold mb-4 text-white">Personalized Recommendations</h2>
-                                        <p>Add at least <span className="font-bold text-white">{MIN_ITEMS_FOR_RECOMMENDATIONS}</span> movies or shows to your Trakt watchlist to unlock your feed.</p>
+                                        <p>Add at least <span className="font-bold text-white">{MIN_ITEMS_FOR_RECOMMENDATIONS}</span> movies or shows to your TMDb watchlist to unlock your feed.</p>
                                         <p className="text-sm mt-2">You have <span className="font-bold text-white">{watchlist.length}</span> items so far.</p>
                                     </div>
                                 </div>
@@ -585,6 +584,12 @@ const App: React.FC = () => {
                         </>
                     );
                 case 'myscape': return <MyScapePage onSelectMedia={handleSelectMedia} />;
+                case 'callback':
+                    if (id === 'tmdb') {
+                        return <TmdbCallbackPage onNavigate={navigate} />;
+                    }
+                    navigate('/', true);
+                    return null;
                 case 'movies': return <RecommendationGrid recommendations={moviesContent} onSelect={handleSelectMedia} />;
                 case 'tv': return <RecommendationGrid recommendations={tvContent} onSelect={handleSelectMedia} />;
                 case 'collections': return <ComingSoonPage media={comingSoonContent} onSelectMedia={handleSelectMedia} />;

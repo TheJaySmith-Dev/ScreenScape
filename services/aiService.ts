@@ -1,6 +1,5 @@
 import type { GoogleGenAI } from "@google/genai";
 import { Type, GenerateContentResponse, Chat } from "@google/genai";
-// FIX: Removed unused and deprecated LikedItem type.
 import type { MediaDetails, ViewingGuide, FunFact, AiSearchParams, AiCuratedCarousel, Brand } from '../types.ts';
 import { searchMedia, discoverMediaFromAi } from './mediaService.ts';
 

@@ -1,10 +1,13 @@
+
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, CrewMember, UserLocation, WatchProviders, OmdbDetails, FunFact, SeasonDetails, Episode, SeasonSummary } from '../types.ts';
 import { StarIcon, PlayIcon, PlusIcon, CheckIcon, TvIcon, SparklesIcon, InfoIcon, ChatBubbleIcon, CloseIcon, BellIcon } from './icons.tsx';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
-import { useTrakt } from '../hooks/useTrakt.ts';
+// FIX: Replaced useTrakt with useTmdbAccount as useTrakt.ts does not exist.
+import { useTmdbAccount } from '../hooks/useTmdbAccount.ts';
 import { CinemaAvailability } from './CinemaAvailability.tsx';
 import { fetchOmdbDetails } from '../services/omdbService.ts';
 import { getFunFactsForMedia } from '../services/aiService.ts';
@@ -15,7 +18,7 @@ import { useCountdown } from '../hooks/useCountdown.ts';
 import { StreamingAvailability } from './StreamingAvailability.tsx';
 import { CountrySelector } from './CountrySelector.tsx';
 import { supportedCountries } from '../services/countryService.ts';
-import { TraktActivity } from './TraktActivity.tsx';
+// FIX: Removed TraktActivity as it does not exist.
 
 interface DetailModalProps {
   item: MediaDetails | CollectionDetails;
@@ -195,11 +198,13 @@ const isMediaDetails = (item: MediaDetails | CollectionDetails): item is MediaDe
 
 export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, onSelectActor, selectedLocation, onLocationChange, onOpenChat, onOpenReminderModal }) => {
     const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
-    const { addToWatchlist, removeFromWatchlist, isOnWatchlist } = useTrakt();
+    // FIX: Replaced useTrakt with useTmdbAccount.
+    const { addToWatchlist, removeFromWatchlist, isOnWatchlist } = useTmdbAccount();
     const [omdbDetails, setOmdbDetails] = useState<OmdbDetails | null>(null);
     const [isOmdbLoading, setIsOmdbLoading] = useState(false);
     const [isDetailsVisible, setIsDetailsVisible] = useState(false);
-    const { aiClient, canMakeRequest, incrementRequestCount, trakt } = useSettings();
+    // FIX: Replaced 'trakt' with 'tmdb' from useSettings.
+    const { aiClient, canMakeRequest, incrementRequestCount, tmdb } = useSettings();
 
     // State for AI-generated Fun Facts
     const [funFacts, setFunFacts] = useState<FunFact[] | null>(null);
@@ -367,7 +372,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                       <InfoIcon className="w-5 h-5"/>
                       <span>More Info</span>
                     </button>
-                    {isMediaDetails(item) && trakt.state === 'authenticated' && (
+                    {isMediaDetails(item) && tmdb.state === 'authenticated' && (
                         <button onClick={handleWatchlistToggle} className={`glass-button text-sm transition-colors ${itemIsOnWatchlist ? 'bg-white/20' : ''}`} aria-label={itemIsOnWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}>
                             {itemIsOnWatchlist ? <CheckIcon className="w-5 h-5" /> : <PlusIcon className="w-5 h-5" />}
                             <span>Watchlist</span>
@@ -433,8 +438,6 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                         
                         {isMediaDetails(item) && !item.isInTheaters && <StreamingAvailability item={item} userLocation={selectedLocation} />}
                         
-                        {isMediaDetails(item) && <TraktActivity media={item} />}
-
                         {aiClient && (
                             <div>
                                 <h4 className="text-md font-semibold text-white mb-2 flex items-center gap-2">

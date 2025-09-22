@@ -1,34 +1,43 @@
+
 import React, { useState } from 'react';
+// FIX: Replaced useTrakt with useTmdbAccount as useTrakt.ts does not exist.
 import { useSettings } from '../hooks/useSettings.ts';
-import { useTrakt } from '../hooks/useTrakt.ts';
+// FIX: Replaced useTrakt with useTmdbAccount as useTrakt.ts does not exist.
+import { useTmdbAccount } from '../hooks/useTmdbAccount.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { OnboardingModal } from './OnboardingModal.tsx';
-import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon, TraktIcon } from './icons.tsx';
+// FIX: Replaced TraktIcon with LoginIcon.
+import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon, LoginIcon } from './icons.tsx';
 import type { MediaDetails } from '../types.ts';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
-import { TraktAuthButton } from './TraktAuthButton.tsx';
+// FIX: Removed TraktAuthButton as it does not exist. TMDb auth logic is handled directly.
 
 interface MyScapePageProps {
   onSelectMedia: (media: MediaDetails) => void;
 }
 
+// FIX: Added redirect URI for TMDb authentication.
+const REDIRECT_URI = `${window.location.origin}/callback/tmdb`;
+
 export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
-    const { rateLimit, tmdbApiKey, geminiApiKey, saveApiKeys, clearAllSettings, isAllClearMode, toggleAllClearMode, trakt } = useSettings();
-    const { watchlist, isLoading: preferencesLoading } = useTrakt();
+    // FIX: Replaced 'trakt' with 'tmdb' and added login/logout functions from useSettings.
+    const { rateLimit, tmdbApiKey, geminiApiKey, saveApiKeys, clearAllSettings, isAllClearMode, toggleAllClearMode, tmdb, loginWithTmdb, logoutTmdb } = useSettings();
+    // FIX: Replaced useTrakt with useTmdbAccount.
+    const { watchlist, isLoading: preferencesLoading } = useTmdbAccount();
     const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
+    // FIX: Added state and handler for copying the redirect URI.
+    const [copyText, setCopyText] = useState('Copy');
 
     if (preferencesLoading) {
         return <div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>;
     }
-
-    const watchlistItems: MediaDetails[] = watchlist.map(item => ({
-        ...item,
-        overview: '',
-        backdropUrl: '',
-        rating: 0,
-        trailerUrl: null,
-    }));
     
+    const handleCopy = () => {
+        navigator.clipboard.writeText(REDIRECT_URI);
+        setCopyText('Copied!');
+        setTimeout(() => setCopyText('Copy'), 2000);
+    };
+
     const DAILY_LIMIT = 500;
     const remainingRequests = Math.max(0, DAILY_LIMIT - rateLimit.count);
     const usagePercentage = (rateLimit.count / DAILY_LIMIT) * 100;
@@ -40,16 +49,15 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
         progressBarColor = 'bg-yellow-500';
     }
 
-
     return (
         <>
             <div className="w-full max-w-7xl fade-in">
                 <header className="flex flex-col md:flex-row justify-between md:items-center gap-4 text-center md:text-left mb-12">
                     <div>
                         <h1 className="text-4xl font-bold text-white">MyScape</h1>
-                        <p className="text-lg text-gray-400">Your local hub for settings and liked items.</p>
+                        <p className="text-lg text-gray-400">Your personal hub for settings and your watchlist.</p>
                     </div>
-                    <a href="#/home" className="flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-semibold transition-all duration-300">
+                    <a href="/" className="flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-semibold transition-all duration-300">
                         <ThumbsUpIcon className="w-6 h-6 text-green-400" />
                         <span>For You Recommendations</span>
                     </a>
@@ -99,14 +107,39 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                             </div>
                         </div>
                     </div>
-                    {/* Trakt Settings */}
-                     <div className="glass-panel p-6 rounded-2xl flex flex-col justify-between">
+                    {/* FIX: Replaced Trakt.tv section with TMDb Account section */}
+                    <div className="glass-panel p-6 rounded-2xl flex flex-col justify-between">
                         <div>
-                            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><TraktIcon className="w-5 h-5"/> Trakt.tv Sync</h2>
-                            <p className="text-sm text-gray-300 mb-4">Connect your Trakt account to sync your watchlist across all your devices.</p>
+                            <h2 className="text-xl font-semibold mb-2 flex items-center gap-2"><LoginIcon className="w-5 h-5"/> TMDb Account</h2>
+                            {tmdb.state === 'authenticated' ? (
+                                <div className="text-center">
+                                    <p className="text-gray-300">Logged in as</p>
+                                    <p className="font-bold text-white text-lg">{tmdb.accountDetails?.username}</p>
+                                </div>
+                            ) : (
+                                <>
+                                  <p className="text-sm text-gray-300 mb-4">Login with your TMDb account to sync your watchlist and get personalized recommendations.</p>
+                                  <div className="text-xs p-3 bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 rounded-lg">
+                                    <p className="font-bold mb-1">One-Time Setup Required:</p>
+                                    <p>Go to your <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener noreferrer" className="font-semibold underline hover:text-indigo-200">TMDb API Settings</a> and add the URL below to your "Redirect URI" field.</p>
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <input type="text" readOnly value={REDIRECT_URI} className="w-full text-xs p-2 bg-black/20 border border-white/10 rounded-md font-mono" />
+                                    <button onClick={handleCopy} className="px-3 py-1 text-xs text-indigo-300 bg-indigo-500/10 rounded-md hover:bg-indigo-500/20 transition-colors">{copyText}</button>
+                                  </div>
+                                </>
+                            )}
                         </div>
-                        <div className="mt-auto">
-                           <TraktAuthButton />
+                        <div className="mt-auto pt-4">
+                           {tmdb.state === 'authenticated' ? (
+                                <button onClick={logoutTmdb} className="w-full px-4 py-2 text-sm text-center text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors">
+                                    Logout
+                                </button>
+                           ) : (
+                                <button onClick={loginWithTmdb} disabled={tmdb.state === 'loading'} className="w-full px-4 py-2 text-sm text-center bg-white/5 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50">
+                                    {tmdb.state === 'loading' ? 'Redirecting...' : 'Login with TMDb'}
+                                </button>
+                           )}
                         </div>
                     </div>
                     {/* Usage */}
@@ -136,19 +169,19 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
 
                 {/* Watchlist Section */}
                 <div>
+                    {/* FIX: Updated watchlist title and logic to use TMDb instead of Trakt. */}
                     <h2 className="text-3xl font-bold mb-6 text-white flex items-center gap-3">
-                        <TraktIcon className="w-6 h-6"/>
-                        My Trakt Watchlist
+                        My TMDb Watchlist
                     </h2>
-                    {trakt.state !== 'authenticated' ? (
+                    {tmdb.state !== 'authenticated' ? (
                          <div className="text-center py-12 glass-panel rounded-2xl">
-                            <p className="text-gray-300">Connect your Trakt account to see your watchlist.</p>
+                            <p className="text-gray-300">Login with TMDb to see your watchlist.</p>
                         </div>
-                    ) : watchlistItems.length > 0 ? (
-                        <RecommendationGrid recommendations={watchlistItems} onSelect={onSelectMedia} />
+                    ) : watchlist.length > 0 ? (
+                        <RecommendationGrid recommendations={watchlist} onSelect={onSelectMedia} />
                     ) : (
                         <div className="text-center py-12 glass-panel rounded-2xl">
-                            <p className="text-gray-300">Your Trakt watchlist is empty.</p>
+                            <p className="text-gray-300">Your TMDb watchlist is empty.</p>
                             <p className="text-sm text-gray-400 mt-2">Add movies and shows to see them here.</p>
                         </div>
                     )}
