@@ -1,16 +1,21 @@
 import type { MediaDetails, TmdbAccountDetails } from '../types.ts';
-import { getTmdbApiKey } from './apiKeyManager.ts';
 
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 
+// The user-provided v3 key for general API calls
+let userV3ApiKey: string | null = null;
+
+export const setUserV3ApiKey = (key: string | null) => {
+    userV3ApiKey = key;
+};
+
 const tmdbApiRequest = async <T>(endpoint: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', body: object | null = null, sessionId?: string): Promise<T> => {
-    const apiKey = getTmdbApiKey();
-    if (!apiKey) {
-        throw new Error("TMDb API key is not set. Please provide one in the setup screen.");
+    if (!userV3ApiKey) {
+        throw new Error("TMDb user API key (v3) is not set.");
     }
-    
-    const url = `${API_BASE_URL}${endpoint}?api_key=${apiKey}${sessionId ? `&session_id=${sessionId}` : ''}`;
-    
+
+    const url = `${API_BASE_URL}${endpoint}?api_key=${userV3ApiKey}${sessionId ? `&session_id=${sessionId}` : ''}`;
+
     const response = await fetch(url, {
         method,
         headers: {
@@ -48,7 +53,7 @@ export const getAccountDetails = async (sessionId: string): Promise<TmdbAccountD
 
 // --- Watchlist Management ---
 
-export const getLikes = async (accountId: number, sessionId: string): Promise<MediaDetails[]> => {
+export const getWatchlist = async (accountId: number, sessionId: string): Promise<MediaDetails[]> => {
     const movies = await tmdbApiRequest<{ results: any[] }>(`/account/${accountId}/watchlist/movies`, 'GET', null, sessionId);
     const tvShows = await tmdbApiRequest<{ results: any[] }>(`/account/${accountId}/watchlist/tv`, 'GET', null, sessionId);
 
@@ -64,14 +69,14 @@ export const getLikes = async (accountId: number, sessionId: string): Promise<Me
         type: type,
         releaseDate: item.release_date || item.first_air_date,
     });
-    
+
     const formattedMovies = movies.results.map(item => formatItem(item, 'movie'));
     const formattedTv = tvShows.results.map(item => formatItem(item, 'tv'));
 
     return [...formattedMovies, ...formattedTv];
 };
 
-export const modifyLikes = async (accountId: number, sessionId: string, mediaId: number, mediaType: 'movie' | 'tv', isInWatchlist: boolean): Promise<void> => {
+export const modifyWatchlist = async (accountId: number, sessionId: string, mediaId: number, mediaType: 'movie' | 'tv', isInWatchlist: boolean): Promise<void> => {
     const body = {
         media_type: mediaType,
         media_id: mediaId,

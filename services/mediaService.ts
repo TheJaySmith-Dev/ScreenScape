@@ -661,3 +661,47 @@ export const fetchActorsForAgeGame = async (page: number = 1): Promise<GameActor
     );
     return actorsWithDetails.filter((a): a is GameActor => a !== null);
 };
+
+export const getTmdbCuratedRecommendations = async (
+    watchlist: MediaDetails[]
+): Promise<AiCuratedCarousel[]> => {
+    if (watchlist.length === 0) {
+        return [];
+    }
+
+    // Use the 3 most recently liked items as seeds for recommendations
+    const seedItems = watchlist.slice(0, 3);
+    const watchlistItemIds = new Set(watchlist.map(item => item.id));
+
+    const recommendationPromises = seedItems.map(async (seed) => {
+        try {
+            const endpoint = `/${seed.type}/${seed.id}/recommendations`;
+            const recommendedMedia = await fetchList(endpoint, seed.type);
+
+            // Filter out items the user has already on their watchlist
+            const filteredRecommendations = recommendedMedia.filter(
+                (rec) => !watchlistItemIds.has(rec.id)
+            );
+
+            if (filteredRecommendations.length > 0) {
+                return {
+                    title: `Because you added ${seed.title} to your watchlist`,
+                    items: filteredRecommendations.slice(0, 10), // Limit to 10 per row
+                };
+            }
+            return null;
+        } catch (error) {
+            console.error(`Failed to get recommendations for ${seed.title}:`, error);
+            return null;
+        }
+    });
+
+    const carousels = (await Promise.all(recommendationPromises))
+        .filter((carousel): carousel is AiCuratedCarousel => carousel !== null);
+
+    // De-duplicate carousels by title
+    const uniqueCarousels = Array.from(new Map(carousels.map(item => [item.title, item])).values())
+    .filter(carousel => carousel.items.length > 0); // Remove carousels that are now empty
+
+    return uniqueCarousels;
+};

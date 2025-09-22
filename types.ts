@@ -324,22 +324,20 @@ export interface TmdbAuth {
 export type SetupState = 'needs_tmdb_key' | 'needs_tmdb_auth' | 'complete';
 
 export interface SettingsContextType {
-  geminiApiKey: string | null;
   tmdbApiKey: string | null;
+  geminiApiKey: string | null;
+  saveApiKeys: (keys: { tmdbKey: string; geminiKey: string }) => void;
   aiClient: GoogleGenAI | null;
   rateLimit: RateLimitState;
   isInitialized: boolean;
   isAllClearMode: boolean;
   tmdb: TmdbAuth;
-  setupState: SetupState;
   loginWithTmdb: () => void;
   logoutTmdb: () => void;
   handleTmdbCallback: (requestToken: string) => Promise<void>;
   toggleAllClearMode: () => void;
   canMakeRequest: () => { canRequest: boolean; resetTime: number | null };
   incrementRequestCount: () => void;
-  saveGeminiKey: (key: string) => void;
-  saveTmdbKey: (key: string) => void;
   clearAllSettings: () => void;
 }
 

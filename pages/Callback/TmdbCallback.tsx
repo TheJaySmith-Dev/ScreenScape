@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useSettings } from '../../hooks/useSettings.ts';
 import { LoadingSpinner } from '../../components/LoadingSpinner.tsx';
 
@@ -8,37 +8,25 @@ interface TmdbCallbackPageProps {
 
 export const TmdbCallbackPage: React.FC<TmdbCallbackPageProps> = ({ onNavigate }) => {
     const { handleTmdbCallback } = useSettings();
-    const processing = useRef(false);
-    const [status, setStatus] = useState('Processing login...');
-    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const processCallback = async () => {
-            if (processing.current) return;
-            processing.current = true;
-
-            const params = new URLSearchParams(window.location.hash.split('?')[1] || '');
+            const params = new URLSearchParams(window.location.search);
             const requestToken = params.get('request_token');
             const approved = params.get('approved');
 
             if (requestToken && approved === 'true') {
                 try {
-                    setStatus('Creating session with TMDb...');
                     await handleTmdbCallback(requestToken);
-                    setStatus('Success! Redirecting...');
-                    setTimeout(() => onNavigate('/myscape', true), 1500);
-                } catch (err: any) {
-                    const errorMessage = err.message || 'An unknown error occurred during login.';
-                    console.error("TMDb callback failed:", err);
-                    setError(`Login failed: ${errorMessage}. Please try again.`);
-                    setStatus('Error');
-                    // Stay on this page for a few seconds to show the error
-                    setTimeout(() => onNavigate('/myscape', true), 5000);
+                    onNavigate('/myscape');
+                } catch (error) {
+                    console.error("TMDb callback failed:", error);
+                    // Optionally show an error message to the user here
+                    onNavigate('/myscape'); // Navigate back even on error
                 }
             } else {
-                setError("Authentication was not approved or the token is missing from the redirect.");
-                setStatus('Error');
-                setTimeout(() => onNavigate('/myscape', true), 5000);
+                console.error("TMDb authentication not approved or token missing.");
+                onNavigate('/myscape'); // Redirect if auth was denied
             }
         };
 
@@ -46,14 +34,9 @@ export const TmdbCallbackPage: React.FC<TmdbCallbackPageProps> = ({ onNavigate }
     }, [handleTmdbCallback, onNavigate]);
 
     return (
-        <div className="flex flex-col justify-center items-center h-screen text-center p-4">
+        <div className="flex flex-col justify-center items-center h-screen">
             <LoadingSpinner />
-            <p className="mt-4 text-gray-300 text-lg">{status}</p>
-            {error && (
-                <div className="mt-4 max-w-md">
-                    <p className="text-red-400 bg-red-500/10 p-3 rounded-lg">{error}</p>
-                </div>
-            )}
+            <p className="mt-4 text-gray-300">Finalizing connection...</p>
         </div>
     );
 };

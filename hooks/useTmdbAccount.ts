@@ -5,13 +5,13 @@ import type { MediaDetails } from '../types.ts';
 
 export const useTmdbAccount = () => {
     const { tmdb } = useSettings();
-    const [likes, setLikes] = useState<MediaDetails[]>([]);
+    const [watchlist, setWatchlist] = useState<MediaDetails[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchLikes = useCallback(async () => {
+    const fetchWatchlist = useCallback(async () => {
         if (tmdb.state !== 'authenticated' || !tmdb.accountDetails?.id || !tmdb.sessionId) {
-            setLikes([]);
+            setWatchlist([]);
             setIsLoading(false);
             return;
         }
@@ -20,10 +20,10 @@ export const useTmdbAccount = () => {
         setError(null);
 
         try {
-            const items = await tmdbAuthService.getLikes(tmdb.accountDetails.id, tmdb.sessionId);
-            setLikes(items);
+            const items = await tmdbAuthService.getWatchlist(tmdb.accountDetails.id, tmdb.sessionId);
+            setWatchlist(items);
         } catch (err) {
-            setError('Could not load your TMDb likes.');
+            setError('Could not load your TMDb watchlist.');
             console.error(err);
         } finally {
             setIsLoading(false);
@@ -31,34 +31,34 @@ export const useTmdbAccount = () => {
     }, [tmdb.state, tmdb.accountDetails, tmdb.sessionId]);
 
     useEffect(() => {
-        fetchLikes();
-    }, [fetchLikes]);
+        fetchWatchlist();
+    }, [fetchWatchlist]);
 
-    const isOnLikes = (tmdbId: number) => likes.some(item => item.id === tmdbId);
+    const isOnWatchlist = (tmdbId: number) => watchlist.some(item => item.id === tmdbId);
 
-    const addToLikes = async (media: MediaDetails) => {
-        if (isOnLikes(media.id) || !tmdb.accountDetails?.id || !tmdb.sessionId) return;
-        
+    const addToWatchlist = async (media: MediaDetails) => {
+        if (isOnWatchlist(media.id) || !tmdb.accountDetails?.id || !tmdb.sessionId) return;
+
         try {
-            setLikes(prev => [media, ...prev]); // Optimistic update
-            await tmdbAuthService.modifyLikes(tmdb.accountDetails.id, tmdb.sessionId, media.id, media.type, true);
+            setWatchlist(prev => [media, ...prev]); // Optimistic update
+            await tmdbAuthService.modifyWatchlist(tmdb.accountDetails.id, tmdb.sessionId, media.id, media.type, true);
         } catch (err) {
-            setError("Failed to add to likes. Please try again.");
-            fetchLikes(); // Revert
+            setError("Failed to add to watchlist. Please try again.");
+            fetchWatchlist(); // Revert
         }
     };
 
-    const removeFromLikes = async (media: MediaDetails) => {
-        if (!isOnLikes(media.id) || !tmdb.accountDetails?.id || !tmdb.sessionId) return;
+    const removeFromWatchlist = async (media: MediaDetails) => {
+        if (!isOnWatchlist(media.id) || !tmdb.accountDetails?.id || !tmdb.sessionId) return;
 
         try {
-            setLikes(prev => prev.filter(item => item.id !== media.id)); // Optimistic update
-            await tmdbAuthService.modifyLikes(tmdb.accountDetails.id, tmdb.sessionId, media.id, media.type, false);
+            setWatchlist(prev => prev.filter(item => item.id !== media.id)); // Optimistic update
+            await tmdbAuthService.modifyWatchlist(tmdb.accountDetails.id, tmdb.sessionId, media.id, media.type, false);
         } catch (err) {
-            setError("Failed to remove from likes. Please try again.");
-            fetchLikes(); // Revert
+            setError("Failed to remove from watchlist. Please try again.");
+            fetchWatchlist(); // Revert
         }
     };
 
-    return { likes, isLoading, error, isOnLikes, addToLikes, removeFromLikes };
+    return { watchlist, isLoading, error, isOnWatchlist, addToWatchlist, removeFromWatchlist };
 };

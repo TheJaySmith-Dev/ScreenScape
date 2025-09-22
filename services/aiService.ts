@@ -386,3 +386,14 @@ export const getTmdbCuratedRecommendations = async (likes: MediaDetails[], aiCli
         throw new Error("Could not generate recommendations at this time.");
     }
 };
+
+export const startChatForBrand = (brand: Brand, aiClient: GoogleGenAI): Chat => {
+    const chat = aiClient.chats.create({
+        model,
+        config: {
+            systemInstruction: `You are a friendly, conversational expert on media franchises. The user is asking you questions about the "${brand.name}" franchise.
+            Use your vast knowledge to answer their questions about characters, storylines, behind-the-scenes facts, and the overall universe. Keep your answers concise and engaging. Do not answer questions that are not related to this specific franchise or the film/TV industry in general.`
+        }
+    });
+    return chat;
+};

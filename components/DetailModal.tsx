@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { MediaDetails, CollectionDetails, CastMember, CrewMember, UserLocation, WatchProviders, OmdbDetails, FunFact, SeasonDetails, Episode, SeasonSummary } from '../types.ts';
-import { StarIcon, PlayIcon, ThumbsUpIcon, TvIcon, SparklesIcon, InfoIcon, ChatBubbleIcon, CloseIcon, BellIcon } from './icons.tsx';
+import { StarIcon, PlayIcon, PlusIcon, CheckIcon, TvIcon, SparklesIcon, InfoIcon, ChatBubbleIcon, CloseIcon, BellIcon } from './icons.tsx';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
@@ -193,7 +193,7 @@ const isMediaDetails = (item: MediaDetails | CollectionDetails): item is MediaDe
 
 export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoading, onSelectMedia, onSelectActor, selectedLocation, onLocationChange, onOpenChat, onOpenReminderModal }) => {
     const [trailerVideoId, setTrailerVideoId] = useState<string | null>(null);
-    const { addToLikes, removeFromLikes, isOnLikes } = useTmdbAccount();
+    const { addToWatchlist, removeFromWatchlist, isOnWatchlist } = useTmdbAccount();
     const [omdbDetails, setOmdbDetails] = useState<OmdbDetails | null>(null);
     const [isOmdbLoading, setIsOmdbLoading] = useState(false);
     const [isDetailsVisible, setIsDetailsVisible] = useState(false);
@@ -243,9 +243,9 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         }
     };
 
-    const handleLikeToggle = () => {
+    const handleWatchlistToggle = () => {
         if (isMediaDetails(item)) {
-            isOnLikes(item.id) ? removeFromLikes(item) : addToLikes(item);
+            isOnWatchlist(item.id) ? removeFromWatchlist(item) : addToWatchlist(item);
         }
     };
 
@@ -292,7 +292,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
         return [userCountry, ...otherCountries];
     }, [selectedLocation.code]);
 
-    const itemIsOnLikes = isMediaDetails(item) && isOnLikes(item.id);
+    const itemIsOnWatchlist = isMediaDetails(item) && isOnWatchlist(item.id);
 
     const backgroundImageUrl = isMediaDetails(item)
         ? (item.textlessBackdropUrl || item.backdropUrl)
@@ -354,9 +354,9 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                       <span>More Info</span>
                     </button>
                     {isMediaDetails(item) && tmdb.state === 'authenticated' && (
-                        <button onClick={handleLikeToggle} className={`glass-button text-sm transition-colors ${itemIsOnLikes ? 'bg-white/20' : ''}`} aria-label={itemIsOnLikes ? 'Remove from likes' : 'Add to likes'}>
-                            <ThumbsUpIcon className="w-5 h-5" />
-                            <span>{itemIsOnLikes ? 'Liked' : 'Like'}</span>
+                        <button onClick={handleWatchlistToggle} className={`glass-button text-sm transition-colors ${itemIsOnWatchlist ? 'bg-white/20' : ''}`} aria-label={itemIsOnWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}>
+                            {itemIsOnWatchlist ? <CheckIcon className="w-5 h-5" /> : <PlusIcon className="w-5 h-5" />}
+                            <span>Watchlist</span>
                         </button>
                     )}
                     {isMediaDetails(item) && aiClient && (

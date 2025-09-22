@@ -44,8 +44,8 @@ const SetupPage = React.lazy(() => import('./components/SetupPage.tsx').then(mod
 const getPathRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
 
 const App: React.FC = () => {
-    const { isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount, setupState } = useSettings();
-    const { likes, isLoading: isAccountLoading } = useTmdbAccount();
+    const { tmdbApiKey, geminiApiKey, saveApiKeys, isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount, tmdb } = useSettings();
+    const { watchlist, isLoading: isAccountLoading } = useTmdbAccount();
     const [route, setRoute] = useState<string[]>(getPathRoute());
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -172,14 +172,14 @@ const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (setupState === 'complete') {
+        if (isInitialized && tmdbApiKey) {
             fetchInitialData();
         }
-    }, [setupState, fetchInitialData]);
+    }, [isInitialized, tmdbApiKey, fetchInitialData]);
 
     const MIN_ITEMS_FOR_RECOMMENDATIONS = 3;
     const fetchForYouRecommendations = useCallback(async () => {
-        if (setupState !== 'complete' || likes.length < MIN_ITEMS_FOR_RECOMMENDATIONS || isForYouLoading) {
+        if (tmdb.state !== 'authenticated' || watchlist.length < MIN_ITEMS_FOR_RECOMMENDATIONS || isForYouLoading) {
             return;
         }
 
@@ -187,12 +187,7 @@ const App: React.FC = () => {
         setForYouError(null);
         
         try {
-            // FIX: Call getTmdbCuratedRecommendations from aiService and pass aiClient.
-            if (!aiClient) {
-                setForYouError("AI client is not configured. Please add a Gemini API key in MyScape.");
-                return;
-            }
-            const results = await getTmdbCuratedRecommendations(likes, aiClient);
+            const results = await mediaService.getTmdbCuratedRecommendations(watchlist);
             
             if (results.length === 0) {
                 setForYouError("Couldn't generate recommendations. Add a few more titles to your likes!");
@@ -206,14 +201,14 @@ const App: React.FC = () => {
         } finally {
             setIsForYouLoading(false);
         }
-    }, [likes, isForYouLoading, setupState, aiClient]);
+    }, [watchlist, isForYouLoading, tmdb.state]);
 
     useEffect(() => {
         const page = route[0] || 'home';
-        if (page === 'home' && setupState === 'complete' && !isAccountLoading) {
+        if (page === 'home' && isInitialized && tmdbApiKey && !isAccountLoading) {
             fetchForYouRecommendations();
         }
-    }, [route, setupState, isAccountLoading, fetchForYouRecommendations]);
+    }, [route, isInitialized, tmdbApiKey, isAccountLoading, fetchForYouRecommendations]);
 
     useEffect(() => {
         const [page, id] = route;
@@ -507,14 +502,26 @@ const App: React.FC = () => {
                     const forYouContent = () => {
                         if (isAccountLoading) return null;
 
-                        if (likes.length < MIN_ITEMS_FOR_RECOMMENDATIONS) {
+                        if (tmdb.state !== 'authenticated') {
+                             return (
+                                <div className="mt-12 md:mt-16 px-4 sm:px-6 lg:px-8">
+                                    <div className="text-center text-gray-300 fade-in glass-panel p-8">
+                                        <UserIcon className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+                                        <h2 className="text-2xl font-bold mb-4 text-white">Connect to TMDb</h2>
+                                        <p>Log in with your TMDb account in <a href="/myscape" className="font-bold text-white hover:underline">MyScape</a> to get personalized recommendations.</p>
+                                    </div>
+                                </div>
+                            );
+                        }
+
+                        if (watchlist.length < MIN_ITEMS_FOR_RECOMMENDATIONS) {
                             return (
                                 <div className="mt-12 md:mt-16 px-4 sm:px-6 lg:px-8">
                                     <div className="text-center text-gray-300 fade-in glass-panel p-8">
                                         <ThumbsUpIcon className="w-12 h-12 text-green-400 mx-auto mb-4" />
                                         <h2 className="text-2xl font-bold mb-4 text-white">Personalized Recommendations</h2>
-                                        <p>Like at least <span className="font-bold text-white">{MIN_ITEMS_FOR_RECOMMENDATIONS}</span> movies or shows to unlock your feed.</p>
-                                        <p className="text-sm mt-2">You have <span className="font-bold text-white">{likes.length}</span> items liked so far.</p>
+                                        <p>Add at least <span className="font-bold text-white">{MIN_ITEMS_FOR_RECOMMENDATIONS}</span> movies or shows to your TMDb watchlist to unlock your feed.</p>
+                                        <p className="text-sm mt-2">You have <span className="font-bold text-white">{watchlist.length}</span> items so far.</p>
                                     </div>
                                 </div>
                             );
@@ -595,7 +602,7 @@ const App: React.FC = () => {
                     return <RecommendationGrid recommendations={searchResults} onSelect={handleSelectMedia} />;
                 case 'brand':
                     if (selectedBrand) {
-                        return <BrandDetail brand={selectedBrand} media={brandContent} onBack={() => navigate('brands')} onSelectMedia={handleSelectMedia} onSelectCollection={handleSelectCollection} mediaTypeFilter={mediaTypeFilter} setMediaTypeFilter={setMediaTypeFilter} sortBy={sortBy} setSortBy={setSortBy} onGenerateGuides={aiClient ? handleGenerateGuides : undefined} onOpenChat={aiClient ? handleOpenBrandChatModal : undefined} />;
+                        return <BrandDetail brand={selectedBrand} media={brandContent} onBack={() => navigate('/brands')} onSelectMedia={handleSelectMedia} onSelectCollection={handleSelectCollection} mediaTypeFilter={mediaTypeFilter} setMediaTypeFilter={setMediaTypeFilter} sortBy={sortBy} setSortBy={setSortBy} onGenerateGuides={aiClient ? handleGenerateGuides : undefined} onOpenChat={aiClient ? handleOpenBrandChatModal : undefined} />;
                     }
                     return <div className="text-center">Loading brand...</div>;
                 case 'studio':
@@ -607,7 +614,7 @@ const App: React.FC = () => {
                         return <PersonPage 
                                     person={selectedPerson} 
                                     media={personContent} 
-                                    onBack={() => navigate('people')} 
+                                    onBack={() => navigate('/people')}
                                     onSelectMedia={handleSelectMedia}
                                     onSelectActor={handleSelectActor} />;
                     }
