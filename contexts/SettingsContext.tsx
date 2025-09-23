@@ -189,7 +189,9 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         return { canRequest: false, resetTime: rateLimit.resetTime };
     }, [rateLimit]);
 
-    const clearAllSettings = useCallback(() => {
+    const clearAllSettings = useCallback(async () => {
+        await logoutTmdb();
+
         const newResetTime = new Date().setHours(23, 59, 59, 999);
         setGeminiApiKey(null);
         setTmdbApiKeyState(null);
@@ -197,7 +199,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         setAiClient(null);
         setRateLimit({ count: 0, resetTime: newResetTime });
         setIsAllClearMode(false);
-        logoutTmdb();
         
         localStorage.removeItem(LOCAL_STORAGE_KEY_GEMINI);
         localStorage.removeItem(LOCAL_STORAGE_KEY_TMDB);
