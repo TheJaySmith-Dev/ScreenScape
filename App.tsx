@@ -38,7 +38,6 @@ const StreamingGrid = React.lazy(() => import('./components/StreamingGrid.tsx').
 const BrandDetail = React.lazy(() => import('./components/BrandDetail.tsx').then(module => ({ default: module.BrandDetail })));
 const RecommendationGrid = React.lazy(() => import('./components/RecommendationGrid.tsx').then(module => ({ default: module.RecommendationGrid })));
 const ComingSoonPage = React.lazy(() => import('./components/ComingSoonPage.tsx').then(module => ({ default: module.ComingSoonPage })));
-const TmdbCallbackPage = React.lazy(() => import('./pages/Callback/TmdbCallback.tsx').then(module => ({ default: module.TmdbCallbackPage })));
 const SetupPage = React.lazy(() => import('./components/SetupPage.tsx').then(module => ({ default: module.SetupPage })));
 
 const getPathRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
