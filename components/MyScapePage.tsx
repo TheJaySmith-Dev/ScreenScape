@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useSettings } from '../hooks/useSettings.ts';
 import { useLocalLikes } from '../hooks/useLocalLikes.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
-import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon, KeyIcon, EyeIcon, EyeSlashIcon, CheckCircleIcon } from './icons.tsx';
+import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon, KeyIcon, EyeIcon, EyeSlashIcon, CheckCircleIcon, UserCircleIcon } from './icons.tsx';
 import type { MediaDetails } from '../types.ts';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
+import { useAuth0 } from '@auth0/auth0-react';
 
 interface MyScapePageProps {
   onSelectMedia: (media: MediaDetails) => void;
@@ -66,6 +67,53 @@ const GeminiKeyManager: React.FC = () => {
     );
 };
 
+const AuthManager: React.FC = () => {
+    const {
+        isLoading,
+        isAuthenticated,
+        user,
+        loginWithRedirect,
+        logout,
+    } = useAuth0();
+
+    if (isLoading) {
+        return <div className="flex justify-center items-center h-24"><LoadingSpinner /></div>;
+    }
+
+    if (isAuthenticated && user) {
+        return (
+            <div className="text-center">
+                {user.picture ? (
+                    <img src={user.picture} alt={user.name} className="w-16 h-16 rounded-full mx-auto mb-4" />
+                ) : (
+                    <UserCircleIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                )}
+                <p className="text-gray-300">Logged in as</p>
+                <p className="font-bold text-white text-lg truncate">{user.name}</p>
+                <button
+                    onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+                    className="w-full mt-4 px-4 py-2 text-sm text-center text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors"
+                >
+                    Logout
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="text-center">
+            <UserCircleIcon className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+            <p className="text-gray-300 mb-4">Login to sync your likes across devices (coming soon!).</p>
+            <button
+                onClick={() => loginWithRedirect()}
+                className="w-full glass-button primary"
+            >
+                Login or Sign Up
+            </button>
+        </div>
+    );
+}
+
 export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
     const { rateLimit, clearAllSettings, isAllClearMode, toggleAllClearMode } = useSettings();
     const { likes, isLoading: preferencesLoading } = useLocalLikes();
@@ -95,7 +143,11 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                 </a>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                 <div className="glass-panel p-6 rounded-2xl">
+                    <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><UserCircleIcon className="w-6 h-6"/> Account</h2>
+                    <AuthManager />
+                </div>
                 <div className="glass-panel p-6 rounded-2xl">
                     <h2 className="text-xl font-semibold mb-4 flex items-center gap-2"><SparklesIcon className="w-6 h-6 text-indigo-400"/> AI Usage</h2>
                      <div className="text-center">
@@ -138,7 +190,7 @@ export const MyScapePage: React.FC<MyScapePageProps> = ({ onSelectMedia }) => {
                             </button>
                         </div>
                         <div>
-                            <p className="text-xs text-gray-400">This will clear all your local data, including your Gemini key and login session.</p>
+                            <p className="text-xs text-gray-400">This will clear all your local data, including your Gemini key.</p>
                             <button onClick={clearAllSettings} className="w-full mt-2 px-4 py-2 text-sm text-center text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-colors">
                                 Clear All Local Data
                             </button>
