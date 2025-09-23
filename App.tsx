@@ -39,6 +39,7 @@ const BrandDetail = React.lazy(() => import('./components/BrandDetail.tsx').then
 const RecommendationGrid = React.lazy(() => import('./components/RecommendationGrid.tsx').then(module => ({ default: module.RecommendationGrid })));
 const ComingSoonPage = React.lazy(() => import('./components/ComingSoonPage.tsx').then(module => ({ default: module.ComingSoonPage })));
 const SetupPage = React.lazy(() => import('./components/SetupPage.tsx').then(module => ({ default: module.SetupPage })));
+const LogtoCallback = React.lazy(() => import('./pages/Callback/LogtoCallback.tsx'));
 
 const getPathRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
 
@@ -556,6 +557,7 @@ const App: React.FC = () => {
                         </>
                     );
                 case 'myscape': return <MyScapePage onSelectMedia={handleSelectMedia} />;
+                case 'callback': return <LogtoCallback />;
                 case 'movies': return <RecommendationGrid recommendations={moviesContent} onSelect={handleSelectMedia} />;
                 case 'tv': return <RecommendationGrid recommendations={tvContent} onSelect={handleSelectMedia} />;
                 case 'collections': return <ComingSoonPage media={comingSoonContent} onSelectMedia={handleSelectMedia} />;

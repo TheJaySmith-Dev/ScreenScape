@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@auth0/auth0-react": "^2.5.0",
     "@google/genai": "^1.17.0",
+    "@logto/react": "^4.0.9",
     "firebase": "^12.2.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"

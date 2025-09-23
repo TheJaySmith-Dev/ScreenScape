@@ -2,33 +2,25 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import { SettingsProvider } from './contexts/SettingsContext.tsx';
-import { Auth0Provider } from '@auth0/auth0-react';
+import { LogtoProvider, type LogtoConfig } from '@logto/react';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error("Could not find root element to mount to");
 }
 
-const domain = import.meta.env.VITE_AUTH0_DOMAIN;
-const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID;
-
-if (!domain || !clientId) {
-    throw new Error('Auth0 domain or client ID not set in environment variables.');
-}
+const config: LogtoConfig = {
+    endpoint: 'https://qrd6i9.logto.app/',
+    appId: 'mkb9ruywcb1z97g3trf84',
+};
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <Auth0Provider
-        domain={domain}
-        clientId={clientId}
-        authorizationParams={{
-            redirect_uri: window.location.origin
-        }}
-    >
+    <LogtoProvider config={config}>
         <SettingsProvider>
             <App />
         </SettingsProvider>
-    </Auth0Provider>
+    </LogtoProvider>
   </React.StrictMode>
 );
