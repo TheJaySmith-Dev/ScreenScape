@@ -7,6 +7,7 @@ const LOCAL_STORAGE_KEY_GEMINI = 'screenscape_gemini_api_key';
 const LOCAL_STORAGE_KEY_TMDB = 'screenscape_tmdb_api_key';
 const LOCAL_STORAGE_KEY_RATE_LIMIT = 'screenscape_rate_limit';
 const LOCAL_STORAGE_KEY_ALL_CLEAR = 'screenscape_all_clear_mode';
+const FALLBACK_TMDB_KEY = '09b97a49759876f2fde9eadb163edc44';
 
 const getInitialRateLimit = (): RateLimitState => {
     try {
@@ -39,7 +40,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     useEffect(() => {
         const localGeminiKey = localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI);
-        const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB) ?? '09b97a49759876f2fde9eadb163edc44';
+        const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB) || FALLBACK_TMDB_KEY;
         const localAllClear = localStorage.getItem(LOCAL_STORAGE_KEY_ALL_CLEAR);
         
         if (localAllClear) setIsAllClearMode(JSON.parse(localAllClear));
