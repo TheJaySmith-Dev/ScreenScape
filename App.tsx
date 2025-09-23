@@ -656,7 +656,7 @@ const App: React.FC = () => {
     }
 
     const page = route[0] || 'home';
-    if (setupState !== 'complete' && page !== 'callback') {
+    if (setupState !== 'complete') {
         return (
             <Suspense fallback={<div className="flex justify-center items-center h-screen"><LoadingSpinner /></div>}>
                 <SetupPage />
