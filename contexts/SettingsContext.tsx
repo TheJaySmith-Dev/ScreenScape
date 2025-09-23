@@ -39,11 +39,16 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     useEffect(() => {
         const localGeminiKey = localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI);
-        const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
+        let localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
         const localAllClear = localStorage.getItem(LOCAL_STORAGE_KEY_ALL_CLEAR);
         
         if (localAllClear) setIsAllClearMode(JSON.parse(localAllClear));
         
+        // If no key is found in localStorage, use the provided fallback key.
+        if (!localTmdbKey) {
+            localTmdbKey = '09b97a49759876f2fde9eadb163edc44';
+        }
+
         setGeminiApiKey(localGeminiKey);
         setTmdbApiKeyState(localTmdbKey);
         setTmdbApiKey(localTmdbKey); // Set in manager
