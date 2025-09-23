@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSettings } from '../hooks/useSettings.ts';
 import { useLocalLikes } from '../hooks/useLocalLikes.ts';
 import { RecommendationGrid } from './RecommendationGrid.tsx';
-import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon, KeyIcon, EyeIcon, EyeSlashIcon, CheckCircleIcon, UserCircleIcon } from './icons.tsx';
+import { SparklesIcon, Cog6ToothIcon, ThumbsUpIcon, KeyIcon, EyeIcon, EyeSlashIcon, CheckCircleIcon, UserIcon as UserCircleIcon } from './icons.tsx';
 import type { MediaDetails, IdTokenClaims } from '../types.ts';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { useLogto } from '@logto/react';

@@ -1,6 +1,6 @@
+import React, { useEffect } from 'react';
 import { useHandleSignInCallback } from '@logto/react';
 import { LoadingSpinner } from '../../components/LoadingSpinner.tsx';
-import { useEffect } from 'react';
 
 const LogtoCallback = () => {
   const { isLoading, error } = useHandleSignInCallback(() => {
