@@ -30,16 +30,31 @@ export const fetchApi = async <T,>(endpoint: string): Promise<T> => {
     if (!apiKey) {
         throw new Error("TMDb API key is not set. Please provide one in the setup screen.");
     }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+
     const separator = endpoint.includes('?') ? '&' : '?';
     const url = `${API_BASE_URL}${endpoint}${separator}api_key=${apiKey}&language=en-US`;
-    const response = await fetch(url);
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({})); 
-        console.error("API Error:", JSON.stringify(errorData, null, 2));
-        const errorMessage = errorData.status_message || response.statusText || 'Unknown error';
-        throw new Error(`API request failed: ${response.status} ${errorMessage}`);
+
+    try {
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error("API Error:", JSON.stringify(errorData, null, 2));
+            const errorMessage = errorData.status_message || response.statusText || 'Unknown error';
+            throw new Error(`API request failed: ${response.status} ${errorMessage}`);
+        }
+        return response.json();
+    } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            throw new Error('API request timed out after 10 seconds.');
+        }
+        throw error;
     }
-    return response.json();
 };
 
 export const findBestTrailer = (videos: any[]): any | null => {
