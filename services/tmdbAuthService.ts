@@ -46,6 +46,10 @@ export const getAccountDetails = async (sessionId: string): Promise<TmdbAccountD
     return tmdbApiRequest('/account', 'GET', null, sessionId);
 };
 
+export const deleteSession = async (sessionId: string): Promise<{ success: boolean }> => {
+    return tmdbApiRequest('/authentication/session', 'DELETE', { session_id: sessionId });
+};
+
 // --- Watchlist Management ---
 
 export const getLikes = async (accountId: number, sessionId: string): Promise<MediaDetails[]> => {

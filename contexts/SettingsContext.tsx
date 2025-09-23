@@ -129,11 +129,19 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         }
     }, []);
 
-    const logoutTmdb = useCallback(() => {
+    const logoutTmdb = useCallback(async () => {
+        const currentSessionId = tmdb.sessionId;
+        if (currentSessionId) {
+            try {
+                await tmdbAuthService.deleteSession(currentSessionId);
+            } catch (error) {
+                console.error("Failed to delete TMDb session:", error);
+            }
+        }
         setTmdb({ sessionId: null, accountDetails: null, state: 'idle' });
         localStorage.removeItem(LOCAL_STORAGE_KEY_TMDB_AUTH);
         setSetupState('needs_tmdb_auth');
-    }, []);
+    }, [tmdb.sessionId]);
 
     const handleTmdbCallback = useCallback(async (requestToken: string) => {
         setTmdb(prev => ({ ...prev, state: 'loading' }));
