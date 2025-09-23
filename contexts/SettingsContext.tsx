@@ -7,7 +7,6 @@ const LOCAL_STORAGE_KEY_GEMINI = 'screenscape_gemini_api_key';
 const LOCAL_STORAGE_KEY_TMDB = 'screenscape_tmdb_api_key';
 const LOCAL_STORAGE_KEY_RATE_LIMIT = 'screenscape_rate_limit';
 const LOCAL_STORAGE_KEY_ALL_CLEAR = 'screenscape_all_clear_mode';
-const FALLBACK_TMDB_KEY = '09b97a49759876f2fde9eadb163edc44';
 
 const getInitialRateLimit = (): RateLimitState => {
     try {
@@ -40,7 +39,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
     useEffect(() => {
         const localGeminiKey = localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI);
-        const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB) || FALLBACK_TMDB_KEY;
+        const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
         const localAllClear = localStorage.getItem(LOCAL_STORAGE_KEY_ALL_CLEAR);
         
         if (localAllClear) setIsAllClearMode(JSON.parse(localAllClear));
@@ -54,6 +53,8 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         // Determine initial setup state
         if (!localTmdbKey) {
             setSetupState('needs_tmdb_key');
+        } else if (!localGeminiKey) {
+            setSetupState('needs_gemini_key');
         } else {
             setSetupState('complete');
         }
@@ -80,8 +81,11 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         setGeminiApiKey(trimmedKey || null);
         if (trimmedKey) {
             localStorage.setItem(LOCAL_STORAGE_KEY_GEMINI, trimmedKey);
+            setSetupState('complete'); // Final step, setup is complete
         } else {
             localStorage.removeItem(LOCAL_STORAGE_KEY_GEMINI);
+            // Optional: decide if you want to stay on this step or go back
+            // For now, we'll stay, assuming they might just be correcting a mistake
         }
     }, []);
 
@@ -91,7 +95,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         setTmdbApiKey(trimmedKey || null); // Update manager
         if (trimmedKey) {
             localStorage.setItem(LOCAL_STORAGE_KEY_TMDB, trimmedKey);
-            setSetupState('complete'); // Setup is complete after getting the key
+            setSetupState('needs_gemini_key'); // Advance to next step
         } else {
             localStorage.removeItem(LOCAL_STORAGE_KEY_TMDB);
             setSetupState('needs_tmdb_key');

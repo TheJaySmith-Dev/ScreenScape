@@ -61,6 +61,62 @@ const ApiKeyStep: React.FC = () => {
 
 
 
+const GeminiKeyStep: React.FC = () => {
+    const { saveGeminiKey, geminiApiKey } = useSettings();
+    const [keyInput, setKeyInput] = useState(geminiApiKey || '');
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (keyInput.trim()) {
+            saveGeminiKey(keyInput.trim());
+        }
+    };
+
+    return (
+        <div className="w-full max-w-md text-center fade-in">
+            <div className="glass-panel p-8 md:p-12">
+                <div className="flex justify-center items-center mb-4">
+                    <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center border-2 border-purple-500/30">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-purple-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12.52.23a1.5 1.5 0 0 0-1.04 0l-8.49 4.9a1.5 1.5 0 0 0-.5 1.3v9.82a1.5 1.5 0 0 0 .5 1.3l8.49 4.9a1.5 1.5 0 0 0 1.04 0l8.49-4.9a1.5 1.5 0 0 0 .5-1.3V6.44a1.5 1.5 0 0 0-.5-1.3L12.52.23Z"/></svg>
+                    </div>
+                </div>
+                <h1 className="text-3xl font-bold text-white mb-2">
+                    Gemini API Key
+                </h1>
+                <p className="text-gray-300 mb-6">
+                    AI features like personalized recommendations are powered by Google Gemini. A free key is required.
+                </p>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <input
+                        type="text"
+                        value={keyInput}
+                        onChange={(e) => setKeyInput(e.target.value)}
+                        placeholder="Paste your Gemini API Key"
+                        className="w-full px-4 py-3 text-white bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/80 focus:outline-none transition-colors placeholder-gray-400"
+                        aria-label="Gemini API Key"
+                        autoFocus
+                    />
+                    <button
+                        type="submit"
+                        disabled={!keyInput.trim()}
+                        className="w-full glass-button primary text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Finish Setup
+                    </button>
+                </form>
+                 <a
+                    href="https://aistudio.google.com/app/apikey"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-sm text-gray-400 mt-4 hover:text-purple-300 transition-colors"
+                >
+                    Get a Gemini key here &rarr;
+                </a>
+            </div>
+        </div>
+    );
+}
+
 export const SetupPage: React.FC = () => {
     const { setupState } = useSettings();
 
@@ -77,6 +133,7 @@ export const SetupPage: React.FC = () => {
             {/* Content */}
             <div className="relative z-10">
                {setupState === 'needs_tmdb_key' && <ApiKeyStep />}
+               {setupState === 'needs_gemini_key' && <GeminiKeyStep />}
             </div>
         </div>
     );
