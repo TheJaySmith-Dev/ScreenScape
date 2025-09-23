@@ -25,7 +25,7 @@ import type { MediaDetails, CollectionDetails, Collection, ActorDetails, Brand, 
 // FIX: Import 'getTmdbCuratedRecommendations' from aiService to resolve missing property error.
 import { getViewingGuidesForBrand, getAiDescriptionForBrand, getTmdbCuratedRecommendations } from './services/aiService.ts';
 import { useSettings } from './hooks/useSettings.ts';
-import { useTmdbAccount } from './hooks/useTmdbAccount.ts';
+import { useLocalLikes } from './hooks/useLocalLikes.ts';
 
 // Lazy load page components for code-splitting and performance
 const MyScapePage = React.lazy(() => import('./components/MyScapePage.tsx').then(module => ({ default: module.MyScapePage })));
@@ -45,7 +45,7 @@ const getPathRoute = () => window.location.hash.replace(/^#\/?|\/$/g, '').split(
 
 const App: React.FC = () => {
     const { isInitialized, aiClient, isAllClearMode, canMakeRequest, incrementRequestCount, setupState } = useSettings();
-    const { likes, isLoading: isAccountLoading } = useTmdbAccount();
+    const { likes, isLoading: isAccountLoading } = useLocalLikes();
     const [route, setRoute] = useState<string[]>(getPathRoute());
     const [isLoading, setIsLoading] = useState(true);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -107,17 +107,6 @@ const App: React.FC = () => {
         }
     }, []);
 
-    useEffect(() => {
-        // Handle the redirect from TMDb which uses query parameters
-        const params = new URLSearchParams(window.location.search);
-        const isTmdbCallback = params.get('approved') === 'true' && params.get('request_token');
-
-        if (isTmdbCallback) {
-            const requestToken = params.get('request_token');
-            // Convert the query param URL to a hash-based one for the SPA router
-            navigate(`callback/tmdb?request_token=${requestToken}&approved=true`, true);
-        }
-    }, [navigate]);
 
     useEffect(() => {
         const handleHashChange = () => setRoute(getPathRoute());
@@ -568,12 +557,6 @@ const App: React.FC = () => {
                         </>
                     );
                 case 'myscape': return <MyScapePage onSelectMedia={handleSelectMedia} />;
-                case 'callback':
-                    if (id === 'tmdb') {
-                        return <TmdbCallbackPage onNavigate={navigate} />;
-                    }
-                    navigate('/', true);
-                    return null;
                 case 'movies': return <RecommendationGrid recommendations={moviesContent} onSelect={handleSelectMedia} />;
                 case 'tv': return <RecommendationGrid recommendations={tvContent} onSelect={handleSelectMedia} />;
                 case 'collections': return <ComingSoonPage media={comingSoonContent} onSelectMedia={handleSelectMedia} />;

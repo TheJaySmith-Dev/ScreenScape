@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSettings } from '../hooks/useSettings.ts';
-import { KeyIcon, LoginIcon } from './icons.tsx';
+import { KeyIcon } from './icons.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 
 const ApiKeyStep: React.FC = () => {
@@ -59,41 +59,6 @@ const ApiKeyStep: React.FC = () => {
     );
 };
 
-const LoginStep: React.FC = () => {
-    const { loginWithTmdb, tmdb } = useSettings();
-
-    return (
-        <div className="w-full max-w-md text-center fade-in">
-            <div className="glass-panel p-8 md:p-12">
-                 <div className="flex justify-center items-center mb-4">
-                    <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center border-2 border-green-500/30">
-                        <LoginIcon className="w-8 h-8 text-green-300 transform -scale-x-100" />
-                    </div>
-                </div>
-                <h1 className="text-3xl font-bold text-white mb-2">
-                    Almost there!
-                </h1>
-                <p className="text-gray-300 mb-8">
-                    Log in with your TMDb account to unlock your personalized scape and save your likes.
-                </p>
-                
-                {tmdb.state === 'loading' ? (
-                    <div className="flex flex-col items-center justify-center">
-                        <LoadingSpinner />
-                        <p className="mt-4 text-gray-300">Redirecting to TMDb...</p>
-                    </div>
-                ) : (
-                     <button
-                        onClick={loginWithTmdb}
-                        className="w-full glass-button primary text-lg"
-                    >
-                        <span>Login with TMDb</span>
-                    </button>
-                )}
-            </div>
-        </div>
-    );
-};
 
 
 export const SetupPage: React.FC = () => {
@@ -112,7 +77,6 @@ export const SetupPage: React.FC = () => {
             {/* Content */}
             <div className="relative z-10">
                {setupState === 'needs_tmdb_key' && <ApiKeyStep />}
-               {setupState === 'needs_tmdb_auth' && <LoginStep />}
             </div>
         </div>
     );

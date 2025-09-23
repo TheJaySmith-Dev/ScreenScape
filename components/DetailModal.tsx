@@ -5,7 +5,7 @@ import { StarIcon, PlayIcon, ThumbsUpIcon, TvIcon, SparklesIcon, InfoIcon, ChatB
 import { RecommendationGrid } from './RecommendationGrid.tsx';
 import { LoadingSpinner } from './LoadingSpinner.tsx';
 import { CustomVideoPlayer } from './CustomVideoPlayer.tsx';
-import { useTmdbAccount } from '../hooks/useTmdbAccount.ts';
+import { useLocalLikes } from '../hooks/useLocalLikes.ts';
 import { CinemaAvailability } from './CinemaAvailability.tsx';
 import { fetchOmdbDetails } from '../services/omdbService.ts';
 import { getFunFactsForMedia } from '../services/aiService.ts';
@@ -196,11 +196,11 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
     const handleClosePlayer = useCallback(() => {
         setTrailerVideoId(null);
     }, []);
-    const { addToLikes, removeFromLikes, isOnLikes } = useTmdbAccount();
+    const { addToLikes, removeFromLikes, isOnLikes } = useLocalLikes();
     const [omdbDetails, setOmdbDetails] = useState<OmdbDetails | null>(null);
     const [isOmdbLoading, setIsOmdbLoading] = useState(false);
     const [isDetailsVisible, setIsDetailsVisible] = useState(false);
-    const { aiClient, canMakeRequest, incrementRequestCount, tmdb } = useSettings();
+    const { aiClient, canMakeRequest, incrementRequestCount } = useSettings();
 
     const [funFacts, setFunFacts] = useState<FunFact[] | null>(null);
     const [isFactsLoading, setIsFactsLoading] = useState(false);
@@ -356,7 +356,7 @@ export const DetailModal: React.FC<DetailModalProps> = ({ item, onClose, isLoadi
                       <InfoIcon className="w-5 h-5"/>
                       <span>More Info</span>
                     </button>
-                    {isMediaDetails(item) && tmdb.state === 'authenticated' && (
+                    {isMediaDetails(item) && (
                         <button onClick={handleLikeToggle} className={`glass-button text-sm transition-colors ${itemIsOnLikes ? 'bg-white/20' : ''}`} aria-label={itemIsOnLikes ? 'Remove from likes' : 'Add to likes'}>
                             <ThumbsUpIcon className="w-5 h-5" />
                             <span>{itemIsOnLikes ? 'Liked' : 'Like'}</span>

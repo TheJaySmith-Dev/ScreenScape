@@ -1,14 +1,12 @@
 import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import * as tmdbAuthService from '../services/tmdbAuthService.ts';
 import { setTmdbApiKey } from '../services/apiKeyManager.ts';
-import type { SettingsContextType, RateLimitState, TmdbAuth, SetupState } from '../types.ts';
+import type { SettingsContextType, RateLimitState, SetupState } from '../types.ts';
 
 const LOCAL_STORAGE_KEY_GEMINI = 'screenscape_gemini_api_key';
 const LOCAL_STORAGE_KEY_TMDB = 'screenscape_tmdb_api_key';
 const LOCAL_STORAGE_KEY_RATE_LIMIT = 'screenscape_rate_limit';
 const LOCAL_STORAGE_KEY_ALL_CLEAR = 'screenscape_all_clear_mode';
-const LOCAL_STORAGE_KEY_TMDB_AUTH = 'screenscape_tmdb_auth';
 
 const getInitialRateLimit = (): RateLimitState => {
     try {
@@ -28,19 +26,6 @@ const getInitialRateLimit = (): RateLimitState => {
     return { count: 0, resetTime: newResetTime };
 };
 
-const getInitialTmdbAuth = (): TmdbAuth => {
-    try {
-        const stored = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB_AUTH);
-        if (stored) {
-            const state: TmdbAuth = JSON.parse(stored);
-            if (state.sessionId && state.accountDetails) {
-                 return { ...state, state: 'authenticated' };
-            }
-        }
-    } catch (e) { console.error("Failed to parse tmdb auth state", e); }
-    return { sessionId: null, accountDetails: null, state: 'idle' };
-};
-
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -50,14 +35,12 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     const [rateLimit, setRateLimit] = useState<RateLimitState>(getInitialRateLimit());
     const [isInitialized, setIsInitialized] = useState(false);
     const [isAllClearMode, setIsAllClearMode] = useState<boolean>(false);
-    const [tmdb, setTmdb] = useState<TmdbAuth>(getInitialTmdbAuth());
     const [setupState, setSetupState] = useState<SetupState>('needs_tmdb_key');
 
     useEffect(() => {
         const localGeminiKey = localStorage.getItem(LOCAL_STORAGE_KEY_GEMINI);
         const localTmdbKey = localStorage.getItem(LOCAL_STORAGE_KEY_TMDB);
         const localAllClear = localStorage.getItem(LOCAL_STORAGE_KEY_ALL_CLEAR);
-        const initialTmdbAuth = getInitialTmdbAuth();
         
         if (localAllClear) setIsAllClearMode(JSON.parse(localAllClear));
         
@@ -66,13 +49,10 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         setTmdbApiKey(localTmdbKey); // Set in manager
         
         setRateLimit(getInitialRateLimit());
-        setTmdb(initialTmdbAuth);
         
         // Determine initial setup state
         if (!localTmdbKey) {
             setSetupState('needs_tmdb_key');
-        } else if (initialTmdbAuth.state !== 'authenticated') {
-            setSetupState('needs_tmdb_auth');
         } else {
             setSetupState('complete');
         }
@@ -110,54 +90,12 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         setTmdbApiKey(trimmedKey || null); // Update manager
         if (trimmedKey) {
             localStorage.setItem(LOCAL_STORAGE_KEY_TMDB, trimmedKey);
-            setSetupState('needs_tmdb_auth');
+            setSetupState('complete'); // Setup is complete after getting the key
         } else {
             localStorage.removeItem(LOCAL_STORAGE_KEY_TMDB);
             setSetupState('needs_tmdb_key');
         }
     }, []);
-    
-    const loginWithTmdb = useCallback(async () => {
-        setTmdb(prev => ({ ...prev, state: 'loading' }));
-        try {
-            const requestToken = await tmdbAuthService.createRequestToken();
-            const redirectUrl = `${window.location.origin}${window.location.pathname}`;
-            window.location.href = `https://www.themoviedb.org/authenticate/${requestToken}?redirect_to=${encodeURIComponent(redirectUrl)}`;
-        } catch (error) {
-            console.error("TMDb login failed to start:", error);
-            setTmdb(prev => ({...prev, state: 'error'}));
-        }
-    }, []);
-
-    const logoutTmdb = useCallback(async () => {
-        const currentSessionId = tmdb.sessionId;
-        if (currentSessionId) {
-            try {
-                await tmdbAuthService.deleteSession(currentSessionId);
-            } catch (error) {
-                console.error("Failed to delete TMDb session:", error);
-            }
-        }
-        setTmdb({ sessionId: null, accountDetails: null, state: 'idle' });
-        localStorage.removeItem(LOCAL_STORAGE_KEY_TMDB_AUTH);
-        setSetupState('needs_tmdb_auth');
-    }, [tmdb.sessionId]);
-
-    const handleTmdbCallback = useCallback(async (requestToken: string) => {
-        setTmdb(prev => ({ ...prev, state: 'loading' }));
-        try {
-            const { session_id } = await tmdbAuthService.createSession(requestToken);
-            const accountDetails = await tmdbAuthService.getAccountDetails(session_id);
-            const newAuthState: TmdbAuth = { sessionId: session_id, accountDetails, state: 'authenticated' };
-            setTmdb(newAuthState);
-            localStorage.setItem(LOCAL_STORAGE_KEY_TMDB_AUTH, JSON.stringify(newAuthState));
-            setSetupState('complete');
-        } catch (error) {
-            console.error("Failed to handle TMDb callback:", error);
-            logoutTmdb(); // Reset on failure
-            throw error;
-        }
-    }, [logoutTmdb]);
 
     const toggleAllClearMode = useCallback(() => {
         setIsAllClearMode(prev => {
@@ -189,9 +127,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         return { canRequest: false, resetTime: rateLimit.resetTime };
     }, [rateLimit]);
 
-    const clearAllSettings = useCallback(async () => {
-        await logoutTmdb();
-
+    const clearAllSettings = useCallback(() => {
         const newResetTime = new Date().setHours(23, 59, 59, 999);
         setGeminiApiKey(null);
         setTmdbApiKeyState(null);
@@ -204,21 +140,18 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
         localStorage.removeItem(LOCAL_STORAGE_KEY_TMDB);
         localStorage.removeItem(LOCAL_STORAGE_KEY_RATE_LIMIT);
         localStorage.removeItem(LOCAL_STORAGE_KEY_ALL_CLEAR);
+        localStorage.removeItem('screenscape_tmdb_auth'); // Also remove the old auth key just in case
         setSetupState('needs_tmdb_key');
-    }, [logoutTmdb]);
+    }, []);
 
-    const value = {
+    const value: SettingsContextType = {
         geminiApiKey,
         tmdbApiKey,
         aiClient,
         rateLimit,
         isInitialized,
         isAllClearMode,
-        tmdb,
         setupState,
-        loginWithTmdb,
-        logoutTmdb,
-        handleTmdbCallback,
         toggleAllClearMode,
         canMakeRequest,
         incrementRequestCount,
